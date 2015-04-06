@@ -1,18 +1,23 @@
 {
-"installed_packages":
-  [
-    "Better TypeScript",
-    "BracketHighlighter",
-    "Colorsublime",
-    "EditorConfig",
-    "GitGutter",
-    "GitHubinator",
-    "HTML5",
-    "Jade",
-    "LESS",
-    "Sass",
-    "SideBarEnhancements",
-    "Theme - Afterglow",
-    "ToggleQuotes"
-  ]
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"Better TypeScript",
+		"BracketHighlighter",
+		"Colorsublime",
+		"EditorConfig",
+		"GitGutter",
+		"GitHubinator",
+		"GoSublime",
+		"Gradle_Language",
+		"HTML5",
+		"Jade",
+		"LESS",
+		"Sass",
+		"SideBarEnhancements",
+		"Theme - Afterglow",
+		"ToggleQuotes"
+	]
 }

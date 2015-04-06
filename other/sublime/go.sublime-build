@@ -1,0 +1,4 @@
+{
+  "shell_cmd": "go build",
+  "selector": "source.go"
+}
