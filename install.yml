@@ -1,0 +1,70 @@
+---
+
+- name: Tap thoughbot formulae
+  homebrew_tap:
+    tap: thoughtbot/formulae
+  tags:
+    - dotfiles
+
+- name: Install rcm
+  homebrew:
+    name: rcm
+  tags:
+    - dotfiles
+
+- name: Ensure vim directories are present
+  file:
+    name: "~/{{ item }}"
+    state: directory
+  with_items:
+    - .vim/backups
+    - .vim/colors
+    - .vim/swaps
+    - .vim/syntax
+    - .vim/undo
+  tags:
+    - dotfiles
+
+- name: Install dotfiles
+  shell: rcup -x install.yml -x "other/*" -d ~/.dotfiles
+  changed_when: false
+  tags:
+    - dotfiles
+
+- name: Ensure sublime installed packages directory is present
+  file:
+    name: ~/Library/Application Support/Sublime Text 3/Installed Packages
+    state: directory
+  tags:
+    - dotfiles
+
+- name: Ensure sublime user packages directory is present
+  file:
+    name: ~/Library/Application Support/Sublime Text 3/Packages/User
+    state: directory
+  tags:
+    - dotfiles
+
+- name: Install sublime package control
+  get_url:
+    dest: ~/Library/Application Support/Sublime Text 3/Installed Packages/Package Control.sublime-package
+    url: https://sublime.wbond.net/Package%20Control.sublime-package
+  tags:
+    - dotfiles
+
+- name: Link sublime settings
+  file:
+    path: "~/Library/Application Support/Sublime Text 3/Packages/User/{{ item }}"
+    src: "~/.dotfiles/other/sublime/{{ item }}"
+    state: link
+  with_items:
+    - Default (OSX).sublime-keymap
+    - Package Control.sublime-settings
+    - Preferences.sublime-settings
+    - Ruby on Rails.sublime-settings
+    - Shell-Unix-Generic.sublime-settings
+    - Textile.sublime-settings
+    - SublimeLinter.sublime-settings
+    - typescript.sublime-build
+  tags:
+    - dotfiles
