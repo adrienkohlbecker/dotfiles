@@ -139,5 +139,9 @@ export HISTCONTROL=ignoredups
 # Make some commands not show up in history
 export HISTIGNORE="ls:cd:cd -:pwd:exit:date:* --help"
 
+# add brew provided zsh completion
+fpath=(/usr/local/share/zsh/site-functions $fpath)
+autoload -Uz compinit && compinit
+
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
