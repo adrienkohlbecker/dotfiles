@@ -26,7 +26,7 @@
     - dotfiles
 
 - name: Install dotfiles
-  shell: rcup -x install.yml -x "other/*" -d ~/.dotfiles
+  shell: rcup -f -x install.yml -x "other/*" -d ~/.dotfiles
   changed_when: false
   tags:
     - dotfiles
