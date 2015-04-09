@@ -143,5 +143,20 @@ export HISTIGNORE="ls:cd:cd -:pwd:exit:date:* --help"
 fpath=(/usr/local/share/zsh/site-functions $fpath)
 autoload -Uz compinit && compinit
 
+# Skip forward/back a word with opt-arrow
+bindkey '[C' forward-word
+bindkey '[D' backward-word
+
+# Skip to start/end of line with cmd-arrow
+bindkey '[E' beginning-of-line
+bindkey '[F' end-of-line
+
+# Delete word with opt-backspace/opt-delete
+bindkey '[G' backward-kill-word
+bindkey '[H' kill-word
+
+# Delete line with cmd-backspace
+bindkey '[I' kill-whole-line
+
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
