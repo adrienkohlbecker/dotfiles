@@ -6,6 +6,8 @@
 	[
 		"Better TypeScript",
 		"BracketHighlighter",
+		"DashDoc",
+		"Dockerfile Syntax Highlighting",
 		"EditorConfig",
 		"GitGutter",
 		"GitHubinator",

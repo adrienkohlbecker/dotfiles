@@ -66,5 +66,6 @@
     - Textile.sublime-settings
     - SublimeLinter.sublime-settings
     - typescript.sublime-build
+    - GoSublime.sublime-settings
   tags:
     - dotfiles
