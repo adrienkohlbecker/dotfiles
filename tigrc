@@ -6,9 +6,17 @@ bind diff <Up> move-up
 bind diff <Down> move-down
 
 # Ammend commit
-bind status + !git commit --amend
+bind status + @git commit --amend
 
 # remove file
-bind status D !rm %(file)
+bind status D @rm %(file)
 
-bind stage C !git commit
+bind stage C @git commit
+
+bind refs M !git merge %(branch)
+bind refs B @git branch %(prompt) %(branch)
+
+bind refs C ?@git checkout %(branch)
+
+bind generic S !git push origin %(branch)
+bind status S !git push origin
