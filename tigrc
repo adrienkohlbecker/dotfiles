@@ -10,6 +10,7 @@ bind status + !git commit --amend
 
 # remove file
 bind status D @rm %(file)
+bind stage D @rm %(file)
 
 bind stage C !git commit
 
