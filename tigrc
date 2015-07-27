@@ -19,5 +19,5 @@ bind refs B @git branch %(prompt) %(branch)
 
 bind refs C ?@git checkout %(branch)
 
-bind generic S !git push origin %(branch)
-bind status S !git push origin
+bind generic S !git push -u origin %(branch)
+bind status S !git push -u origin
