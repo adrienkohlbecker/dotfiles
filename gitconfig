@@ -44,6 +44,8 @@
   noff = merge --no-ff
   # amending last commit
   amend = commit --amend
+  # delete branch already merger into master
+  roomba = "!git branch --merged master | grep -v '\\* master' | xargs -n 1 git branch -d"
 
 [apply]
   # Detect whitespace errors when applying a patch
@@ -106,6 +108,11 @@
 
 [diff]
   algorithm = patience
+
+[filter "lfs"]
+	clean = git-lfs clean %f
+	smudge = git-lfs smudge %f
+	required = true
 
 [include]
   path = ~/.gitconfig.local

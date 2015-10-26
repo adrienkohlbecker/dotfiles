@@ -69,3 +69,11 @@
     - GoSublime.sublime-settings
   tags:
     - dotfiles
+
+- name: Link atom settings
+  file:
+    path: "~/.atom"
+    src: "~/.dotfiles/other/atom"
+    state: link
+  tags:
+    - dotfiles

@@ -10,5 +10,6 @@
   { "keys": ["super+space"], "command": "insert_snippet", "args": {"contents": " " } },
   { "keys": ["alt+shift+space"], "command": "insert_snippet", "args": {"contents": " " } },
   { "keys": ["ctrl+shift+space"], "command": "insert_snippet", "args": {"contents": " " } },
-  { "keys": ["super+shift+space"], "command": "insert_snippet", "args": {"contents": " " } }
+  { "keys": ["super+shift+space"], "command": "insert_snippet", "args": {"contents": " " } },
+  { "keys": ["super+shift+."], "command": "alignment" }
 ]
