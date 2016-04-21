@@ -147,3 +147,9 @@ autoload -Uz compinit && compinit
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
 test -e ${HOME}/.iterm2_shell_integration.zsh && source ${HOME}/.iterm2_shell_integration.zsh
+
+alias dc="docker-compose"
+alias dcr="docker-compose run --rm --service-ports"
+alias dcb="shr git-mtime && docker-compose build"
+
+alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles/.git --work-tree=$HOME'
