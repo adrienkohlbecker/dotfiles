@@ -152,4 +152,4 @@ alias dc="docker-compose"
 alias dcr="docker-compose run --rm --service-ports"
 alias dcb="shr git-mtime && docker-compose build"
 
-alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles/.git --work-tree=$HOME'
+alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'

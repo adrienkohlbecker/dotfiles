@@ -6,7 +6,7 @@ laptop:
 dotfiles:
   title: "dotfiles"
   paths: [
-    "/Users/adrien/.dotfiles"
+    "/Users/adrien/"
   ]
 google_play:
   title: "google-play"
