@@ -11,9 +11,6 @@ defutf8 on
 hardstatus alwayslastline
 hardstatus string '%{= kG}[ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}(%{W}%n*%f%t%?(%u)%?%{r})%{w}%?%+Lw%?%?%= %{g}][%{B} %d/%m %{W}%c %{g}]'
 
-# I use control+a for beginning-of-line, this remaps it to the tick/tilda key
-escape ``
-
 # Autodetach session on hangup instead of terminating screen completely
 autodetach on
 
