@@ -26,3 +26,7 @@
 
 '.platform-darwin atom-text-editor':
   'shift-cmd-.': 'aligner:align'
+
+'.platform-darwin .editor':
+  'alt-space': ''
+  'alt-shift-space': ' '

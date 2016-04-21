@@ -1,0 +1,103 @@
+"*":
+  "advanced-open-file":
+    createFileInstantly: true
+    fuzzyMatch: true
+    helmDirSwitch: true
+  "atom-typescript":
+    preferredQuoteCharacter: "\""
+  autosave:
+    enabled: true
+  core:
+    disabledPackages: [
+      "minimap-highlight-selected"
+      ".bin"
+    ]
+    excludeVcsIgnoredPaths: false
+    themes: [
+      "one-dark-ui"
+      "afterglow-like"
+    ]
+  editor:
+    backUpBeforeSaving: true
+    fontFamily: "Meslo LG S"
+    fontSize: 12
+    invisibles: {}
+    scrollPastEnd: true
+    showIndentGuide: true
+    showInvisibles: true
+  "exception-reporting":
+    userId: "88008823-3674-434c-c1a3-d88dcfdb6dad"
+  "find-and-replace": {}
+  "fuzzy-finder":
+    preserveLastSearch: true
+  "git-diff": {}
+  "go-plus":
+    goPath: "~/.gopath"
+  "gometalinter-linter": {}
+  linter: {}
+  "linter-erb": {}
+  "linter-flake8":
+    configFileNames: [
+      "tox.ini"
+    ]
+    executablePath: "/usr/local/bin/flake8"
+    ignoreErrorCodes: [
+      "E251"
+      "E221"
+      "E272"
+      "E501"
+    ]
+  "linter-haml":
+    hamlLintExecutablePath: "/Users/adrien/.gem/ruby/2.3.0/bin/haml-lint"
+  "linter-haml-lint":
+    hamlLintExecutablePath: "/usr/bin/haml-lint"
+  "linter-jsonlint": {}
+  "linter-pep8":
+    ignoreErrorCodes: [
+      "E251"
+      "E221"
+      "E272"
+      "E501"
+    ]
+    pep8ExecutablePath: "/usr/local/bin/pep8"
+  "linter-pyflakes":
+    pyflakesExecutablePath: "/usr/local/bin/pyflakes"
+  "linter-pylama":
+    executablePath: "/usr/local/bin/pylama"
+    ignoreErrorsAndWarnings: "E251,E221,E272,E501,D100,E201,E202,D101,D102"
+  "linter-python-pep8":
+    ignoreErrorCodes: "E251, E221"
+    pep8DirToExecutable: "/usr/local/bin/"
+  "linter-python-pyflakes":
+    pyflakesDirToExecutable: "/usr/local/bin/"
+  "linter-rubocop":
+    command: "/Users/adrien/.gem/ruby/2.3.0/bin/rubocop"
+  "linter-ruby": {}
+  "linter-scss-lint":
+    executablePath: "/usr/local/bin/scss-lint"
+  "linter-shellcheck":
+    shellcheckExecutablePath: "/usr/local/bin/shellcheck"
+  "linter-tslint":
+    tslintExecutablePath: "/usr/local/bin/tslint"
+  "markdown-preview":
+    useGitHubStyle: true
+  minimap: {}
+  pigments:
+    mergeColorDuplicates: true
+  "project-manager":
+    sortBy: "title"
+  "spell-check": {}
+  "status-bar": {}
+  tabs:
+    enableVcsColoring: true
+    usePreviewTabs: true
+  "toggle-quotes": {}
+  "tree-view":
+    hideIgnoredNames: true
+    squashDirectoryNames: true
+  welcome:
+    showOnStartup: false
+  whitespace:
+    ignoreWhitespaceOnCurrentLine: false
+"file-types":
+  cfg: "source.ini"

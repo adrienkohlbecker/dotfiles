@@ -1,0 +1,45 @@
+laptop:
+  title: "laptop"
+  paths: [
+    "/Users/adrien/.laptop"
+  ]
+dotfiles:
+  title: "dotfiles"
+  paths: [
+    "/Users/adrien/.dotfiles"
+  ]
+google_play:
+  title: "google-play"
+  paths: [
+    "/Users/adrien/Desktop/google-play"
+  ]
+hypervisor:
+  title: "hypervisor"
+  paths: [
+    "/Users/adrien/Desktop/hypervisor"
+  ]
+compta:
+  title: "compta"
+  paths: [
+    "/Users/adrien/Desktop/compta"
+  ]
+kohlby:
+  title: "kohlby"
+  paths: [
+    "/Users/adrien/Desktop/kohlby"
+  ]
+ci:
+  title: "ci"
+  paths: [
+    "/Users/adrien/Desktop/ci"
+  ]
+shr:
+  title: "shr"
+  paths: [
+    "/Users/adrien/Desktop/shr"
+  ]
+vagrant_fsnotify:
+  title: "vagrant-fsnotify"
+  paths: [
+    "/Users/adrien/Desktop/vagrant-fsnotify"
+  ]
