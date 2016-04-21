@@ -108,6 +108,7 @@
 
 [diff]
   algorithm = patience
+	tool = diffmerge
 
 [filter "lfs"]
 	clean = git-lfs clean %f
