@@ -146,7 +146,7 @@ autoload -Uz compinit && compinit
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-test -e ${HOME}/.iterm2_shell_integration.zsh && source ${HOME}/.iterm2_shell_integration.zsh
+test -e ${HOME}/.iterm2_zsh_integration && source ${HOME}/.iterm2_zsh_integration
 
 alias dc="docker-compose"
 alias dcr="docker-compose run --rm --service-ports"
