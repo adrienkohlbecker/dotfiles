@@ -21,3 +21,6 @@ bind refs C ?@git checkout %(branch)
 
 bind generic S !git push -u origin %(branch)
 bind status S !git push -u origin
+
+bind generic F !git push -f -u origin %(branch)
+bind status F !git push -f -u origin
