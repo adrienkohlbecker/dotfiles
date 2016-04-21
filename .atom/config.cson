@@ -93,8 +93,8 @@
     usePreviewTabs: true
   "toggle-quotes": {}
   "tree-view":
+    autoReveal: true
     hideIgnoredNames: true
-    squashDirectoryNames: true
   welcome:
     showOnStartup: false
   whitespace:
