@@ -38,6 +38,11 @@ shr:
   paths: [
     "/Users/adrien/Desktop/shr"
   ]
+travelmeet:
+  title: "travelmeet"
+  paths: [
+    "/Users/adrien/Desktop/travelmeet"
+  ]
 vagrant_fsnotify:
   title: "vagrant-fsnotify"
   paths: [
