@@ -1,7 +1,7 @@
 laptop:
   title: "laptop"
   paths: [
-    "/Users/adrien/.laptop"
+    "/Users/adrien/Desktop/laptop"
   ]
 dotfiles:
   title: "dotfiles"

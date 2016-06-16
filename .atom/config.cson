@@ -48,7 +48,7 @@
       "E501"
     ]
   "linter-haml":
-    hamlLintExecutablePath: "/Users/adrien/.gem/ruby/2.3.0/bin/haml-lint"
+    hamlLintExecutablePath: "/Users/adrien/.gem/ruby/2.3.1/bin/haml-lint"
   "linter-haml-lint":
     hamlLintExecutablePath: "/usr/bin/haml-lint"
   "linter-jsonlint": {}
@@ -71,7 +71,7 @@
   "linter-python-pyflakes":
     pyflakesDirToExecutable: "/usr/local/bin/"
   "linter-rubocop":
-    command: "/Users/adrien/.gem/ruby/2.3.0/bin/rubocop"
+    command: "/Users/adrien/.gem/ruby/2.3.1/bin/rubocop"
   "linter-ruby": {}
   "linter-scss-lint":
     executablePath: "/usr/local/bin/scss-lint"
