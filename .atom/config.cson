@@ -3,16 +3,22 @@
     createFileInstantly: true
     fuzzyMatch: true
     helmDirSwitch: true
+  "atom-beautify":
+    general:
+      _analyticsUserId: "af33be49-76a1-4640-9245-e811abbe788d"
   "atom-typescript":
     preferredQuoteCharacter: "\""
   autosave:
     enabled: true
   core:
+    closeEmptyWindows: false
     disabledPackages: [
       "minimap-highlight-selected"
       ".bin"
     ]
     excludeVcsIgnoredPaths: false
+    projectHome: "/Users/adrien/Desktop"
+    telemetryConsent: "limited"
     themes: [
       "one-dark-ui"
       "afterglow-like"
@@ -20,7 +26,6 @@
   editor:
     backUpBeforeSaving: true
     fontFamily: "Meslo LG S"
-    fontSize: 12
     invisibles: {}
     scrollPastEnd: true
     showIndentGuide: true
@@ -31,9 +36,25 @@
   "fuzzy-finder":
     preserveLastSearch: true
   "git-diff": {}
+  "go-config":
+    gopath: "~/.gopath"
   "go-plus":
+    currentPanelHeight: "22.467532467532468vh"
     goPath: "~/.gopath"
-  "gometalinter-linter": {}
+  "gometalinter-linter":
+    args: [
+      "--vendor"
+      "--disable-all"
+      "--enable=vet"
+      "--enable=vetshadow"
+      "--enable=golint"
+      "--enable=ineffassign"
+      "--enable=goconst"
+      "--tests"
+      "--json"
+      "--exclude=unexported"
+      "."
+    ]
   linter: {}
   "linter-erb": {}
   "linter-flake8":
@@ -74,9 +95,11 @@
     command: "/Users/adrien/.gem/ruby/2.3.1/bin/rubocop"
   "linter-ruby": {}
   "linter-scss-lint":
-    executablePath: "/usr/local/bin/scss-lint"
+    executablePath: "/Users/adrien/.gem/ruby/2.3.1/bin/scss-lint"
   "linter-shellcheck":
+    enableNotice: true
     shellcheckExecutablePath: "/usr/local/bin/shellcheck"
+    userParameters: "-x"
   "linter-tslint":
     tslintExecutablePath: "/usr/local/bin/tslint"
   "markdown-preview":
@@ -91,10 +114,13 @@
   tabs:
     enableVcsColoring: true
     usePreviewTabs: true
+  "tester-go":
+    runCoverageOnSave: true
   "toggle-quotes": {}
   "tree-view":
     autoReveal: true
     hideIgnoredNames: true
+    hideVcsIgnoredFiles: true
   welcome:
     showOnStartup: false
   whitespace:

@@ -11,7 +11,12 @@ dotfiles:
 google_play:
   title: "google-play"
   paths: [
-    "/Users/adrien/Desktop/google-play"
+    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/google-play"
+  ]
+m3u:
+  title: "m3u"
+  paths: [
+    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/m3u"
   ]
 hypervisor:
   title: "hypervisor"
@@ -31,12 +36,22 @@ kohlby:
 ci:
   title: "ci"
   paths: [
-    "/Users/adrien/Desktop/ci"
+    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/ci"
   ]
 shr:
   title: "shr"
   paths: [
-    "/Users/adrien/Desktop/shr"
+    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/shr"
+  ]
+sensors:
+  title: "sensors"
+  paths: [
+    "/Users/adrien/.gopath/src/github.com/adrienkohlbecker/sensors"
+  ]
+"ejson-kms":
+  title: "ejson-kms"
+  paths: [
+    "/Users/adrien/.gopath/src/github.com/adrienkohlbecker/ejson-kms"
   ]
 travelmeet:
   title: "travelmeet"
@@ -47,4 +62,9 @@ vagrant_fsnotify:
   title: "vagrant-fsnotify"
   paths: [
     "/Users/adrien/Desktop/vagrant-fsnotify"
+  ]
+sms:
+  title: "sms"
+  paths: [
+    "/Users/adrien/Dropbox/Applications/SMSBackupRestore"
   ]
