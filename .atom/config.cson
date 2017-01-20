@@ -39,8 +39,14 @@
   "go-config":
     gopath: "~/.gopath"
   "go-plus":
+    config:
+      gopath: "~/.gopath"
     currentPanelHeight: "22.467532467532468vh"
     goPath: "~/.gopath"
+    test:
+      coverageDisplayMode: "gutter"
+      coverageHighlightMode: "covered"
+      runTestsOnSave: false
   "gometalinter-linter":
     args: [
       "--vendor"
