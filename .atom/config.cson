@@ -17,7 +17,7 @@
       ".bin"
     ]
     excludeVcsIgnoredPaths: false
-    projectHome: "/Users/adrien/Desktop"
+    projectHome: "/Users/ak/Desktop"
     telemetryConsent: "limited"
     themes: [
       "one-dark-ui"
@@ -75,7 +75,7 @@
       "E501"
     ]
   "linter-haml":
-    hamlLintExecutablePath: "/Users/adrien/.gem/ruby/2.3.1/bin/haml-lint"
+    hamlLintExecutablePath: "/Users/ak/.gem/ruby/2.3.1/bin/haml-lint"
   "linter-haml-lint":
     hamlLintExecutablePath: "/usr/bin/haml-lint"
   "linter-jsonlint": {}
@@ -98,10 +98,10 @@
   "linter-python-pyflakes":
     pyflakesDirToExecutable: "/usr/local/bin/"
   "linter-rubocop":
-    command: "/Users/adrien/.gem/ruby/2.3.1/bin/rubocop"
+    command: "/Users/ak/.gem/ruby/2.4.0/bin/rubocop"
   "linter-ruby": {}
   "linter-scss-lint":
-    executablePath: "/Users/adrien/.gem/ruby/2.3.1/bin/scss-lint"
+    executablePath: "/Users/ak/.gem/ruby/2.3.1/bin/scss-lint"
   "linter-shellcheck":
     enableNotice: true
     shellcheckExecutablePath: "/usr/local/bin/shellcheck"

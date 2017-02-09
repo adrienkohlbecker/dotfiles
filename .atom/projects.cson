@@ -1,70 +1,70 @@
 laptop:
   title: "laptop"
   paths: [
-    "/Users/adrien/Desktop/laptop"
+    "/Users/ak/Desktop/laptop"
   ]
 dotfiles:
   title: "dotfiles"
   paths: [
-    "/Users/adrien/"
+    "/Users/ak/"
   ]
 google_play:
   title: "google-play"
   paths: [
-    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/google-play"
+    "/Users/ak/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/google-play"
   ]
 m3u:
   title: "m3u"
   paths: [
-    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/m3u"
+    "/Users/ak/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/m3u"
   ]
 hypervisor:
   title: "hypervisor"
   paths: [
-    "/Users/adrien/Desktop/hypervisor"
+    "/Users/ak/Desktop/hypervisor"
   ]
 compta:
   title: "compta"
   paths: [
-    "/Users/adrien/Desktop/compta"
+    "/Users/ak/Desktop/compta"
   ]
 kohlby:
   title: "kohlby"
   paths: [
-    "/Users/adrien/Desktop/kohlby"
+    "/Users/ak/Desktop/kohlby"
   ]
 ci:
   title: "ci"
   paths: [
-    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/ci"
+    "/Users/ak/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/ci"
   ]
 shr:
   title: "shr"
   paths: [
-    "/Users/adrien/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/shr"
+    "/Users/ak/.gopath/src/gitlab.kohlby.fr/adrienkohlbecker/shr"
   ]
 sensors:
   title: "sensors"
   paths: [
-    "/Users/adrien/.gopath/src/github.com/adrienkohlbecker/sensors"
+    "/Users/ak/.gopath/src/github.com/adrienkohlbecker/sensors"
   ]
 "ejson-kms":
   title: "ejson-kms"
   paths: [
-    "/Users/adrien/.gopath/src/github.com/adrienkohlbecker/ejson-kms"
+    "/Users/ak/.gopath/src/github.com/adrienkohlbecker/ejson-kms"
   ]
 travelmeet:
   title: "travelmeet"
   paths: [
-    "/Users/adrien/Desktop/travelmeet"
+    "/Users/ak/Desktop/travelmeet"
   ]
 vagrant_fsnotify:
   title: "vagrant-fsnotify"
   paths: [
-    "/Users/adrien/Desktop/vagrant-fsnotify"
+    "/Users/ak/Desktop/vagrant-fsnotify"
   ]
 sms:
   title: "sms"
   paths: [
-    "/Users/adrien/Dropbox/Applications/SMSBackupRestore"
+    "/Users/ak/Dropbox/Applications/SMSBackupRestore"
   ]

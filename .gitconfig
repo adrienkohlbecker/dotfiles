@@ -57,7 +57,7 @@
   # editor = vim # Unecessary because git uses $EDITOR
   autocrlf = input
   # Use custom `.gitignore` and `.gitattributes`
-	excludesfile = /Users/adrien/.gitignore_global
+	excludesfile = /Users/ak/.gitignore_global
   # Treat spaces before tabs, lines that are indented with 8 or more spaces, and all kinds of trailing whitespace as an error
   whitespace = space-before-tab,indent-with-non-tab,trailing-space
   filemode = false
