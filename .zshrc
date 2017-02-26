@@ -155,6 +155,3 @@ alias dcb="shr git-mtime && docker-compose build"
 alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
 alias t="tig status"
-
-# Load ssh keys into keychain: https://blog.elao.com/en/tech/ssh-agent-does-not-automatically-load-passphrases-on-the-osx-sierra-keychain/
-ssh-add -A &> /dev/null
