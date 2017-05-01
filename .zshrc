@@ -45,7 +45,7 @@ HIST_STAMPS="dd/mm/yyyy"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git screen rails ruby node screen)
+plugins=(git docker)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -128,17 +128,6 @@ export MANPAGER="less -X"
 # Highlight section titles in manual pages
 export LESS_TERMCAP_md="${yellow}";
 
-# Friendly path
-export PATH=".:./bin:./node_modules/.bin:$PATH"
-
-# Larger bash history (allow 32³ entries; default is 500)
-export HISTSIZE=32768
-export HISTFILESIZE=$HISTSIZE
-export HISTCONTROL=ignoredups
-
-# Make some commands not show up in history
-export HISTIGNORE="ls:cd:cd -:pwd:exit:date:* --help"
-
 # add brew provided zsh completion
 fpath=(/usr/local/share/zsh/site-functions $fpath)
 autoload -Uz compinit && compinit
@@ -150,8 +139,17 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell
 
 alias dc="docker-compose"
 alias dcr="docker-compose run --rm --service-ports"
-alias dcb="shr git-mtime && docker-compose build"
+alias dcb="docker-compose build"
 
 alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
-alias t="tig status"
+alias tig="command tig status"
+
+alias gs="(cd ~/Desktop;  git-standup -m 2 -D local -L)"
+
+source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source /usr/local/opt/zsh-history-substring-search/zsh-history-substring-search.zsh
+bindkey '\eOA' history-substring-search-up # or ^[OA
+bindkey '\eOB' history-substring-search-down # or ^[OB
+
+export DATADOG_ROOT="$HOME/Desktop/datadog"

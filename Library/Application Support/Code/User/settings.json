@@ -1,0 +1,48 @@
+// Place your settings in this file to overwrite the default settings
+{
+  // Controls the font size in pixels.
+  "editor.fontSize": 12,
+  // Controls auto save of dirty files. Accepted values:  "off", "afterDelay", "onFocusChange" (editor loses focus), "onWindowChange" (window loses focus). If set to "afterDelay", you can configure the delay in "files.autoSaveDelay".
+  "files.autoSave": "onFocusChange",
+  // Controls the font family.
+  "editor.fontFamily": "Meslo LG S",
+  // The number of spaces a tab is equal to. This setting is overriden based on the file contents when `editor.detectIndentation` is on.
+  "editor.tabSize": 2,
+  // Controls how the editor should render whitespace characters, possibilities are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words.
+  "editor.renderWhitespace": "boundary",
+  // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
+  "editor.formatOnSave": true,
+  // Controls if suggestions should be accepted on 'Enter' - in addition to 'Tab'. Helps to avoid ambiguity between inserting new lines or accepting suggestions.
+  "editor.acceptSuggestionOnEnter": false,
+  // Complete functions with their parameter signature
+  "go.useCodeSnippetsOnFunctionSuggest": true,
+  // Run 'go test -coverprofile' on save
+  "go.coverOnSave": true,
+  // Specifies the base folders to search for git repositories
+  "gitProjectManager.baseProjectsFolders": [
+    "~/Desktop",
+    "~/.gopath/src/github.com/datadog"
+  ],
+  // Turn linting of Dockerfiles on or off.
+  "docker.enableLinting": true,
+  "files.associations": {
+    "Vagrantfile*": "ruby",
+    "Berksfile": "ruby"
+  },
+  // Controls whether the editor should render control characters
+  "editor.renderControlCharacters": true,
+  // When enabled, insert a final new line at the end of the file when saving it.
+  "files.insertFinalNewline": true,
+  // Controls if the minimap is shown
+  "editor.minimap.enabled": true,
+  // Render the actual characters on a line (as opposed to color blocks)
+  "editor.minimap.renderCharacters": false,
+  "gitProjectManager.openInNewWindow": true,
+  "gitProjectManager.storeRepositoriesBetweenSessions": true,
+  "git.confirmSync": false,
+  "editor.rulers": [
+    120
+  ],
+  "workbench.editor.closeOnFileDelete": false,
+  "window.zoomLevel": 0
+}

@@ -7,6 +7,7 @@ bind diff <Down> move-down
 
 # Ammend commit
 bind status + !git commit --amend
+bind status P !hub pr --browse
 
 # remove file
 bind status D @rm %(file)
