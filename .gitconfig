@@ -45,7 +45,9 @@
   # amending last commit
   amend = commit --amend
   # delete branch already merger into master
-  roomba = "!git branch --merged master | grep -v '\\* master' | xargs -n 1 git branch -d"
+  roomba = "!git checkout -q $(git dfb) && git pull && git branch --merged $(git dfb) | grep -v $(git dfb) | grep -v '\\*' | xargs -r -n 1 git branch -d"
+  # get default branch
+  dfb = "!git branch -r --points-at refs/remotes/origin/HEAD | grep '\\->' | cut -d' ' -f5 | cut -d/ -f2"
 
 [apply]
   # Detect whitespace errors when applying a patch
@@ -61,6 +63,7 @@
   # Treat spaces before tabs, lines that are indented with 8 or more spaces, and all kinds of trailing whitespace as an error
   whitespace = space-before-tab,indent-with-non-tab,trailing-space
   filemode = false
+  commentChar = ";"
 
 [color]
   # Use colors in Git commands that are capable of colored output when outputting to the terminal
@@ -119,11 +122,11 @@
   path = ~/.gitconfig.local
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
+	path =
 [mergetool "sourcetree"]
 	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
 [commit]
 	gpgsign = true
 [gpg]
-	program = gpg2
+	program = gpg

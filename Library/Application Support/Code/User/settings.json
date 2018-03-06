@@ -1,48 +1,48 @@
-// Place your settings in this file to overwrite the default settings
 {
-  // Controls the font size in pixels.
-  "editor.fontSize": 12,
-  // Controls auto save of dirty files. Accepted values:  "off", "afterDelay", "onFocusChange" (editor loses focus), "onWindowChange" (window loses focus). If set to "afterDelay", you can configure the delay in "files.autoSaveDelay".
-  "files.autoSave": "onFocusChange",
-  // Controls the font family.
-  "editor.fontFamily": "Meslo LG S",
-  // The number of spaces a tab is equal to. This setting is overriden based on the file contents when `editor.detectIndentation` is on.
-  "editor.tabSize": 2,
-  // Controls how the editor should render whitespace characters, possibilities are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words.
-  "editor.renderWhitespace": "boundary",
-  // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
-  "editor.formatOnSave": true,
-  // Controls if suggestions should be accepted on 'Enter' - in addition to 'Tab'. Helps to avoid ambiguity between inserting new lines or accepting suggestions.
-  "editor.acceptSuggestionOnEnter": false,
-  // Complete functions with their parameter signature
-  "go.useCodeSnippetsOnFunctionSuggest": true,
-  // Run 'go test -coverprofile' on save
-  "go.coverOnSave": true,
-  // Specifies the base folders to search for git repositories
-  "gitProjectManager.baseProjectsFolders": [
-    "~/Desktop",
-    "~/.gopath/src/github.com/datadog"
-  ],
-  // Turn linting of Dockerfiles on or off.
-  "docker.enableLinting": true,
-  "files.associations": {
-    "Vagrantfile*": "ruby",
-    "Berksfile": "ruby"
-  },
-  // Controls whether the editor should render control characters
-  "editor.renderControlCharacters": true,
-  // When enabled, insert a final new line at the end of the file when saving it.
-  "files.insertFinalNewline": true,
-  // Controls if the minimap is shown
-  "editor.minimap.enabled": true,
-  // Render the actual characters on a line (as opposed to color blocks)
-  "editor.minimap.renderCharacters": false,
-  "gitProjectManager.openInNewWindow": true,
-  "gitProjectManager.storeRepositoriesBetweenSessions": true,
-  "git.confirmSync": false,
-  "editor.rulers": [
-    120
-  ],
-  "workbench.editor.closeOnFileDelete": false,
-  "window.zoomLevel": 0
+    // Controls which editor is shown at startup, if none is restored from the previous session. Select 'none' to start without an editor, 'welcomePage' to open the Welcome page (default), 'newUntitledFile' to open a new untitled file (only opening an empty workspace).
+    "workbench.startupEditor": "none",
+    // Controls auto save of dirty files. Accepted values:  'off', 'afterDelay', 'onFocusChange' (editor loses focus), 'onWindowChange' (window loses focus). If set to 'afterDelay', you can configure the delay in 'files.autoSaveDelay'.
+    "files.autoSave": "onFocusChange",
+    // Controls how the editor should render whitespace characters, possibilities are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words.
+    "editor.renderWhitespace": "boundary",
+    // Controls the font family.
+    "editor.fontFamily": "Meslo LG S",
+    // Configure file associations to languages (e.g. "*.extension": "html"). These have precedence over the default associations of the languages installed.
+    "files.associations": {
+        "Vagrantfile*": "ruby",
+        "Berksfile": "ruby",
+        "*.sh.erb": "shellscript",
+        "*.rb.erb": "ruby",
+        "*.yaml.erb": "yaml",
+        "Dockerfile.*": "dockerfile",
+        "*.yml.erb": "yaml",
+        ".gitlab-ci.yml": "yaml"
+    },
+    // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
+    "editor.formatOnSave": false,
+    // Controls if editors showing a file should close automatically when the file is deleted or renamed by some other process. Disabling this will keep the editor open as dirty on such an event. Note that deleting from within the application will always close the editor and that dirty files will never close to preserve your data.
+    "workbench.editor.closeOnFileDelete": false,
+    // Controls the dimensions of opening a new window when at least one window is already opened. By default, a new window will open in the center of the screen with small dimensions. When set to 'inherit', the window will get the same dimensions as the last window that was active. When set to 'maximized', the window will open maximized and fullscreen if configured to 'fullscreen'. Note that this setting does not have an impact on the first window that is opened. The first window will always restore the size and location as you left it before closing.
+    "window.newWindowDimensions": "maximized",
+    // When enabled, insert a final new line at the end of the file when saving it.
+    "files.insertFinalNewline": true,
+    // When enabled, will trim all new lines after the final new line at the end of the file when saving it.
+    "files.trimFinalNewlines": true,
+    // When enabled, will trim trailing whitespace when saving a file.
+    "files.trimTrailingWhitespace": true,
+    // Define if extension should look for Git projects inside other Git projects.
+    "gitProjectManager.searchInsideProjects": false,
+    // Specifies whether saves repository folders' data between sessions
+    "gitProjectManager.storeRepositoriesBetweenSessions": true,
+    // Specifies the base folders to search for git repositories
+    "gitProjectManager.baseProjectsFolders": [
+        "~/Desktop",
+        "~/.gopath/src/github.com/datadog"
+    ],
+    // Define the behavior when opening a new project, if true a new VSCode will be opened with the selected project
+    "gitProjectManager.openInNewWindow": true,
+    // Show or hide the Explorer.
+    "docker.showExplorer": false,
+    "window.zoomLevel": 0,
+    "extensions.ignoreRecommendations": false,
 }

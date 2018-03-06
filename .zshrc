@@ -147,9 +147,11 @@ alias tig="command tig status"
 
 alias gs="(cd ~/Desktop;  git-standup -m 2 -D local -L)"
 
+export AWS_VAULT_KEYCHAIN_NAME=login
+export AWS_SESSION_TTL=24h
+export AWS_ASSUME_ROLE_TTL=1h
+
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /usr/local/opt/zsh-history-substring-search/zsh-history-substring-search.zsh
 bindkey '\eOA' history-substring-search-up # or ^[OA
 bindkey '\eOB' history-substring-search-down # or ^[OB
-
-export DATADOG_ROOT="$HOME/Desktop/datadog"

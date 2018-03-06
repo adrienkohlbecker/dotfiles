@@ -7,11 +7,13 @@ bind diff <Down> move-down
 
 # Ammend commit
 bind status + !git commit --amend
-bind status P !hub pr --browse
+bind status P !hub pull-request --browse
 
 # remove file
 bind status D @rm %(file)
 bind stage D @rm %(file)
+
+bind status = !git roomba
 
 bind stage C !git commit
 
