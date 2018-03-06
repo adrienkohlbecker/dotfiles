@@ -43,6 +43,15 @@
     "gitProjectManager.openInNewWindow": true,
     // Show or hide the Explorer.
     "docker.showExplorer": false,
-    "window.zoomLevel": 0,
     "extensions.ignoreRecommendations": false,
+    // Customizes which terminal application to run on OS X.
+    "terminal.external.osxExec": "iTerm 2.app",
+    // When set, text selected in the terminal will be copied to the clipboard.
+    "terminal.integrated.copyOnSelection": true,
+    // Controls the maximum amount of lines the terminal keeps in its buffer.
+    "terminal.integrated.scrollback": 10000,
+    // The path of the shell that the terminal uses on OS X.
+    "terminal.integrated.shell.osx": "/Users/ak/.vscode_tmux.sh",
+    // The command line arguments to use when on the OS X terminal.
+    "terminal.integrated.shellArgs.osx": [],
 }
