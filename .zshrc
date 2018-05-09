@@ -152,7 +152,7 @@ export AWS_SESSION_TTL=24h
 export AWS_ASSUME_ROLE_TTL=1h
 
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source /usr/local/opt/zsh-history-substring-search/zsh-history-substring-search.zsh
+source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
 bindkey '\eOA' history-substring-search-up # or ^[OA
 bindkey '\eOB' history-substring-search-down # or ^[OB
 
@@ -170,5 +170,3 @@ function current-master {
 }
 
 alias glstage='CURRENT_STAGING=$(current-staging) && git push && git fetch origin $CURRENT_STAGING:$CURRENT_STAGING && git co $CURRENT_STAGING && git noff --no-edit - && git push && git co -'
-
-eval $(docker-machine env)
