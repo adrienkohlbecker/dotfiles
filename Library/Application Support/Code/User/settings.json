@@ -36,7 +36,7 @@
     "gitProjectManager.storeRepositoriesBetweenSessions": true,
     // Specifies the base folders to search for git repositories
     "gitProjectManager.baseProjectsFolders": [
-        "~/Desktop",
+        "~/Work",
         "~/.gopath/src/github.com/datadog"
     ],
     // Define the behavior when opening a new project, if true a new VSCode will be opened with the selected project
@@ -49,5 +49,33 @@
     // When set, text selected in the terminal will be copied to the clipboard.
     "terminal.integrated.copyOnSelection": true,
     // Controls the maximum amount of lines the terminal keeps in its buffer.
-    "terminal.integrated.scrollback": 10000
+    "terminal.integrated.scrollback": 10000,
+    "editor.tabSize": 2,
+    "window.zoomLevel": 0,
+    "gitlens.advanced.messages": {
+        "suppressShowKeyBindingsNotice": true
+    },
+    "gitlens.codeLens.enabled": false,
+    "gitlens.currentLine.enabled": false,
+    "terminal.integrated.rendererType": "dom",
+    "terraform.codelens.enabled": false,
+    "terraform.indexing": {
+        "enabled": true,
+        "liveIndexing": true,
+        "delay": 500,
+        "exclude": [
+            ".terraform/**/*",
+            "**/.terraform/**/*",
+            ".cloudops/**/*",
+            "**/.cloudops/**/*"
+        ]
+    },
+    "github.hosts": [
+        {
+            "host": "https://github.com",
+            "username": "oauth",
+            "token": "system"
+        }
+    ],
+    "gitlens.gitExplorer.files.layout": "tree"
 }

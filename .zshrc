@@ -144,8 +144,9 @@ alias dcb="docker-compose build"
 alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
 alias tig="command tig status"
+alias trash="command trash -F"
 
-alias gs="(cd ~/Desktop;  git-standup -m 2 -D local -L)"
+alias gs="(cd ~/Work;  git-standup -m 2 -D local -L)"
 
 export AWS_VAULT_KEYCHAIN_NAME=login
 export AWS_SESSION_TTL=24h
@@ -170,3 +171,7 @@ function current-master {
 }
 
 alias glstage='CURRENT_STAGING=$(current-staging) && git push && git fetch origin $CURRENT_STAGING:$CURRENT_STAGING && git co $CURRENT_STAGING && git noff --no-edit - && git push && git co -'
+
+export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
