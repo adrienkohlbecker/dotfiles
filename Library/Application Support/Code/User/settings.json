@@ -14,9 +14,12 @@
         "*.sh.erb": "shellscript",
         "*.rb.erb": "ruby",
         "*.yaml.erb": "yaml",
+        "*.toml.j2": "toml",
+        "*.ini.j2": "ini",
         "Dockerfile.*": "dockerfile",
         "*.yml.erb": "yaml",
-        ".gitlab-ci.yml": "yaml"
+        ".gitlab-ci.yml": "yaml",
+        "*.cfg.j2": "properties"
     },
     // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
     "editor.formatOnSave": false,
@@ -70,12 +73,19 @@
             "**/.cloudops/**/*"
         ]
     },
-    "github.hosts": [
+    "gitlens.gitExplorer.files.layout": "tree",
+    "githubPullRequests.hosts": [
         {
             "host": "https://github.com",
             "username": "oauth",
             "token": "system"
         }
     ],
-    "gitlens.gitExplorer.files.layout": "tree"
+    "arduino.ignoreBoards": [
+        "WeMos D1"
+    ],
+    "arduino.additionalUrls": [
+        "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
+    ],
+    "gitlens.views.repositories.files.layout": "tree"
 }

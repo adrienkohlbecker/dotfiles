@@ -153,25 +153,13 @@ export AWS_SESSION_TTL=24h
 export AWS_ASSUME_ROLE_TTL=1h
 
 source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-bindkey '\eOA' history-substring-search-up # or ^[OA
-bindkey '\eOB' history-substring-search-down # or ^[OB
+#source /usr/local/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+#bindkey '\eOA' history-substring-search-up # or ^[OA
+#bindkey '\eOB' history-substring-search-down # or ^[OB
 
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
-function current-staging {
-  (
-    git fetch --quiet --no-tags origin $(current-master)
-    git show origin/$(current-master):.gitlab-ci.yml | ruby -r yaml -e 'puts YAML.load(ARGF.read)["variables"]["CURRENT_STAGING"]'
-  )
-}
-
-function current-master {
-  git branch -r --points-at refs/remotes/origin/HEAD | grep '\->' | cut -d' ' -f5 | cut -d/ -f2
-}
-
-alias glstage='CURRENT_STAGING=$(current-staging) && git push && git fetch origin $CURRENT_STAGING:$CURRENT_STAGING && git co $CURRENT_STAGING && git noff --no-edit - && git push && git co -'
-
 export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+source ~/.fzf.zsh
+
