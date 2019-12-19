@@ -2,23 +2,6 @@
 #   available options: vim, mvim, mate, emacsclient...etc.
 Pry.config.editor = 'vim'
 
-# Custom prompt
-def x_color
-  env = ENV.fetch('RAILS_ENV', defined?(Rails) ? Rails.env : 'development').to_sym
-  if env == :production
-    "\e[1;41m%s\e[0m "
-  elsif env == :staging
-    "\e[1;43;30m%s\e[0m "
-  else
-    '%s'
-  end
-end
-Pry.config.prompt = [
-
-  proc { |obj, nest_level, instance| format(x_color, Pry::DEFAULT_PROMPT.first.call(obj, nest_level, instance)) },
-  proc { |obj, nest_level, instance| format(x_color, Pry::DEFAULT_PROMPT.last.call(obj, nest_level, instance)) }
-]
-
 class RedOutput
   def initialize(output)
     @output = output

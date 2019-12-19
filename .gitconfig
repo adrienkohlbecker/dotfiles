@@ -123,9 +123,10 @@
   cmd = /usr/local/bin/icdiff --line-numbers $LOCAL $REMOTE
 
 [filter "lfs"]
-	clean = git-lfs clean %f
-	smudge = git-lfs smudge %f
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
 	required = true
+	process = git-lfs filter-process
 
 [include]
   path = ~/.gitconfig.local

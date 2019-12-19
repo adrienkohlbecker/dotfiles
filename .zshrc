@@ -51,7 +51,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
@@ -159,7 +159,20 @@ source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
-export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
+#export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
 
 source ~/.fzf.zsh
 
+function gdk() {
+  (cd /Users/ak/Work/gitlab/gdk || exit 1; command gdk "$@")
+}
+
+function gitlab-helm() {
+  [ -f ~/.helm/tiller-ca.crt ] || (kubectl get secrets/tiller-secret -n gitlab-managed-apps -o "jsonpath={.data['ca\.crt']}" | base64 --decode > ~/.helm/tiller-ca.crt)
+  [ -f ~/.helm/tiller.crt ]    || (kubectl get secrets/tiller-secret -n gitlab-managed-apps -o "jsonpath={.data['tls\.crt']}" | base64 --decode > ~/.helm/tiller.crt)
+  [ -f ~/.helm/tiller.key ]    || (kubectl get secrets/tiller-secret -n gitlab-managed-apps -o "jsonpath={.data['tls\.key']}" | base64 --decode > ~/.helm/tiller.key)
+  helm "$@" --tiller-connection-timeout 1 --tls \
+     --tls-ca-cert ~/.helm/tiller-ca.crt --tls-cert ~/.helm/tiller.crt \
+     --tls-key ~/.helm/tiller.key \
+     --tiller-namespace gitlab-managed-apps
+}

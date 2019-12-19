@@ -1,0 +1,11 @@
+#!/bin/bash
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+IFS=$'\n\t'
+set -euxo pipefail
+
+( git diff master... --name-only;  git diff --name-only ) | sort | uniq | ( grep _spec.js || true ) | ( grep spec/frontend || true ) | xargs -t -r yarn jest --runTestsByPath
+( git diff master... --name-only;  git diff --name-only ) | sort | uniq | ( grep _spec.js || true ) | ( grep spec/javascripts || true ) | xargs -t -r -L1 yarn karma -f
+( git diff master... --name-only;  git diff --name-only ) | sort | uniq | ( egrep "()\.vue|js$" || true ) | xargs -t -r node_modules/.bin/prettier --write
+( git diff master... --name-only;  git diff --name-only ) | sort | uniq | ( egrep "()\.rb|ruby$" || true ) | grep -v 'schema.rb' | grep -v 'db/fixtures/'| xargs -t -r bundle exec rubocop --auto-correct
+( git diff master... --name-only;  git diff --name-only ) | sort | uniq | ( grep _spec.rb || true ) | xargs -t -r bundle exec rspec
+( git diff master... --name-only;  git diff --name-only ) | sort | uniq | ( egrep "()\.vue|js$" || true ) | xargs -t -r node_modules/.bin/eslint --fix --max-warnings 0 --report-unused-disable-directives

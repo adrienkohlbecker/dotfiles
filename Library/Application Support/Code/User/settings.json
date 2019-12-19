@@ -4,7 +4,7 @@
     // Controls auto save of dirty files. Accepted values:  'off', 'afterDelay', 'onFocusChange' (editor loses focus), 'onWindowChange' (window loses focus). If set to 'afterDelay', you can configure the delay in 'files.autoSaveDelay'.
     "files.autoSave": "onFocusChange",
     // Controls how the editor should render whitespace characters, possibilities are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words.
-    "editor.renderWhitespace": "boundary",
+    "editor.renderWhitespace": "none",
     // Controls the font family.
     "editor.fontFamily": "Meslo LG S",
     // Configure file associations to languages (e.g. "*.extension": "html"). These have precedence over the default associations of the languages installed.
@@ -19,7 +19,8 @@
         "Dockerfile.*": "dockerfile",
         "*.yml.erb": "yaml",
         ".gitlab-ci.yml": "yaml",
-        "*.cfg.j2": "properties"
+        "*.cfg.j2": "properties",
+        ".ExifTool_config": "perl"
     },
     // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
     "editor.formatOnSave": false,
@@ -87,5 +88,8 @@
     "arduino.additionalUrls": [
         "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
     ],
-    "gitlens.views.repositories.files.layout": "tree"
+    "gitlens.views.repositories.files.layout": "tree",
+    "go.formatTool": "goimports",
+    "breadcrumbs.enabled": true,
+    "editor.renderIndentGuides": false
 }
