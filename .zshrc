@@ -176,3 +176,10 @@ function gitlab-helm() {
      --tls-key ~/.helm/tiller.key \
      --tiller-namespace gitlab-managed-apps
 }
+
+
+# Added by GDK bootstrap
+export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+# Added by GDK bootstrap
+export RUBY_CONFIGURE_OPTS="--with-openssl-dir=/usr/local/opt/openssl@1.1 --with-readline-dir=/usr/local/opt/readline"

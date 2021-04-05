@@ -55,7 +55,6 @@
     // Controls the maximum amount of lines the terminal keeps in its buffer.
     "terminal.integrated.scrollback": 10000,
     "editor.tabSize": 2,
-    "window.zoomLevel": 0,
     "gitlens.advanced.messages": {
         "suppressShowKeyBindingsNotice": true
     },
@@ -89,7 +88,20 @@
         "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
     ],
     "gitlens.views.repositories.files.layout": "tree",
-    "go.formatTool": "goimports",
     "breadcrumbs.enabled": true,
-    "editor.renderIndentGuides": false
+    "editor.renderIndentGuides": false,
+    "ruby.format": "rubocop",
+    "go.lintTool": "golangci-lint",
+    "go.formatTool": "goimports",
+    "go.coverOnTestPackage": false,
+    "go.toolsManagement.autoUpdate": true,
+    "jsonnet.libPaths": [
+        "vendor"
+    ],
+    "workbench.editorAssociations": [
+        {
+            "viewType": "jupyter.notebook.ipynb",
+            "filenamePattern": "*.ipynb"
+        }
+    ]
 }

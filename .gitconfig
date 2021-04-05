@@ -48,6 +48,7 @@
   roomba = "!git checkout -q $(git dfb) && git pull && git branch --merged $(git dfb) | grep -v $(git dfb) | grep -v '\\*' | xargs -r -n 1 git branch -d"
   # get default branch
   dfb = "!git branch -r --points-at refs/remotes/origin/HEAD | grep '\\->' | cut -d' ' -f5 | cut -d/ -f2"
+	recent-branches = ! git for-each-ref --sort=-committerdate --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' --color=always refs/heads/ | grep Kohlbecker | cut -d, -f2 | head -n10
 
 [apply]
   # Detect whitespace errors when applying a patch

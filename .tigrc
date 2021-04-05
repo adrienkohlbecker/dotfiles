@@ -15,16 +15,18 @@ bind status D @rm %(file)
 bind stage D @rm %(file)
 
 bind status = !git roomba
+bind status B !git rebase --continue
 
 bind stage C !git commit
+bind stage B !git rebase --continue
 
 bind refs M !git merge --no-ff %(branch)
 bind refs B @git branch %(prompt) %(branch)
 
 bind refs C ?@git checkout %(branch)
 
-bind generic S !git push -u origin %(branch)
-bind status S !git push -u origin
+bind generic S !git push %(branch)
+bind status S !git push
 
 bind generic F !git push --force-with-lease -u origin %(branch)
 bind status F !git push --force-with-lease -u origin

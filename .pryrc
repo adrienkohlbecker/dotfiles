@@ -13,9 +13,9 @@ class RedOutput
 end
 
 # Exception
-Pry.config.exception_handler = proc do |output, exception, instance|
-  Pry::DEFAULT_EXCEPTION_HANDLER.call(RedOutput.new(output), exception, instance)
-end
+# Pry.config.exception_handler = proc do |output, exception, instance|
+#   Pry::DEFAULT_EXCEPTION_HANDLER.call(RedOutput.new(output), exception, instance)
+# end
 
 # Rails
 if defined?(Rails)
