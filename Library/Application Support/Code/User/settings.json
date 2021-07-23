@@ -1,107 +1,19 @@
 {
-    // Controls which editor is shown at startup, if none is restored from the previous session. Select 'none' to start without an editor, 'welcomePage' to open the Welcome page (default), 'newUntitledFile' to open a new untitled file (only opening an empty workspace).
-    "workbench.startupEditor": "none",
-    // Controls auto save of dirty files. Accepted values:  'off', 'afterDelay', 'onFocusChange' (editor loses focus), 'onWindowChange' (window loses focus). If set to 'afterDelay', you can configure the delay in 'files.autoSaveDelay'.
-    "files.autoSave": "onFocusChange",
-    // Controls how the editor should render whitespace characters, possibilities are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words.
-    "editor.renderWhitespace": "none",
-    // Controls the font family.
-    "editor.fontFamily": "Meslo LG S",
-    // Configure file associations to languages (e.g. "*.extension": "html"). These have precedence over the default associations of the languages installed.
-    "files.associations": {
-        "Vagrantfile*": "ruby",
-        "Berksfile": "ruby",
-        "*.sh.erb": "shellscript",
-        "*.rb.erb": "ruby",
-        "*.yaml.erb": "yaml",
-        "*.toml.j2": "toml",
-        "*.ini.j2": "ini",
-        "Dockerfile.*": "dockerfile",
-        "*.yml.erb": "yaml",
-        ".gitlab-ci.yml": "yaml",
-        "*.cfg.j2": "properties",
-        ".ExifTool_config": "perl"
-    },
-    // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
-    "editor.formatOnSave": false,
-    // Controls if editors showing a file should close automatically when the file is deleted or renamed by some other process. Disabling this will keep the editor open as dirty on such an event. Note that deleting from within the application will always close the editor and that dirty files will never close to preserve your data.
-    "workbench.editor.closeOnFileDelete": false,
-    // Controls the dimensions of opening a new window when at least one window is already opened. By default, a new window will open in the center of the screen with small dimensions. When set to 'inherit', the window will get the same dimensions as the last window that was active. When set to 'maximized', the window will open maximized and fullscreen if configured to 'fullscreen'. Note that this setting does not have an impact on the first window that is opened. The first window will always restore the size and location as you left it before closing.
-    "window.newWindowDimensions": "maximized",
-    // When enabled, insert a final new line at the end of the file when saving it.
-    "files.insertFinalNewline": true,
-    // When enabled, will trim all new lines after the final new line at the end of the file when saving it.
-    "files.trimFinalNewlines": true,
-    // When enabled, will trim trailing whitespace when saving a file.
-    "files.trimTrailingWhitespace": true,
-    // Define if extension should look for Git projects inside other Git projects.
-    "gitProjectManager.searchInsideProjects": false,
-    // Specifies whether saves repository folders' data between sessions
-    "gitProjectManager.storeRepositoriesBetweenSessions": true,
-    // Specifies the base folders to search for git repositories
     "gitProjectManager.baseProjectsFolders": [
         "~/Work",
-        "~/.gopath/src/github.com/datadog"
+        "~/.gopath/src/github.com/adrienkohlbecker"
     ],
-    // Define the behavior when opening a new project, if true a new VSCode will be opened with the selected project
+    "workbench.startupEditor": "newUntitledFile",
     "gitProjectManager.openInNewWindow": true,
-    // Show or hide the Explorer.
-    "docker.showExplorer": false,
-    "extensions.ignoreRecommendations": false,
-    // Customizes which terminal application to run on OS X.
-    "terminal.external.osxExec": "iTerm 2.app",
-    // When set, text selected in the terminal will be copied to the clipboard.
-    "terminal.integrated.copyOnSelection": true,
-    // Controls the maximum amount of lines the terminal keeps in its buffer.
-    "terminal.integrated.scrollback": 10000,
-    "editor.tabSize": 2,
-    "gitlens.advanced.messages": {
-        "suppressShowKeyBindingsNotice": true
+    "files.autoSave": "onFocusChange",
+    "gitProjectManager.storeRepositoriesBetweenSessions": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "files.trimFinalNewlines": true,
+    "asm-code-lens.enableCodeLenses": false,
+    "workbench.editorAssociations": {
+        "*.pdf": "default"
     },
-    "gitlens.codeLens.enabled": false,
-    "gitlens.currentLine.enabled": false,
-    "terminal.integrated.rendererType": "dom",
-    "terraform.codelens.enabled": false,
-    "terraform.indexing": {
-        "enabled": true,
-        "liveIndexing": true,
-        "delay": 500,
-        "exclude": [
-            ".terraform/**/*",
-            "**/.terraform/**/*",
-            ".cloudops/**/*",
-            "**/.cloudops/**/*"
-        ]
-    },
-    "gitlens.gitExplorer.files.layout": "tree",
-    "githubPullRequests.hosts": [
-        {
-            "host": "https://github.com",
-            "username": "oauth",
-            "token": "system"
-        }
-    ],
-    "arduino.ignoreBoards": [
-        "WeMos D1"
-    ],
-    "arduino.additionalUrls": [
-        "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
-    ],
-    "gitlens.views.repositories.files.layout": "tree",
-    "breadcrumbs.enabled": true,
-    "editor.renderIndentGuides": false,
-    "ruby.format": "rubocop",
-    "go.lintTool": "golangci-lint",
-    "go.formatTool": "goimports",
-    "go.coverOnTestPackage": false,
-    "go.toolsManagement.autoUpdate": true,
-    "jsonnet.libPaths": [
-        "vendor"
-    ],
-    "workbench.editorAssociations": [
-        {
-            "viewType": "jupyter.notebook.ipynb",
-            "filenamePattern": "*.ipynb"
-        }
-    ]
+    "security.workspace.trust.untrustedFiles": "open"
 }

@@ -137,3 +137,8 @@
 	program = gpg
 [stash]
 	showPatch = true
+[user]
+	name = Adrien Kohlbecker
+	email = adrien.kohlbecker@gmail.com
+[init]
+	defaultBranch = master
