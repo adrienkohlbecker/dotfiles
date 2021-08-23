@@ -1,7 +1,6 @@
 {
     "gitProjectManager.baseProjectsFolders": [
         "~/Work",
-        "~/.gopath/src/github.com/adrienkohlbecker"
     ],
     "workbench.startupEditor": "newUntitledFile",
     "gitProjectManager.openInNewWindow": true,
@@ -15,5 +14,16 @@
     "workbench.editorAssociations": {
         "*.pdf": "default"
     },
-    "security.workspace.trust.untrustedFiles": "open"
+    "security.workspace.trust.untrustedFiles": "open",
+    "go.toolsManagement.autoUpdate": true,
+    "remote.SSH.remotePlatform": {
+        "homelab": "linux"
+    },
+    "remote.SSH.defaultForwardedPorts": [
+        {
+            "name": "gdk",
+            "localPort": 3000,
+            "remotePort": 3000,
+        },
+    ]
 }
