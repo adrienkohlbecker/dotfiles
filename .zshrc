@@ -35,6 +35,7 @@ alias history="builtin fc -l -i -D"
 alias tig="command tig status"
 alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME command tig status'
+alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" command qmk'
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
 # Prompt theme
@@ -57,12 +58,17 @@ export MANPATH=""
 export INFOPATH=""
 eval `/usr/libexec/path_helper -s`
 
+export HOMEBREW_PREFIX=""
+export HOMEBREW_CELLAR=""
+export HOMEBREW_REPOSITORY=""
+export HOMEBREW_SHELLENV_PREFIX=""
+export HOMEBREW_PREFIX=""
 eval "$($HOMEBREW_PATH/bin/brew shellenv)"
 
 # unprefixed utils
 export PATH="$HOMEBREW_PATH/opt/findutils/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/grep/libexec/gnubin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/gnu-sed/libexec/gnubin:$PATH"
+#export PATH="$HOMEBREW_PATH/opt/gnu-sed/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/gnu-tar/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/curl/bin:$PATH"
