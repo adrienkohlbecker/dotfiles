@@ -1,13 +1,7 @@
-if [[ `uname -m` == 'arm64' ]]; then
-  DEFAULT_HOMEBREW_PATH=/opt/homebrew
-else
-  DEFAULT_HOMEBREW_PATH=/usr/local
-fi
-HOMEBREW_PATH="${HOMEBREW_PATH:-$DEFAULT_HOMEBREW_PATH}"
+source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-source $HOMEBREW_PATH/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source $HOMEBREW_PATH/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
+[ -f ~/.fzf.zsh ] || $HOME/.zsh/fzf/install --no-update-rc --no-bash --no-fish --completion --key-bindings
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 ## History file configuration
@@ -25,7 +19,6 @@ setopt hist_ignore_space      # ignore commands that start with space
 setopt hist_verify            # show command with history expansion to user before running it
 setopt share_history          # share command history data
 setopt hist_reduce_blanks     # Remove superfluous blanks before recording entry.
-
 
 # Edit the current command line in $EDITOR
 autoload -U edit-command-line
@@ -51,15 +44,26 @@ fpath+=("$HOME/.zsh/pure")
 autoload -U promptinit; promptinit
 prompt pure
 
-# Gopath
-export GOPATH=$HOME/.gopath
-export PATH=$GOPATH/bin:$PATH
+# editor
+export EDITOR=vim
 
-# GPG
-if [[ -z "$GPG_AGENT_INFO" && ! -S "${GNUPGHOME:-$HOME/.gnupg}/S.gpg-agent" ]]; then
-  # Start gpg-agent if not started.
-  gpg-agent --daemon
+# Start gpg-agent if not running
+gpg-connect-agent /bye
+
+if [[ `uname` == 'Linux' ]]; then
+  exit 0
 fi
+
+################################################################
+# macOS specific settings
+################################################################
+
+if [[ `uname -m` == 'arm64' ]]; then
+  DEFAULT_HOMEBREW_PATH=/opt/homebrew
+else
+  DEFAULT_HOMEBREW_PATH=/usr/local
+fi
+HOMEBREW_PATH="${HOMEBREW_PATH:-$DEFAULT_HOMEBREW_PATH}"
 
 export PATH=""
 export MANPATH=""
@@ -83,8 +87,9 @@ export PATH="$HOMEBREW_PATH/opt/curl/bin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/postgresql@12/bin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/python@3.9/libexec/bin:$PATH"
 
-# editor
-export EDITOR=vim
+# Gopath
+export GOPATH=$HOME/.gopath
+export PATH=$GOPATH/bin:$PATH
 
 source "$HOMEBREW_PATH/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
 source "$HOMEBREW_PATH/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
