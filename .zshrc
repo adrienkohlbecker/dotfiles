@@ -26,9 +26,17 @@ setopt hist_verify            # show command with history expansion to user befo
 setopt share_history          # share command history data
 setopt hist_reduce_blanks     # Remove superfluous blanks before recording entry.
 
+
+# Edit the current command line in $EDITOR
+autoload -U edit-command-line
+zle -N edit-command-line
+bindkey '\C-x\C-e' edit-command-line
+
 ## keybindings
 bindkey "^A" beginning-of-line
 bindkey "^E" end-of-line
+bindkey "^[[A" history-beginning-search-backward
+bindkey "^[[B" history-beginning-search-forward
 
 # command aliases
 alias history="builtin fc -l -i -D"
@@ -78,6 +86,9 @@ export PATH="$HOMEBREW_PATH/opt/python@3.9/libexec/bin:$PATH"
 # editor
 export EDITOR=vim
 
+source "$HOMEBREW_PATH/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
+source "$HOMEBREW_PATH/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
+
 # ASDF
 . $HOME/.asdf/asdf.sh
 fpath=(${ASDF_DIR}/completions $fpath)
@@ -102,5 +113,14 @@ function gdk {
     HOMEBREW_PATH=/usr/local source ~/.zshrc
     cd ~/Work/gitlab/gdk
     command gdk "$@"
+  )
+}
+
+function tf {
+  if [ -z "$1" ]; then echo "Usage: tf ENV ARGS..."; return 1; fi
+  (
+    cd ~/Work/gitlab/gitlab-com-infrastructure/environments/$1 || return 1
+    shift
+    ~/Work/gitlab/gitlab-com-infrastructure/bin/tf "$@"
   )
 }

@@ -4,7 +4,6 @@
     ],
     "workbench.startupEditor": "newUntitledFile",
     "gitProjectManager.openInNewWindow": true,
-    "files.autoSave": "onFocusChange",
     "gitProjectManager.storeRepositoriesBetweenSessions": true,
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
@@ -25,5 +24,16 @@
             "localPort": 3000,
             "remotePort": 3000,
         },
-    ]
+    ],
+    "terminal.integrated.scrollback": 10000,
+    "[go]": {
+        "editor.insertSpaces": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        },
+        "editor.suggest.snippetsPreventQuickSuggestions": false
+    },
+    "files.autoSave": "afterDelay",
+    "editor.tabSize": 2
 }
