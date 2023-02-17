@@ -82,10 +82,14 @@ export PATH="$HOMEBREW_PATH/opt/findutils/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/grep/libexec/gnubin:$PATH"
 #export PATH="$HOMEBREW_PATH/opt/gnu-sed/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/gnu-tar/libexec/gnubin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
+#export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/curl/bin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/postgresql@12/bin:$PATH"
 export PATH="$HOMEBREW_PATH/opt/python@3.9/libexec/bin:$PATH"
+export PATH="$HOME/.platformio/penv/bin:$PATH"
+
+# fzf
+export PATH="$HOME/.zsh/fzf/bin:$PATH"
 
 # Gopath
 export GOPATH=$HOME/.gopath

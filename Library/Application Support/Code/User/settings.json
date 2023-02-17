@@ -6,7 +6,6 @@
     "gitProjectManager.openInNewWindow": true,
     "gitProjectManager.storeRepositoriesBetweenSessions": true,
     "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
     "files.eol": "\n",
     "files.trimFinalNewlines": true,
     "asm-code-lens.enableCodeLenses": false,
@@ -14,7 +13,6 @@
         "*.pdf": "default"
     },
     "security.workspace.trust.untrustedFiles": "open",
-    "go.toolsManagement.autoUpdate": true,
     "remote.SSH.remotePlatform": {
         "homelab": "linux"
     },
@@ -26,14 +24,22 @@
         },
     ],
     "terminal.integrated.scrollback": 10000,
-    "[go]": {
-        "editor.insertSpaces": false,
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": true
-        },
-        "editor.suggest.snippetsPreventQuickSuggestions": false
-    },
     "files.autoSave": "afterDelay",
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "files.associations": {
+        "*.h": "c",
+        "*.a": "retroasm_65816"
+    },
+    "editor.accessibilitySupport": "off",
+    "[retroasm_65816]": {
+        "editor.rulers": [120]
+    },
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "redhat.telemetry.enabled": true,
+    "ruby.format": "rubocop",
+    "go.toolsManagement.autoUpdate": true,
+    "[xml]": {
+        "editor.defaultFormatter": "redhat.vscode-xml"
+    },
+    "files.insertFinalNewline": true,
 }
