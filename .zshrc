@@ -42,7 +42,7 @@ alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 # Prompt theme
 fpath+=("$HOME/.zsh/pure")
 autoload -U promptinit; promptinit
-prompt pure
+[ ! -d "$HOME/.zsh/pure" ] || prompt pure
 
 # editor
 export EDITOR=vim
@@ -51,7 +51,7 @@ export EDITOR=vim
 gpg-connect-agent /bye
 
 if [[ `uname` == 'Linux' ]]; then
-  exit 0
+  return
 fi
 
 ################################################################
