@@ -10,7 +10,8 @@
     "files.trimFinalNewlines": true,
     "asm-code-lens.enableCodeLenses": false,
     "workbench.editorAssociations": {
-        "*.pdf": "default"
+        "*.pdf": "default",
+        "*.svg": "svgPreview.previewEditor"
     },
     "security.workspace.trust.untrustedFiles": "open",
     "remote.SSH.remotePlatform": {
@@ -28,7 +29,10 @@
     "editor.tabSize": 2,
     "files.associations": {
         "*.h": "c",
-        "*.a": "retroasm_65816"
+        "*.a": "retroasm_65816",
+        "*.s": "asm",
+        "*.toml.j2": "toml",
+        "*.xml.j2": "xml"
     },
     "editor.accessibilitySupport": "off",
     "[retroasm_65816]": {
@@ -42,4 +46,18 @@
         "editor.defaultFormatter": "redhat.vscode-xml"
     },
     "files.insertFinalNewline": true,
+    "[asm]": {
+        "editor.rulers": [
+            {
+                "column": 18,
+                "color": "#2c2c2c"
+            },{
+                "column": 50,
+                "color": "#2c2c2c"
+            },120
+        ]
+    },
+    "extensions.ignoreRecommendations": true,
+    "editor.stickyScroll.enabled": true,
+    "git.terminalAuthentication": false
 }
