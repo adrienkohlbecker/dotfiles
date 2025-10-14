@@ -37,8 +37,8 @@ bindkey "^[[B" history-beginning-search-forward
 alias history="builtin fc -l -i -D"
 alias tig="command tig status"
 alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
-alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME command tig status'
-alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" command qmk'
+alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME tig status'
+alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
 # Prompt theme
