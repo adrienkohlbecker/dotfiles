@@ -7,139 +7,66 @@
   ts = status
   pr = pull-request
   cp = cherry-pick
-  # View the SHA, description, and history graph of the latest commits
-  l = log --pretty=oneline --date-order --date=iso --graph --full-history --pretty=format:'%x08%x09%C(red)%h %C(cyan)%ad%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08%x08 %C(bold blue)%aN%C(reset)%C(bold yellow)%d %C(reset)%s'
-  # View the current working tree status using the short format
-  s = status -s
-  # Show the diff between the latest commit and the current state
-  d = !"git diff-index --quiet HEAD -- || clear; git diff --patch-with-stat"
-  # `git di $number` shows the diff between the state `$number` revisions ago and the current state
-  di = !"d() { git diff --patch-with-stat HEAD~$1; }; git diff-index --quiet HEAD -- || clear; d"
-  # Pull in remote changes for the current repository and all its submodules
-  p = !"git pull; git submodule foreach git pull origin master"
-  # Clone a repository including all submodules
-  c = clone --recursive
-  # Commit all changes
-  ca = !git add -A && git commit -av
-  # Switch to a branch, creating it if necessary
-  go = checkout -B
-  # Show verbose output about tags, branches or remotes
-  tags = tag -l
-  branches = branch -a
-  remotes = remote -v
-  # Credit an author on the latest commit
-  credit = "!f() { git commit --amend --author \"$1 <$2>\" -C HEAD; }; f"
-  # Interactive rebase with the given number of latest commits
-  reb = "!r() { git rebase -i HEAD~$1; }; r"
-  # Undo last commit
-  undo = reset --soft HEAD^
-  # Undo a `git push`
-  undopush = push -f origin HEAD^:master
-  lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
-  # add or rm, only untracked/modified
-  addm = !git-ls-files -m -z | xargs -0 git-add && git status
-  addu = !git-ls-files -o --exclude-standard -z | xargs -0 git-add && git status
-  rmm = !git-ls-files -d -z | xargs -0 git-rm && git status
-  rmu = !git-ls-files -o --exclude-standard -z | xargs -0 rm && git status
   # merge without fast forward
   noff = merge --no-ff
-  # amending last commit
-  amend = commit --amend
   # delete branch already merger into master
   roomba = "!git checkout -q $(git dfb) && git pull && git branch --merged $(git dfb) | grep -v $(git dfb) | grep -v '\\*' | xargs -r -n 1 git branch -d"
   # get default branch
   dfb = "!git branch -r --points-at refs/remotes/origin/HEAD | grep '\\->' | cut -d' ' -f5 | cut -d/ -f2"
 	recent-branches = ! git for-each-ref --sort=-committerdate --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' --color=always refs/heads/ | grep Kohlbecker | cut -d, -f2 | head -n10
 
-[apply]
-  # Detect whitespace errors when applying a patch
-  # whitespace = fix
-  # Do not warn about whitespace errors
-  whitespace = nowarn
-
 [core]
-  # editor = vim # Unecessary because git uses $EDITOR
-  autocrlf = input
   # Use custom `.gitignore` and `.gitattributes`
-	excludesfile = /Users/ak/.gitignore_global
-  # Treat spaces before tabs, lines that are indented with 8 or more spaces, and all kinds of trailing whitespace as an error
-  whitespace = space-before-tab,indent-with-non-tab,trailing-space
-  filemode = false
-  commentChar = ";"
-
-[color]
-  # Use colors in Git commands that are capable of colored output when outputting to the terminal
+	excludesfile = ~/.gitignore
+	attributesfile = ~/.gitattributes
+[column]
   ui = auto
-[color "branch"]
-  current = yellow reverse
-  local = yellow
-  remote = green
-[color "diff"]
-  meta = yellow bold
-  frag = magenta bold
-  old = red bold
-  new = green bold
-[color "status"]
-  added = yellow
-  changed = green
-  untracked = cyan
-[merge]
-  # Include summaries of merged commits in newly created merge commit messages
-  log = true
-  # gives you a little more information when a merge conflict happens.
-  # Normally you get two sections - the intended changes from the ‘left’ and the intended changes from the ‘right.’
-  # With this option you get a third section, the original changes before ‘left’ and ‘right’ tried to change it.
-  conflictstyle = diff3
-
-[branch]
-  # Force all new branches to automatically use rebase
-  autosetuprebase = always
-
-# Use `origin` as the default remote on the `master` branch in all cases
-[branch "master"]
-  remote = origin
-  merge = refs/heads/master
-
 [fetch]
   prune = true
-
+  pruneTags = true
+  all = true
 [push]
-  default = current
-
-[mergetool]
-  keepBackup = true
-
+  default = simple
+  autoSetupRemote = true
+  followTags = true
+[pull]
+  rebase = true
 [credential]
   helper = osxkeychain
-
 [help]
-  autocorrect = 1
-
+  autocorrect = prompt
 [diff]
-  algorithm = patience
-  tool = icdiff
-
-[difftool]
-  prompt = false
-[difftool "icdiff"]
-  cmd = /usr/local/bin/icdiff --line-numbers $LOCAL $REMOTE
-
-[filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	required = true
-	process = git-lfs filter-process
-
+  algorithm = histogram
+  colorMoved = plain
+  mnemonicPrefix = true
+  renames = true
 [include]
   path = ~/.gitconfig.local
 [commit]
 	gpgsign = true
+  verbose = true
 [gpg]
 	program = gpg
-[stash]
-	showPatch = true
+	format = ssh
 [user]
 	name = Adrien Kohlbecker
 	email = adrien.kohlbecker@gmail.com
+	signingkey = ~/.ssh/id_rsa.pub
 [init]
 	defaultBranch = master
+[merge]
+  log = true
+  conflictstyle = zdiff3
+[rebase]
+  autoSquash = true
+  autoStash = true
+  updateRefs = true
+[branch]
+  sort = -committerdate
+[tag]
+  sort = version:refname
+[rerere]
+  enabled = true
+  autoupdate = true
+[gpg "ssh"]
+	allowedSignersFile = ~/.ssh/allowed_signers

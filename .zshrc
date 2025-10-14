@@ -1,3 +1,5 @@
+# .zshrc Loaded after .zshenv and .zprofile for interactive shells. This is you at the terminal. A better default dotfile for certain updates, such as PROMPT, because this is the only time PROMPT really matters.
+
 source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
 source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
@@ -41,16 +43,11 @@ alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
 # Prompt theme
 fpath+=("$HOME/.zsh/pure")
-autoload -U promptinit; promptinit
+autoload -U promptinit
+promptinit
 [ ! -d "$HOME/.zsh/pure" ] || prompt pure
 
-# editor
-export EDITOR=vim
-
-# Start gpg-agent if not running
-gpg-connect-agent /bye
-
-if [[ `uname` == 'Linux' ]]; then
+if [[ $(uname) == 'Linux' ]]; then
   return
 fi
 
@@ -58,48 +55,8 @@ fi
 # macOS specific settings
 ################################################################
 
-if [[ `uname -m` == 'arm64' ]]; then
-  DEFAULT_HOMEBREW_PATH=/opt/homebrew
-else
-  DEFAULT_HOMEBREW_PATH=/usr/local
-fi
-HOMEBREW_PATH="${HOMEBREW_PATH:-$DEFAULT_HOMEBREW_PATH}"
+source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 
-export PATH=""
-export MANPATH=""
-export INFOPATH=""
-eval `/usr/libexec/path_helper -s`
-
-export HOMEBREW_PREFIX=""
-export HOMEBREW_CELLAR=""
-export HOMEBREW_REPOSITORY=""
-export HOMEBREW_SHELLENV_PREFIX=""
-export HOMEBREW_PREFIX=""
-eval "$($HOMEBREW_PATH/bin/brew shellenv)"
-
-# unprefixed utils
-export PATH="$HOMEBREW_PATH/opt/findutils/libexec/gnubin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/grep/libexec/gnubin:$PATH"
-#export PATH="$HOMEBREW_PATH/opt/gnu-sed/libexec/gnubin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/gnu-tar/libexec/gnubin:$PATH"
-#export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/curl/bin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/postgresql@12/bin:$PATH"
-export PATH="$HOMEBREW_PATH/opt/python@3.9/libexec/bin:$PATH"
-export PATH="$HOME/.platformio/penv/bin:$PATH"
-
-# fzf
-export PATH="$HOME/.zsh/fzf/bin:$PATH"
-
-# Gopath
-export GOPATH=$HOME/.gopath
-export PATH=$GOPATH/bin:$PATH
-
-source "$HOMEBREW_PATH/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
-source "$HOMEBREW_PATH/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
-
-# ASDF
-. $HOME/.asdf/asdf.sh
 fpath=(${ASDF_DIR}/completions $fpath)
 
 # Brew completions
@@ -108,28 +65,3 @@ fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
 # compinit
 autoload -Uz compinit
 compinit
-
-export PKG_CONFIG_PATH=""
-
-# Added by GDK bootstrap
-export PKG_CONFIG_PATH="$HOMEBREW_PATH/opt/icu4c/lib/pkgconfig:${PKG_CONFIG_PATH}"
-
-# Added by GDK bootstrap
-export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$HOMEBREW_PATH/opt/openssl@1.1 --with-readline-dir=$HOMEBREW_PATH/opt/readline"
-
-function gdk {
-  (
-    HOMEBREW_PATH=/usr/local source ~/.zshrc
-    cd ~/Work/gitlab/gdk
-    command gdk "$@"
-  )
-}
-
-function tf {
-  if [ -z "$1" ]; then echo "Usage: tf ENV ARGS..."; return 1; fi
-  (
-    cd ~/Work/gitlab/gitlab-com-infrastructure/environments/$1 || return 1
-    shift
-    ~/Work/gitlab/gitlab-com-infrastructure/bin/tf "$@"
-  )
-}

@@ -1,5 +1,6 @@
 {
     "gitProjectManager.baseProjectsFolders": [
+
         "~/Work",
     ],
     "workbench.startupEditor": "newUntitledFile",
@@ -11,7 +12,8 @@
     "asm-code-lens.enableCodeLenses": false,
     "workbench.editorAssociations": {
         "*.pdf": "default",
-        "*.svg": "svgPreview.previewEditor"
+        "*.svg": "svgPreview.previewEditor",
+        "*.tsv": "default"
     },
     "security.workspace.trust.untrustedFiles": "open",
     "remote.SSH.remotePlatform": {
@@ -25,39 +27,128 @@
         },
     ],
     "terminal.integrated.scrollback": 10000,
-    "files.autoSave": "afterDelay",
+    "files.autoSave": "onFocusChange",
     "editor.tabSize": 2,
     "files.associations": {
         "*.h": "c",
         "*.a": "retroasm_65816",
         "*.s": "asm",
         "*.toml.j2": "toml",
-        "*.xml.j2": "xml"
+        "*.xml.j2": "xml",
+        "*.conf.j2": "properties",
+        "*.yaml.j2": "yaml",
+        "*.yml.j2": "yaml",
+        "*.service.j2": "systemd-unit-file",
+        "*.sh.j2": "shellscript",
+        "stdout": "ansi"
     },
     "editor.accessibilitySupport": "off",
     "[retroasm_65816]": {
-        "editor.rulers": [120]
+        "editor.rulers": [
+            120
+        ]
     },
     "terminal.integrated.enableMultiLinePasteWarning": false,
-    "redhat.telemetry.enabled": true,
+    "redhat.telemetry.enabled": false,
     "ruby.format": "rubocop",
     "go.toolsManagement.autoUpdate": true,
     "[xml]": {
         "editor.defaultFormatter": "redhat.vscode-xml"
     },
     "files.insertFinalNewline": true,
+    "editor.foldingStrategy": "auto",
+    "editor.defaultFoldingRangeProvider": "zokugun.explicit-folding",
     "[asm]": {
         "editor.rulers": [
             {
                 "column": 18,
                 "color": "#2c2c2c"
-            },{
+            },
+            {
                 "column": 50,
                 "color": "#2c2c2c"
-            },120
+            },
+            120
         ]
     },
+    "print.colourScheme": "Lightfair",
+    "vs64.showWelcome": false,
     "extensions.ignoreRecommendations": true,
     "editor.stickyScroll.enabled": true,
-    "git.terminalAuthentication": false
+    "convertToAsciiArt.favoriteFont": "ANSI Shadow",
+    "git.terminalAuthentication": false,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "editor.cursorBlinking": "phase",
+    "window.commandCenter": false,
+    "workbench.editor.tabSizing": "shrink",
+    "[plaintext]": {
+        "editor.unicodeHighlight.invisibleCharacters": true
+    },
+    "[markdown]": {
+        "editor.unicodeHighlight.invisibleCharacters": true
+    },
+    "editor.cursorSmoothCaretAnimation": "on",
+    "workbench.tree.indent": 11,
+    "workbench.tree.renderIndentGuides": "always",
+    "workbench.tree.enableStickyScroll": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "modifications",
+    "git.autofetch": "all",
+    "cSpell.language": "en,fr",
+    "workbench.colorTheme": "One Dark Pro",
+    "oneDarkPro.editorTheme": "One Dark Pro Darker",
+    "workbench.iconTheme": "material-icon-theme",
+    "cSpell.userWords": [
+        "ansible",
+        "cmdline",
+        "elif",
+        "linux",
+        "loglevel",
+        "nginx",
+        "systemdunits",
+        "zache",
+        "zfsbootmenu"
+    ],
+    "editor.renderControlCharacters": false,
+    "ansible.ansible.useFullyQualifiedCollectionNames": false,
+    "yaml.customTags": [
+        "!vault scalar"
+    ],
+    "update.showReleaseNotes": false,
+    "terraform.experimentalFeatures.validateOnSave": true,
+    "python.createEnvironment.trigger": "off",
+    "shellformat.effectLanguages": [
+
+        "shellscript",
+        "dotenv",
+        "hosts",
+        "jvmoptions",
+        "ignore",
+        "gitignore",
+        "properties",
+        "spring-boot-properties",
+        "azcli",
+        "bats"
+    ],
+    "remote.SSH.configFile": "/Users/ak/.ssh/config",
+    "terraform.experimentalFeatures.prefillRequiredFields": true,
+    "git.blame.editorDecoration.enabled": false,
+    "ansible.lightspeed.enabled": false,
+    "diffEditor.hideUnchangedRegions.enabled": true,
+    "[dockercompose]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "editor.indentSize": "tabSize",
+    "[tsv]": {
+        "editor.insertSpaces": false,
+        "editor.tabSize": 2,
+        "editor.detectIndentation": false,
+    },
+    "git.blame.statusBarItem.enabled": true
 }

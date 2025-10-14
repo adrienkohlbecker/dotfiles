@@ -1,5 +1,6 @@
 # Interactive rebase
 bind main B !git rebase -i %(commit)
+bind main ! !git revert %(commit)
 
 # Move in diff with arrow keys
 bind diff <Up> move-up
@@ -16,8 +17,12 @@ bind stage D @rm %(file)
 
 bind status = !git roomba
 bind status B !git rebase --continue
+bind status E !sh -c "claude -p 'Build commit message from changes staged in git in the current directory. Ignore unstaged changes. Do not mention Claude. Limit commit title to approximately 50 characters. If more explanation is needed, add a blank line below the title, and use a list to add more information, hard-wrapped to 72 characters. Be concise. Output only the commit message.' | git commit --gpg-sign --file=- --edit"
 
+bind stage + !git commit --amend
 bind stage C !git commit
+bind stage E !sh -c "claude -p 'Build commit message from changes staged in git in the current directory. Ignore unstaged changes. Do not mention Claude. Limit commit title to approximately 50 characters. If more explanation is needed, add a blank line below the title, and use a list to add more information, hard-wrapped to 72 characters. Be concise. Output only the commit message.' | git commit --gpg-sign --file=- --edit"
+
 bind stage B !git rebase --continue
 
 bind refs M !git merge --no-ff %(branch)
