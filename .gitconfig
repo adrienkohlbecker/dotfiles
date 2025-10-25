@@ -40,8 +40,6 @@
   colorMoved = plain
   mnemonicPrefix = true
   renames = true
-[include]
-  path = ~/.gitconfig.local
 [commit]
 	gpgsign = true
   verbose = true
@@ -70,3 +68,5 @@
   autoupdate = true
 [gpg "ssh"]
 	allowedSignersFile = ~/.ssh/allowed_signers
+[include]
+  path = ~/.gitconfig.local
