@@ -38,7 +38,6 @@ alias history="builtin fc -l -i -D"
 alias tig="command tig status"
 alias dotfiles='/usr/bin/env git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME tig status'
-alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
 # Prompt theme
@@ -57,11 +56,17 @@ fi
 
 source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 
-fpath=(${ASDF_DIR}/completions $fpath)
-
 # Brew completions
 fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
+fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
 
 # compinit
 autoload -Uz compinit
 compinit
+export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
+
+alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/ak/.lmstudio/bin"
+# End of LM Studio CLI section
