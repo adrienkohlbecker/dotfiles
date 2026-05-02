@@ -46,27 +46,26 @@ autoload -U promptinit
 promptinit
 [ ! -d "$HOME/.zsh/pure" ] || prompt pure
 
-if [[ $(uname) == 'Linux' ]]; then
-  return
+if [[ $(uname) == 'DARWIN' ]]; then
+  ################################################################
+  # macOS specific settings
+  ################################################################
+
+  source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
+
+  # Brew completions
+  fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
+
+  export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
+
+  alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
+
+  # Added by LM Studio CLI (lms)
+  export PATH="$PATH:/Users/ak/.lmstudio/bin"
+  # End of LM Studio CLI section
 fi
 
-################################################################
-# macOS specific settings
-################################################################
-
-source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
-
-# Brew completions
-fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
-fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
-
+fpath+=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
 # compinit
 autoload -Uz compinit
 compinit
-export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
-
-alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/ak/.lmstudio/bin"
-# End of LM Studio CLI section

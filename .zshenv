@@ -34,9 +34,6 @@ if [[ $(uname) == 'DARWIN' ]]; then
 
   source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
 
-  # ASDF
-  export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
-
   # On macOS, /etc/zprofile reorders the path by executing path_helper. The following lines, coupled with code in ~/.zprofile,
   # ensure that the PATH we set in this file take precedence
   typeset -U path
@@ -52,3 +49,6 @@ export PATH="$HOME/.zsh/fzf/bin:$PATH"
 
 # uv
 export PATH="$HOME/.local/bin:$PATH"
+
+# ASDF
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
