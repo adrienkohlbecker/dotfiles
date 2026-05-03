@@ -1,6 +1,6 @@
 # .zshenv This is ALWAYS loaded first, for your user account for all shells.
 
-if [[ $(uname) == 'DARWIN' ]]; then
+if [[ $(uname) == 'Darwin' ]]; then
 
   ################################################################
   # macOS specific settings
