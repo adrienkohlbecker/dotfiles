@@ -1,0 +1,9 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "sh /Users/ak/.claude/statusline-command.sh"
+  },
+  "alwaysThinkingEnabled": true,
+  "editorMode": "normal",
+  "skipAutoPermissionPrompt": true
+}
