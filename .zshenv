@@ -47,8 +47,5 @@ export EDITOR=vim
 # fzf
 export PATH="$HOME/.zsh/fzf/bin:$PATH"
 
-# uv
+# local binaries
 export PATH="$HOME/.local/bin:$PATH"
-
-# ASDF
-export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/bin:${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"

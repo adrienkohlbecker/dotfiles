@@ -65,7 +65,9 @@ if [[ $(uname) == 'DARWIN' ]]; then
   # End of LM Studio CLI section
 fi
 
-fpath+=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
+eval "$(mise activate zsh)"
+
+fpath+=($HOME/.local/share/mise/completions $fpath)
 # compinit
 autoload -Uz compinit
 compinit
