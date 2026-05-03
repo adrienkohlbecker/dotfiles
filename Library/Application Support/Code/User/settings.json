@@ -1,5 +1,6 @@
 {
     "gitProjectManager.baseProjectsFolders": [
+
         "~/Work",
     ],
     "workbench.startupEditor": "newUntitledFile",
@@ -167,5 +168,7 @@
         "-l",
         "250"
     ],
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "claudeCode.useTerminal": true,
+    "remote.autoForwardPorts": false
 }
