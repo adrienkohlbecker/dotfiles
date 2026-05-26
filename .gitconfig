@@ -9,11 +9,16 @@
   cp = cherry-pick
   # merge without fast forward
   noff = merge --no-ff
-  # delete branches already merged into the default branch
-  roomba = "!git checkout -q \"$(git dfb)\" && git pull && git branch --merged \"$(git dfb)\" --format='%(refname:short)' | grep -vx \"$(git dfb)\" | xargs -r -I{} git branch -d -- {}"
-  # get default branch (bare name, e.g. "master"); self-heal a missing origin/HEAD
-  dfb = "!git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null 2>&1 || git remote set-head origin --auto >/dev/null 2>&1; git rev-parse --abbrev-ref origin/HEAD | cut -d/ -f2-"
-	recent-branches = ! git for-each-ref --sort=-committerdate --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' --color=always refs/heads/ | grep Kohlbecker | cut -d, -f2 | head -n10
+  # delete branches already merged into the default branch (true merges only;
+  # squash-merged branches leave no merge commit — use clean_gone for those).
+  # dfb resolved once so the network self-heal in dfb doesn't run three times.
+  roomba = "!b=$(git dfb); git checkout -q \"$b\" && { git pull --ff-only || true; } && git branch --merged \"$b\" --format='%(refname:short)' | grep -vx \"$b\" | xargs -r -I{} git branch -d -- {}"
+  # get default branch bare name (e.g. "master"); self-heal a missing origin/HEAD,
+  # falling back to init.defaultBranch when there is no origin at all (so a
+  # local-only repo yields "master" instead of a bogus "HEAD" + stderr noise)
+  dfb = "!git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null 2>&1 || git remote set-head origin --auto >/dev/null 2>&1 || true; b=$(git rev-parse --abbrev-ref origin/HEAD 2>/dev/null | cut -d/ -f2-); { [ -n \"$b\" ] && [ \"$b\" != HEAD ] && echo \"$b\"; } || git config init.defaultBranch"
+  # most-recently-committed local branches (author shown, not filtered)
+  recent-branches = "!git for-each-ref --color=auto --sort=-committerdate --count=10 --format='%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) %(color:dim white)%(authorname)%(color:reset) - %(contents:subject)' refs/heads/"
 
 [core]
   # Use custom `.gitignore`
@@ -22,6 +27,10 @@
 	# dotfiles repo). core.fsmonitor deliberately NOT set globally: its daemon would
 	# try to watch all of $HOME via the dotfiles bare repo. Enable per-repo if wanted.
 	untrackedCache = true
+[index]
+	# Skip the index trailing checksum — cheaper add/commit/status on the large
+	# $HOME-work-tree index. Honored on git >= 2.40; silently ignored on older.
+	skipHash = true
 [column]
   ui = auto
 [fetch]
@@ -29,7 +38,6 @@
   pruneTags = true
   all = true
 [push]
-  default = simple
   autoSetupRemote = true
   followTags = true
   # --force-with-lease also refuses if there are remote commits we never fetched
@@ -48,7 +56,6 @@
   colorMoved = zebra
   colorMovedWS = allow-indentation-change
   mnemonicPrefix = true
-  renames = true
 [commit]
 	gpgsign = true
   verbose = true
@@ -63,7 +70,8 @@
 	defaultBranch = master
 [merge]
   log = true
-  conflictstyle = zdiff3
+  # diff3 (not zdiff3): zdiff3 needs git >= 2.35, Ubuntu jammy ships 2.34
+  conflictstyle = diff3
 [rebase]
   autoSquash = true
   autoStash = true
@@ -80,3 +88,7 @@
 	allowedSignersFile = ~/.ssh/allowed_signers
 [include]
   path = ~/.gitconfig.local
+# Per-tree identity override (uncomment + create the file to use a work email
+# under ~/Work/, etc.):
+# [includeIf "gitdir:~/Work/"]
+#   path = ~/.gitconfig.work
