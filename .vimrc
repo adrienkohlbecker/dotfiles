@@ -8,18 +8,20 @@ set clipboard=unnamed
 " since hosts without a system vimrc don't get it by default)
 set backspace=indent,eol,start
 
-" Centralize backups, swapfiles and undo history
-set backupdir=~/.vim/backups
-set directory=~/.vim/swaps
-set undodir=~/.vim/undo
+" Centralize backups, swapfiles and undo history. Trailing // encodes the
+" file's full path into the swap/undo name, so same-basename files in
+" different repos (config, main.yml, ...) don't collide on one swapfile.
+set backupdir=~/.vim/backups//
+set directory=~/.vim/swaps//
+set undodir=~/.vim/undo//
 set undofile
 
 " Don't create backups when editing files in certain directories
 set backupskip=/tmp/*,/private/tmp/*
 
-" Respect modeline in files
-set modeline
-set modelines=4
+" Modelines are an option-injection / RCE vector (e.g. CVE-2019-12735) and we
+" open files from untrusted repos daily; rely on filetype detection instead.
+set nomodeline
 
 " Enable syntax highlighting and filetype plugins
 syntax on
@@ -59,6 +61,12 @@ set splitright splitbelow
 
 " Faster updates for CursorHold, swap writes, plugin signals
 set updatetime=300
+
+" Reload files changed outside Vim (pairs with the short updatetime above)
+set autoread
+
+" Don't wait on terminal key codes, so <Esc> leaves insert mode promptly
+set ttimeout ttimeoutlen=100
 
 " Show the sign column only when something populates it (no sign plugins yet)
 set signcolumn=auto
