@@ -9,18 +9,16 @@ Modes:
   fzf-atuin-widget.py <session|workspace|host>
       Emit a NUL-free, one-row-per-command, pygments-highlighted list to
       stdout. \\n in source commands is encoded as ↵ so multi-line commands
-      stay on one fzf row; the widget decodes back when assigning $BUFFER.
+      stay on one fzf row; the widget decodes back when assigning $LBUFFER.
 
   fzf-atuin-widget.py cycle
       Read $FZF_GHOST, emit the fzf action chain to advance one step in the
       session → workspace → host cycle.
 
-Cache: a sidecar sqlite db at ~/.cache/fzf-atuin/highlights.db with a
-       single (uuid PRIMARY KEY, text) table. atuin commands are immutable
-       per uuid, so cached entries never go stale. Sidecar (vs adding a
-       column to atuin's own history.db) keeps us decoupled from atuin's
-       schema — an atuin migration can't silently nuke our cache, and our
-       writes can't bloat atuin's working set.
+Highlighting is done on the fly (no cache): atuin returns in ~tens of ms and
+pygments highlights the distinct command set in about the same, so a sidecar
+sqlite cache wasn't worth its on-disk footprint or its coupling to atuin's
+internals.
 
 Why uv-script-with-inline-deps instead of plain `python3`: $PATH's python3
 depends on which venv is active for the user's cwd at Ctrl-R time, and
@@ -28,16 +26,15 @@ most of them don't have pygments. `uv run --script` resolves+caches the
 dep set independent of any ambient venv, so the widget works everywhere.
 """
 import os
-import sqlite3
+import re
 import subprocess
 import sys
 import traceback
 
-CACHE_DB = os.path.expanduser("~/.cache/fzf-atuin/highlights.db")
 SELF = os.path.abspath(__file__)
-# SQLite default SQLITE_MAX_VARIABLE_NUMBER is 999 on older builds, 32k on
-# macOS system python's bundled sqlite. Stay safely below either.
-SQL_CHUNK = 900
+# Strip C0 control bytes (newlines are encoded as ↵ separately) so a recorded
+# escape sequence can't inject into the fzf list.
+_CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 
 
 def _list_err(short: str, detail: str = "") -> None:
@@ -50,17 +47,6 @@ def _list_err(short: str, detail: str = "") -> None:
     if detail:
         sys.stderr.write(detail.rstrip() + "\n")
     sys.exit(1)
-
-
-def open_cache() -> sqlite3.Connection:
-    os.makedirs(os.path.dirname(CACHE_DB), exist_ok=True)
-    db = sqlite3.connect(CACHE_DB)
-    db.execute("PRAGMA journal_mode=WAL")
-    db.execute(
-        "CREATE TABLE IF NOT EXISTS highlights ("
-        "uuid TEXT PRIMARY KEY, text TEXT NOT NULL)"
-    )
-    return db
 
 
 def cycle() -> None:
@@ -110,73 +96,28 @@ def build(mode: str) -> None:
         _list_err(f"atuin search failed (exit {proc.returncode}): {summary[:80]}",
                   "\n".join(lines))
 
-    order: list[tuple[str, str]] = []
+    # pygments is imported here (not at module top) so the `cycle` path —
+    # invoked on every Ctrl-O — doesn't pay the ~50ms highlighter import.
+    from pygments import highlight
+    from pygments.formatters import TerminalTrueColorFormatter
+    from pygments.lexers import BashLexer
+    lexer = BashLexer()
+    formatter = TerminalTrueColorFormatter(style="dracula")
+
     seen: set[str] = set()
+    out = sys.stdout.buffer
     for rec in proc.stdout.split(b"\0"):
         if len(rec) < 32:
             continue
-        uuid = rec[:32].decode("utf-8")
-        cmd = rec[32:].decode("utf-8", errors="replace")
-        if not cmd.strip():
+        # rec[:32] is the uuid (was only a cache key — no cache now, so skip it).
+        raw = _CTRL.sub("", rec[32:].decode("utf-8", errors="replace"))
+        if not raw.strip():
             continue
-        cmd = cmd.replace("\n", "↵")
+        cmd = raw.replace("\n", "↵")
         if cmd in seen:
             continue
         seen.add(cmd)
-        order.append((uuid, cmd))
-
-    if not order:
-        return
-
-    try:
-        db = open_cache()
-    except sqlite3.Error as e:
-        _list_err(f"sqlite open failed: {CACHE_DB}", str(e))
-
-    cache: dict[str, str | None] = {}
-    uuids = [u for u, _ in order]
-    try:
-        for i in range(0, len(uuids), SQL_CHUNK):
-            batch = uuids[i:i + SQL_CHUNK]
-            ph = ",".join("?" * len(batch))
-            for row_id, hl in db.execute(
-                f"SELECT uuid, text FROM highlights WHERE uuid IN ({ph})",
-                batch,
-            ):
-                cache[row_id] = hl
-    except sqlite3.Error as e:
-        _list_err("sqlite read failed", str(e))
-
-    new = [(u, c) for u, c in order if not cache.get(u)]
-    if new:
-        # Lazy import: pygments costs ~50ms to load. The warm path (column
-        # populated for every uuid in `order`) never needs the highlighter
-        # and shouldn't pay that tax.
-        from pygments import highlight
-        from pygments.formatters import TerminalTrueColorFormatter
-        from pygments.lexers import BashLexer
-        lexer = BashLexer()
-        formatter = TerminalTrueColorFormatter(style="dracula")
-        for u, c in new:
-            text = highlight(c, lexer, formatter).rstrip("\n")
-            cache[u] = text
-            db.execute(
-                "INSERT OR REPLACE INTO highlights (uuid, text) VALUES (?, ?)",
-                (u, text),
-            )
-        try:
-            db.commit()
-        except sqlite3.Error as e:
-            # Best-effort persist; rows are still in `cache` and renderable.
-            # Don't kill the widget over a transient lock.
-            sys.stderr.write(f"warning: sqlite commit failed: {e}\n")
-
-    out = sys.stdout.buffer
-    for u, _ in order:
-        h = cache.get(u)
-        if not h:
-            continue
-        out.write(h.encode("utf-8"))
+        out.write(highlight(cmd, lexer, formatter).rstrip("\n").encode("utf-8"))
         out.write(b"\n")
 
 
