@@ -19,9 +19,9 @@ set undofile
 " Don't create backups when editing files in certain directories
 set backupskip=/tmp/*,/private/tmp/*
 
-" Modelines are an option-injection / RCE vector (e.g. CVE-2019-12735) and we
-" open files from untrusted repos daily; rely on filetype detection instead.
-set nomodeline
+" Respect modeline in files
+set modeline
+set modelines=4
 
 " Enable syntax highlighting and filetype plugins
 syntax on
