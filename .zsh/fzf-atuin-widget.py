@@ -116,7 +116,10 @@ def build(mode: str) -> None:
         if len(rec) < 32:
             continue
         uuid = rec[:32].decode("utf-8")
-        cmd = rec[32:].decode("utf-8", errors="replace").replace("\n", "↵")
+        cmd = rec[32:].decode("utf-8", errors="replace")
+        if not cmd.strip():
+            continue
+        cmd = cmd.replace("\n", "↵")
         if cmd in seen:
             continue
         seen.add(cmd)

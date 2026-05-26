@@ -32,6 +32,7 @@ fzf-atuin-history-widget() {
   # for everything else; $FZF_CTRL_R_OPTS appended last so user overrides win.
   selected=$(
     "$_FZF_ATUIN_HELPER" session | $(__fzfcmd) \
+      --with-shell 'sh -c' \
       --height "${FZF_TMUX_HEIGHT:-40%}" \
       --scheme=history \
       --ansi \
@@ -45,8 +46,7 @@ fzf-atuin-history-widget() {
   )
   local ret=$?
   if [ -n "$selected" ]; then
-    BUFFER=${selected//↵/$'\n'}
-    CURSOR=$#BUFFER
+    LBUFFER=${selected//↵/$'\n'}
   fi
   zle reset-prompt
   return $ret
