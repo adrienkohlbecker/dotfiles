@@ -2,7 +2,10 @@
 # https://ghostty.org/docs/config
 
 copy-on-select = true
-font-family = Menlo
+# Meslo is derived from Menlo; the Nerd Font build adds glyphs for eza/yazi icons.
+# "M" = medium line-gap (closest to Menlo), "Mono" keeps icons single-cell so
+# column-aligned output (eza, ls) doesn't drift.
+font-family = MesloLGM Nerd Font Mono
 font-size = 12
 maximize = true
 minimum-contrast = 2
