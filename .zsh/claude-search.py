@@ -7,13 +7,14 @@ list-all                  Walk ~/.claude/projects/ and emit one tab-separated
                           `display` is pre-rendered with ANSI colors and
                           fixed-width columns for fzf.
 
-list-stdin                Same row format, but reads newline-delimited
-                          filepaths from stdin (used after `rg -l` upstream).
+search <query>            Same row format, but only transcripts containing
+                          every whitespace-separated term in <query> somewhere
+                          (file-level AND via chained `rg -F` scans).
 
-preview <file> [<query>]  Render the transcript with optional keyword
-                          highlight. With a non-empty query, emit ONLY the
-                          turns whose text matches the query (with highlight).
-                          Empty query = full transcript, no highlight.
+preview <file> [<query>]  Render the transcript with optional term highlight.
+                          With a non-empty query, emit ONLY the turns whose
+                          text contains any term (each highlighted). Empty query
+                          = full transcript, no highlight.
 
 Schema reference (Claude Code session JSONL):
   type        'user' | 'assistant' | 'summary' | ...
@@ -28,6 +29,7 @@ import glob
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -102,9 +104,10 @@ def truncate_left(s: str, width: int) -> str:
 
 
 _WS = re.compile(r"\s+")
-# Strip C0 control bytes (keep \t and \n) so transcript-derived text can't inject
-# terminal escapes into the fzf list/preview.
-_CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+# Strip C0+C1 control bytes (keep \t and \n) so transcript-derived text can't
+# inject terminal escapes into the fzf list/preview. The C1 range (0x80-0x9f)
+# covers the 8-bit CSI introducer 0x9b a terminal in 8-bit mode would act on.
+_CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
 _CMD_NAME = re.compile(r"<command-name>([^<]*)</command-name>")
 _CMD_ARGS = re.compile(r"<command-args>([^<]*)</command-args>")
 _WRAPPER_PREFIXES = (
@@ -191,8 +194,12 @@ def _scan_file(path: Path, mtime: float) -> tuple[str, str] | None:
 
 def _format_row(path: Path, mtime: float, cwd: str, summary: str) -> str:
     rt = reltime(mtime).rjust(RELTIME_WIDTH)
-    cwd_disp = collapse_home(cwd)
-    cwd_disp = truncate_left(cwd_disp, CWD_WIDTH)
+    # cwd is transcript-controlled: strip control bytes and collapse tab/newline
+    # before it reaches column 2 (a newline would split the row) or the colored
+    # display (a raw escape would render under fzf --ansi). path comes from the
+    # filesystem, so it needs no scrub.
+    cwd = _CTRL.sub("", cwd.replace("\t", " ").replace("\n", " "))
+    cwd_disp = truncate_left(collapse_home(cwd), CWD_WIDTH)
     summary_one_line = _CTRL.sub("", summary.replace("\t", " ").replace("\n", " "))
     display = (
         f"{DIM}{rt}{RST}  {CYAN}{cwd_disp}{RST}  {summary_one_line}"
@@ -222,16 +229,66 @@ def list_all() -> None:
     _emit_rows(glob.glob(str(PROJECTS_DIR / "*" / "*.jsonl")))
 
 
-def list_stdin() -> None:
-    paths = [ln.strip() for ln in sys.stdin if ln.strip()]
-    _emit_rows(paths)
+def _rg_files(args: list[str]) -> list[str] | None:
+    """`rg -l --null -i -F <args>` → matching paths, or None on rg failure.
+
+    `--null` separates paths with NUL so a newline in a (transcript-derived)
+    path can't split a row. rc 1 with empty output is "no matches" (empty list);
+    rc >= 2 with a stderr message is a real failure.
+    """
+    try:
+        proc = subprocess.run(
+            ["rg", "-l", "--null", "-i", "-F", *args],
+            capture_output=True, text=True, check=False,
+        )
+    except FileNotFoundError:
+        print("csearch: ripgrep (rg) not found on PATH", file=sys.stderr)
+        return None
+    if proc.returncode >= 2 and proc.stderr.strip():
+        print(f"csearch: rg: {proc.stderr.strip()}", file=sys.stderr)
+        return None
+    return [p for p in proc.stdout.split("\0") if p]
 
 
-def preview(file: str, keyword: str = "") -> None:
-    pat = re.compile(re.escape(keyword), re.IGNORECASE) if keyword else None
+def search(query: str) -> None:
+    """Filtered list: transcripts containing ALL whitespace-separated terms.
+
+    File-level AND via chained ripgrep `-F` scans: a transcript matches when
+    every term appears somewhere in it (not necessarily the same turn). `-F`
+    is memchr-fast even on the multi-kilobyte single lines JSONL records produce
+    — a PCRE2 lookahead chain is pathologically slow there. Each pass narrows
+    the file set the next term searches.
+    """
+    terms = query.split()
+    if not terms:
+        list_all()
+        return
+    # First term scans the whole projects tree; subsequent terms scan only the
+    # surviving file list (a few thousand uuid-named paths, well under ARG_MAX).
+    files = _rg_files(["-g", "*.jsonl", "--", terms[0], str(PROJECTS_DIR)])
+    if files is None:
+        return
+    for term in terms[1:]:
+        if not files:
+            break
+        files = _rg_files(["--", term, *files])
+        if files is None:
+            return
+    _emit_rows(files)
+
+
+def preview(file: str, query: str = "") -> None:
+    # search() matches transcripts containing every term *somewhere* (file-level
+    # AND), so show every turn matching ANY term, each highlighted — that
+    # surfaces each term's context and never renders an empty preview for a
+    # transcript the list matched.
+    terms = query.split()
+    pats = [re.compile(re.escape(t), re.IGNORECASE) for t in terms]
 
     def hl(s: str) -> str:
-        return pat.sub(lambda m: f"{RED}{BOLD}{m.group(0)}{RST}", s) if pat else s
+        for p in pats:
+            s = p.sub(lambda m: f"{RED}{BOLD}{m.group(0)}{RST}", s)
+        return s
 
     try:
         fh = open(file, encoding="utf-8", errors="replace")
@@ -254,7 +311,7 @@ def preview(file: str, keyword: str = "") -> None:
             text = render_content(content).strip()
             if not text:
                 continue
-            if pat and not pat.search(text):
+            if pats and not any(p.search(text) for p in pats):
                 continue
             role = f"{CYAN}user{RST}" if t == "user" else f"{YELL}claude{RST}"
             ts = rec.get("timestamp", "")[:19]
@@ -264,8 +321,8 @@ def preview(file: str, keyword: str = "") -> None:
             print()
             emitted += 1
 
-    if pat and emitted == 0:
-        print(f"{DIM}(no turns match {keyword!r}){RST}")
+    if pats and emitted == 0:
+        print(f"{DIM}(no turns match {query!r}){RST}")
 
 
 def main() -> int:
@@ -277,8 +334,8 @@ def main() -> int:
     if cmd == "list-all":
         list_all()
         return 0
-    if cmd == "list-stdin":
-        list_stdin()
+    if cmd == "search":
+        search(rest[0] if rest else "")
         return 0
     if cmd == "preview":
         if not rest:
