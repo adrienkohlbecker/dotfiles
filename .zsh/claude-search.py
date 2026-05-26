@@ -25,7 +25,6 @@ Schema reference (Claude Code session JSONL):
 from __future__ import annotations
 
 import glob
-import hashlib
 import json
 import os
 import re
@@ -35,10 +34,6 @@ from pathlib import Path
 
 
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
-CACHE_DIR = Path.home() / ".cache" / "claude-search"
-# Bump when the cache row format or filter logic changes — older entries
-# get ignored automatically.
-CACHE_VERSION = 3
 
 MAX_LINES_PER_FILE = 200  # cwd / entrypoint / first_user usually within ~10
 
@@ -107,6 +102,9 @@ def truncate_left(s: str, width: int) -> str:
 
 
 _WS = re.compile(r"\s+")
+# Strip C0 control bytes (keep \t and \n) so transcript-derived text can't inject
+# terminal escapes into the fzf list/preview.
+_CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 _CMD_NAME = re.compile(r"<command-name>([^<]*)</command-name>")
 _CMD_ARGS = re.compile(r"<command-args>([^<]*)</command-args>")
 _WRAPPER_PREFIXES = (
@@ -195,7 +193,7 @@ def _format_row(path: Path, mtime: float, cwd: str, summary: str) -> str:
     rt = reltime(mtime).rjust(RELTIME_WIDTH)
     cwd_disp = collapse_home(cwd)
     cwd_disp = truncate_left(cwd_disp, CWD_WIDTH)
-    summary_one_line = summary.replace("\t", " ").replace("\n", " ")
+    summary_one_line = _CTRL.sub("", summary.replace("\t", " ").replace("\n", " "))
     display = (
         f"{DIM}{rt}{RST}  {CYAN}{cwd_disp}{RST}  {summary_one_line}"
     )
@@ -203,13 +201,7 @@ def _format_row(path: Path, mtime: float, cwd: str, summary: str) -> str:
     return f"{path}\t{cwd}\t{display}"
 
 
-def _cache_path_for(jsonl_path: str) -> Path:
-    h = hashlib.sha1(jsonl_path.encode("utf-8")).hexdigest()
-    return CACHE_DIR / f"v{CACHE_VERSION}_{h}.row"
-
-
 def _emit_rows(paths: list[str]) -> None:
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
     files_with_mt = []
     for p in paths:
         try:
@@ -219,44 +211,11 @@ def _emit_rows(paths: list[str]) -> None:
     files_with_mt.sort(reverse=True)
 
     for mtime, p in files_with_mt:
-        cache_file = _cache_path_for(p)
-        cached: str | None = None
-        try:
-            if cache_file.stat().st_mtime >= mtime:
-                cached = cache_file.read_text(encoding="utf-8") or None
-                if cached == "__EXCLUDED__":
-                    continue
-        except OSError:
-            pass
-
-        if cached is None:
-            scan = _scan_file(Path(p), mtime)
-            if scan is None:
-                try:
-                    cache_file.write_text("__EXCLUDED__", encoding="utf-8")
-                    os.utime(cache_file, (mtime, mtime))
-                except OSError:
-                    pass
-                continue
-            cwd, summary = scan
-            # Cache the raw (cwd, summary); regenerate the row at print
-            # time so reltime stays fresh on subsequent runs.
-            try:
-                cache_file.write_text(
-                    f"{cwd}\t{summary}", encoding="utf-8"
-                )
-                os.utime(cache_file, (mtime, mtime))
-            except OSError:
-                pass
-            row = _format_row(Path(p), mtime, cwd, summary)
-        else:
-            parts = cached.split("\t", 1)
-            if len(parts) != 2:
-                continue  # malformed cache entry, ignore
-            cwd, summary = parts
-            row = _format_row(Path(p), mtime, cwd, summary)
-
-        print(row)
+        scan = _scan_file(Path(p), mtime)
+        if scan is None:
+            continue
+        cwd, summary = scan
+        print(_format_row(Path(p), mtime, cwd, summary))
 
 
 def list_all() -> None:
@@ -301,7 +260,7 @@ def preview(file: str, keyword: str = "") -> None:
             ts = rec.get("timestamp", "")[:19]
             print(f"{DIM}── {ts}{RST}  {role}")
             for ln in text.split("\n"):
-                print(hl(ln))
+                print(hl(_CTRL.sub("", ln)))
             print()
             emitted += 1
 
