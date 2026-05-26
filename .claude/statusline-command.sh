@@ -1,82 +1,96 @@
 #!/bin/sh
+# Claude Code status line. Reads session JSON on stdin, prints one colored line.
+# Deliberately NO `set -e`: a statusline must degrade gracefully, never abort —
+# a non-numeric field or a missing git repo must not blank the whole line.
 input=$(cat)
-current_dir=$(echo "$input" | jq -r '.workspace.current_dir')
-model_name=$(echo "$input" | jq -r '.model.display_name')
-remaining=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
 
-# Output style (empty when default or not set)
-output_style=$(echo "$input" | jq -r '.output_style.name // empty')
-[ "$output_style" = "default" ] && output_style=""
+# Single jq pass: one field per line, fixed order, read positionally below.
+# `// ""` keeps every field present so the line count stays stable even when
+# a field is absent (one parse, one fork — not one jq per field).
+{
+  IFS= read -r current_dir
+  IFS= read -r model_name
+  IFS= read -r remaining
+  IFS= read -r output_style
+  IFS= read -r ctx_warning
+  IFS= read -r session_name
+  IFS= read -r agent_name
+  IFS= read -r worktree_name
+  IFS= read -r worktree_branch
+  IFS= read -r ws_git_worktree
+  IFS= read -r rl_5h
+  IFS= read -r rl_7d
+  IFS= read -r rl_5h_reset
+  IFS= read -r rl_7d_reset
+} <<EOF
+$(printf '%s' "$input" | jq -r '
+  def clean: gsub("[[:cntrl:]]"; "");
+  (.workspace.current_dir // "" | clean),
+  (.model.display_name // "" | clean),
+  (.context_window.remaining_percentage // ""),
+  (.output_style.name // "" | if . == "default" then "" else . end | clean),
+  (if .exceeds_200k_tokens then "1" else "" end),
+  (.session_name // "" | clean),
+  (.agent.name // "" | clean),
+  (.worktree.name // "" | clean),
+  (.worktree.branch // "" | clean),
+  (.workspace.git_worktree // "" | clean),
+  (.rate_limits.five_hour.used_percentage // ""),
+  (.rate_limits.seven_day.used_percentage // ""),
+  (.rate_limits.five_hour.resets_at // ""),
+  (.rate_limits.seven_day.resets_at // "")
+')
+EOF
 
-# Context warning: flag when current API response exceeds 200k tokens
-ctx_warning=$(echo "$input" | jq -r 'if .exceeds_200k_tokens then "1" else "" end')
-
-# Optional context indicators (rendered only when set)
-session_name=$(echo "$input" | jq -r '.session_name // empty')
-agent_name=$(echo "$input" | jq -r '.agent.name // empty')
-worktree_name=$(echo "$input" | jq -r '.worktree.name // empty')
-worktree_branch=$(echo "$input" | jq -r '.worktree.branch // empty')
-
-# Rate limit fields (Claude.ai subscribers only; empty when not available)
-rl_5h=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-rl_7d=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
-rl_5h_reset=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
-rl_7d_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+# Colors as real ESC bytes (built once) so the final emit can be printf '%s' —
+# never '%b'. A field value containing a literal "\033[..." must be printed
+# verbatim, not interpreted into control sequences (terminal-injection guard).
+esc=$(printf '\033')
+dim="${esc}[2m"; red="${esc}[31m"; yel="${esc}[33m"; cyan="${esc}[36m"; mag="${esc}[35m"; rst="${esc}[0m"
 
 dir_name=$(basename "$current_dir")
 
-# --- git section (pure-style, cheap operations only) ---
+# --- git section: one `git status --porcelain=v2 --branch` instead of ~8 calls ---
 git_info=""
-if git -C "$current_dir" rev-parse --git-dir > /dev/null 2>&1; then
-  # Branch name; falls back to tag name, then short SHA for detached HEAD
-  branch=$(git -C "$current_dir" symbolic-ref --short HEAD 2>/dev/null)
-  if [ -z "$branch" ]; then
-    branch=$(git -C "$current_dir" describe --tags --exact-match HEAD 2>/dev/null)
-    if [ -z "$branch" ]; then
-      branch=$(git -C "$current_dir" rev-parse --short HEAD 2>/dev/null)
-      [ -n "$branch" ] && branch="($branch)"  # detached indicator, pure style
-    else
-      branch="($branch)"  # on a tag
-    fi
+gitout=$(git -C "$current_dir" status --porcelain=v2 --branch 2>/dev/null)
+if [ -n "$gitout" ]; then
+  # `# branch.head <name>` — or literally "(detached)", which v2 can't expand
+  branch=$(printf '%s\n' "$gitout" | awk '/^# branch.head / {print $3; exit}')
+  if [ "$branch" = "(detached)" ]; then
+    b=$(git -C "$current_dir" describe --tags --exact-match HEAD 2>/dev/null) \
+      || b=$(git -C "$current_dir" rev-parse --short HEAD 2>/dev/null)
+    branch="($b)"
   fi
 
-  # Dirty indicator: staged or unstaged changes (index + worktree, excludes untracked)
+  # Dirty: any staged/unstaged tracked change (1/2) or unmerged (u). Untracked
+  # (?) is excluded, matching the prior diff-based check.
   dirty=""
-  if ! git -C "$current_dir" diff --quiet 2>/dev/null || \
-     ! git -C "$current_dir" diff --cached --quiet 2>/dev/null; then
-    dirty="*"
-  fi
+  printf '%s\n' "$gitout" | grep -q '^[12u] ' && dirty="*"
 
-  # Ahead / behind upstream
+  # Ahead/behind from `# branch.ab +A -B` (only present when an upstream exists)
   arrows=""
-  upstream=$(git -C "$current_dir" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null)
-  if [ -n "$upstream" ]; then
-    ahead=$(git -C "$current_dir" rev-list --count '@{upstream}..HEAD' 2>/dev/null)
-    behind=$(git -C "$current_dir" rev-list --count 'HEAD..@{upstream}' 2>/dev/null)
+  ab=$(printf '%s\n' "$gitout" | awk '/^# branch.ab / {print $3" "$4; exit}')
+  if [ -n "$ab" ]; then
+    ahead=${ab%% *}; ahead=${ahead#+}
+    behind=${ab##* }; behind=${behind#-}
     [ "${ahead:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇡${ahead}"
     [ "${behind:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇣${behind}"
   fi
 
-  # Assemble: branch + dirty run together, arrows separated by space
   git_part="${branch}${dirty}"
   [ -n "$arrows" ] && git_part="${git_part} ${arrows}"
-  # dim grey, matching pure's muted branch colour
-  git_info=$(printf '\033[2m%s\033[0m' "$git_part")
+  git_info="${dim}${git_part}${rst}"
 fi
 
 # --- rate limit section ---
-# Builds a compact "5h:NN% 7d:NN%" string; each part omitted when not present.
-# Uses "remaining" framing (100 - used) so the number stays intuitive alongside ctx%.
-# Color thresholds per field: >50% remaining = dim, 20-50% = yellow, <20% = red.
+# "5h:NN% 7d:NN%" in remaining framing (100 - used). resets_at is Unix epoch
+# seconds (per the statusline schema), so date -r is the correct reader.
+# Color per field: >50% remaining = dim, 20-50% = yellow, <20% = red.
 _rl_color() {
-  pct=$1  # remaining percentage
-  if [ "$pct" -lt 20 ] 2>/dev/null; then
-    printf '\033[31m'   # red
-  elif [ "$pct" -lt 50 ] 2>/dev/null; then
-    printf '\033[33m'   # yellow
-  else
-    printf '\033[2m'    # dim
-  fi
+  pct=$1
+  if [ "$pct" -lt 20 ] 2>/dev/null; then printf '%s' "$red"
+  elif [ "$pct" -lt 50 ] 2>/dev/null; then printf '%s' "$yel"
+  else printf '%s' "$dim"; fi
 }
 rate_info=""
 if [ -n "$rl_5h" ]; then
@@ -86,13 +100,13 @@ if [ -n "$rl_5h" ]; then
     t=$(date -r "$rl_5h_reset" '+%H:%M' 2>/dev/null)
     [ -n "$t" ] && reset_5h="↻${t}"
   fi
-  rate_info="${rate_info}$(_rl_color "$rem_5h")5h:${rem_5h}%${reset_5h}\033[0m"
+  rate_info="${rate_info}$(_rl_color "$rem_5h")5h:${rem_5h}%${reset_5h}${rst}"
 fi
 if [ -n "$rl_7d" ]; then
   rem_7d=$(printf '%.0f' "$(echo "$rl_7d" | awk '{print 100 - $1}')")
   reset_7d=""
   if [ -n "$rl_7d_reset" ]; then
-    # Same-day -> HH:MM; otherwise "Day HH:MM" (7d window can be days away)
+    # Same-day -> HH:MM; otherwise "Day HH:MM" (7d window can be days out)
     today=$(date '+%Y%m%d')
     reset_day=$(date -r "$rl_7d_reset" '+%Y%m%d' 2>/dev/null)
     if [ "$reset_day" = "$today" ]; then
@@ -103,33 +117,36 @@ if [ -n "$rl_7d" ]; then
     [ -n "$t" ] && reset_7d="↻${t}"
   fi
   [ -n "$rate_info" ] && rate_info="${rate_info} "
-  rate_info="${rate_info}$(_rl_color "$rem_7d")7d:${rem_7d}%${reset_7d}\033[0m"
+  rate_info="${rate_info}$(_rl_color "$rem_7d")7d:${rem_7d}%${reset_7d}${rst}"
 fi
 
-# --- assemble status line ---
-# order: dir  git  [worktree]  model  [agent]  [session]  [style]  ctx  usage
-line=$(printf '\033[2m%s\033[0m' "$dir_name")
+# --- assemble: dir  git  [worktree]  model  [agent]  [session]  [style]  ctx  usage ---
+line="${dim}${dir_name}${rst}"
 [ -n "$git_info" ] && line="${line}  ${git_info}"
+
+# Worktree: prefer the --worktree-session fields (they carry a branch); fall back
+# to workspace.git_worktree, which is populated for any linked git worktree.
+wt_label=""
 if [ -n "$worktree_name" ]; then
-  wt_label="${worktree_name}"
+  wt_label="$worktree_name"
   [ -n "$worktree_branch" ] && wt_label="${worktree_name}:${worktree_branch}"
-  line="${line}  $(printf '\033[35m⎇ %s\033[0m' "$wt_label")"
+elif [ -n "$ws_git_worktree" ]; then
+  wt_label="$ws_git_worktree"
 fi
-line="${line}  \033[36m${model_name}\033[0m"
-[ -n "$agent_name" ] && line="${line}  $(printf '\033[35m@%s\033[0m' "$agent_name")"
-[ -n "$session_name" ] && line="${line}  $(printf '\033[2m{%s}\033[0m' "$session_name")"
-if [ -n "$output_style" ]; then
-  line="${line}  $(printf '\033[2m[%s]\033[0m' "$output_style")"
-fi
+[ -n "$wt_label" ] && line="${line}  ${mag}⎇ ${wt_label}${rst}"
+
+line="${line}  ${cyan}${model_name}${rst}"
+[ -n "$agent_name" ] && line="${line}  ${mag}@${agent_name}${rst}"
+[ -n "$session_name" ] && line="${line}  ${dim}{${session_name}}${rst}"
+[ -n "$output_style" ] && line="${line}  ${dim}[${output_style}]${rst}"
 if [ -n "$remaining" ]; then
+  rem=$(printf '%.0f' "$remaining")
   if [ -n "$ctx_warning" ]; then
-    # Red when context exceeds 200k tokens
-    line="${line}  $(printf '\033[31mctx:%s%%\033[0m' "$(printf '%.0f' "$remaining")")"
+    line="${line}  ${red}ctx:${rem}%${rst}"
   else
-    line="${line}  $(printf '\033[2mctx:%s%%\033[0m' "$(printf '%.0f' "$remaining")")"
+    line="${line}  ${dim}ctx:${rem}%${rst}"
   fi
 fi
-if [ -n "$rate_info" ]; then
-  line="${line}  ${rate_info}"
-fi
-printf '%b' "$line"
+[ -n "$rate_info" ] && line="${line}  ${rate_info}"
+
+printf '%s' "$line"
