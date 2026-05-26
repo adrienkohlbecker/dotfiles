@@ -52,5 +52,11 @@ export PATH="$HOME/.zsh/fzf/bin:$PATH"
 # local binaries
 export PATH="$HOME/.local/bin:$PATH"
 
+# dotfiles bare-repo wrapper — a function (not a .zshrc alias) so it resolves in
+# non-interactive shells and scripts too; aliases are only expanded interactively.
+dotfiles() {
+  /usr/bin/env git -C "$HOME" --git-dir="$HOME/.dotfiles" --work-tree="$HOME" "$@"
+}
+
 # Machine-local overrides (untracked, not in the dotfiles repo)
 [ -f ~/.zshenv.local ] && source ~/.zshenv.local

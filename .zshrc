@@ -59,7 +59,7 @@ bindkey "^[[B" history-beginning-search-forward
 # command aliases
 alias history="builtin fc -l -i -D"
 alias tig="command tig status"
-alias dotfiles='/usr/bin/env git -C $HOME --git-dir=$HOME/.dotfiles --work-tree=$HOME'
+# `dotfiles` is a function in ~/.zshenv (works in non-interactive shells too).
 alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME tig status'
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
