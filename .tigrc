@@ -7,9 +7,9 @@ bind status + !git commit --amend
 bind status P !gh pr create --web
 bind status L !glab mr create --remove-source-branch
 
-# remove file
-bind status D @rm %(file)
-bind stage D @rm %(file)
+# remove file (confirm first — rm is irreversible for untracked files)
+bind status D ?@rm %(file)
+bind stage D ?@rm %(file)
 
 bind status = !git roomba
 bind status B !git rebase --continue
@@ -29,8 +29,17 @@ bind refs C ?@git checkout %(branch)
 bind generic S !git push %(branch)
 bind status S !git push
 
-bind generic F !git push --force-with-lease -u origin %(branch)
-bind status F !git push --force-with-lease -u origin
+# force-push: confirm first, and only from refs (selected branch) or status
+# (current branch) — not every view, since it rewrites remote history
+bind refs F ?!git push --force-with-lease -u origin %(branch)
+bind status F ?!git push --force-with-lease -u origin
 
 # don't show contents of untracked directories
 set status-show-untracked-dirs = false
+
+# distinguish ref types in the views: [branch] <tag> {remote}
+set reference-format = "[branch] <tag> {remote}"
+# wrap long lines (e.g. commit subjects) instead of truncating them
+set wrap-lines = true
+# enable mouse scroll / selection
+set mouse = true
