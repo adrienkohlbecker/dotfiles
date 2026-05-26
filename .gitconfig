@@ -16,9 +16,8 @@
 	recent-branches = ! git for-each-ref --sort=-committerdate --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' --color=always refs/heads/ | grep Kohlbecker | cut -d, -f2 | head -n10
 
 [core]
-  # Use custom `.gitignore` and `.gitattributes`
+  # Use custom `.gitignore`
 	excludesfile = ~/.gitignore
-	attributesfile = ~/.gitattributes
 	# Cache untracked-file scan results (no daemon; safe even for the $HOME-work-tree
 	# dotfiles repo). core.fsmonitor deliberately NOT set globally: its daemon would
 	# try to watch all of $HOME via the dotfiles bare repo. Enable per-repo if wanted.
@@ -46,7 +45,8 @@
   autocorrect = prompt
 [diff]
   algorithm = histogram
-  colorMoved = plain
+  colorMoved = zebra
+  colorMovedWS = allow-indentation-change
   mnemonicPrefix = true
   renames = true
 [commit]
@@ -68,6 +68,7 @@
   autoSquash = true
   autoStash = true
   updateRefs = true
+  missingCommitsCheck = warn
 [branch]
   sort = -committerdate
 [tag]
