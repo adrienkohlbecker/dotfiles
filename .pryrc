@@ -1,14 +1,15 @@
 # Editor for the `edit` command (vim, mvim, mate, emacsclient, ...).
-Pry.config.editor = 'vim'
+Pry.config.editor = ENV.fetch('EDITOR', 'vim')
 
-# Load Rails console helpers when running inside a Rails app.
+# Load Rails console helpers when running inside a Rails app. Only the
+# gem-namespaced rails/console/* paths — never bare 'console_app' /
+# 'console_with_helpers', which a malicious checkout could shadow from CWD.
 if defined?(Rails)
   begin
     require 'rails/console/app'
     require 'rails/console/helpers'
   rescue LoadError
-    require 'console_app'
-    require 'console_with_helpers'
+    warn 'pry: Rails console helpers unavailable'
   end
 end
 
@@ -20,10 +21,16 @@ Pry.config.ls.public_method_color = :green
 Pry.config.ls.protected_method_color = :yellow
 Pry.config.ls.private_method_color = :bright_black
 
-# awesome_print: colorized pretty-printing for all pry output, when available.
+# Colorized pretty-printing for all pry output. Prefer amazing_print (the
+# maintained successor); both expose the same .ai method. Degrade silently.
 begin
-  require 'awesome_print'
+  require 'amazing_print'
   Pry.config.print = proc { |output, value| output.puts value.ai }
 rescue LoadError
-  puts 'gem install awesome_print  # <-- highly recommended'
+  begin
+    require 'awesome_print'
+    Pry.config.print = proc { |output, value| output.puts value.ai }
+  rescue LoadError
+    warn 'gem install amazing_print  # <-- highly recommended'
+  end
 end
