@@ -27,6 +27,10 @@
 	# dotfiles repo). core.fsmonitor deliberately NOT set globally: its daemon would
 	# try to watch all of $HOME via the dotfiles bare repo. Enable per-repo if wanted.
 	untrackedCache = true
+	# delta as the pager (installed fleet-wide via mise). Safe everywhere: git only
+	# invokes the pager on an interactive TTY, where mise has put delta on PATH;
+	# scripts/cron (no TTY) skip the pager, so a delta-less context never breaks.
+	pager = delta
 [index]
 	# Skip the index trailing checksum — cheaper add/commit/status on the large
 	# $HOME-work-tree index. Honored on git >= 2.40; silently ignored on older.
@@ -56,6 +60,12 @@
   colorMoved = zebra
   colorMovedWS = allow-indentation-change
   mnemonicPrefix = true
+[interactive]
+  diffFilter = delta --color-only
+[delta]
+  navigate = true
+  line-numbers = true
+  hyperlinks = true
 [commit]
 	gpgsign = true
   verbose = true
