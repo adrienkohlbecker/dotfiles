@@ -62,8 +62,9 @@ if command -v bat >/dev/null 2>&1; then
   export MANROFFOPT="-c"
 fi
 
-# fzf
-export PATH="$HOME/.zsh/fzf/bin:$PATH"
+# fzf env. The fzf binary + keybindings come from mise (see ~/.config/mise/
+# config.toml and the `fzf --zsh` eval in .zshrc), not the old ~/.zsh/fzf
+# submodule, so no PATH entry is needed here.
 # Use fd as fzf's file/dir source (gitignore-aware, skips .git). Guarded: fd is a
 # mac-only install; without it fzf falls back to its built-in walker.
 if command -v fd >/dev/null 2>&1; then

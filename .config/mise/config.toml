@@ -2,10 +2,17 @@
 # mise config, loaded everywhere (workstation + Linux fleet), so a bare
 # `mise install` on a server installs exactly these — no apt name quirks like
 # fdfind/batcat, no per-release gaps (e.g. jammy's ancient zoxide 0.4.3).
-# fd/bat/zoxide/atuin/delta use the aqua backend (prebuilt, checksum- and
+# Everything except eza uses the aqua backend (prebuilt, checksum- and
 # attestation-verified). Language runtimes are NOT here: they live in the
 # mac-only config.mac.toml (loaded via MISE_ENV=mac), kept off the fleet because
 # ruby compiles from source via ruby-build and the servers lack the build deps.
+#
+# fzf, ripgrep, jq and uv back interactive shell pieces in the dotfiles (the
+# atuin Ctrl-R widget, the csearch transcript browser, the statusline and the
+# aws/minio credential_process helpers). fzf now comes from here for the shell
+# (binary + `fzf --zsh` keybindings/completion, wired in .zshrc after `mise
+# activate`); the ~/.zsh/fzf git submodule it superseded is kept only for vim's
+# fzf.vim plugin (rtp+= in .vimrc), whose `fzf` calls resolve to this mise copy.
 #
 # eza is pinned to the asdf plugin, not aqua/ubi/github: eza ships no macOS
 # release asset, so every GitHub-asset backend fails on darwin. The asdf plugin
@@ -19,6 +26,10 @@ bat = "0.26.1"
 zoxide = "0.9.9"
 atuin = "18.16.1"
 delta = "0.19.2"
+fzf = "0.73.1"
+ripgrep = "15.1.0"
+jq = "1.8.1"
+uv = "0.11.16"
 "asdf:mise-plugins/mise-eza" = "0.23.4"
 
 [settings]

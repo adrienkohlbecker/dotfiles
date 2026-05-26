@@ -1,9 +1,5 @@
 # .zshrc Loaded after .zshenv and .zprofile for interactive shells. This is you at the terminal. A better default dotfile for certain updates, such as PROMPT, because this is the only time PROMPT really matters.
 
-# fzf: bootstrap-install on first run (guarded so a not-yet-checked-out submodule
-# doesn't error). Sourced lower down, after compinit, since it registers compdefs.
-[ -f ~/.fzf.zsh ] || [ ! -x "$HOME/.zsh/fzf/install" ] || "$HOME/.zsh/fzf/install" --no-update-rc --no-bash --no-fish --completion --key-bindings
-
 # support comments in shell commands
 setopt interactivecomments
 
@@ -65,17 +61,14 @@ if command -v eza >/dev/null 2>&1; then
   alias lt='eza --tree --level=2 --group-directories-first --icons=auto'
 fi
 
-# yazi (TUI file manager): the `y` wrapper cd's the shell to wherever you exited
-# in yazi (plain `yazi` leaves you in the original dir). Guarded — mac-only install.
-if command -v yazi >/dev/null 2>&1; then
-  y() {
-    local tmp cwd
-    tmp="$(mktemp -t yazi-cwd.XXXXXX)"
-    yazi "$@" --cwd-file="$tmp"
-    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-      builtin cd -- "$cwd"
-    fi
-    rm -f -- "$tmp"
+# mtmux <host> [session] — mosh in and attach (or create) a persistent tmux
+# session on the host, so a dropped link never loses the session. mosh keeps the
+# transport alive across roaming/sleep; tmux survives a hard disconnect. Guarded:
+# mosh is a mac-only install.
+if command -v mosh >/dev/null 2>&1; then
+  mtmux() {
+    local host=${1:?usage: mtmux <host> [session]} session=${2:-main}
+    mosh "$host" -- tmux new-session -A -s "$session"
   }
 fi
 
@@ -109,13 +102,31 @@ else
   compinit -C
 fi
 
-# fzf keybindings/completion (after compinit; defines __fzfcmd, reused by the
-# atuin widget below).
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# mise must activate before the inits below — zoxide and atuin are now
+# mise must activate before the inits below — fzf, zoxide and atuin are all
 # mise-managed, so their binaries are only on PATH after activation runs.
 eval "$(mise activate zsh)"
+
+# fzf keybindings + completion. Must come after `mise activate` (fzf is now
+# mise-provided, on PATH only post-activation) and before the atuin widget
+# below, which reuses fzf's __fzfcmd. `fzf --zsh` replaces the old ~/.zsh/fzf
+# submodule's generated ~/.fzf.zsh.
+command -v fzf >/dev/null && eval "$(fzf --zsh)"
+
+# yazi (TUI file manager): the `y` wrapper cd's the shell to wherever you exited
+# in yazi (plain `yazi` leaves you in the original dir). Defined here, after
+# `mise activate`, rather than next to the eza aliases above — yazi is a mise-only
+# install with no brew fallback, so the guard only passes once mise is on PATH.
+if command -v yazi >/dev/null 2>&1; then
+  y() {
+    local tmp cwd
+    tmp="$(mktemp -t yazi-cwd.XXXXXX)"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+      builtin cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+  }
+fi
 
 # --cmd cd shadows `cd`: every cd trains the db, `cd <partial>` frecency-jumps to
 # the best match, and `cdi` opens an fzf picker over visited dirs.
@@ -125,8 +136,8 @@ eval "$(zoxide init zsh --cmd cd)"
 eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
 
 # Replace stock fzf-history-widget with the atuin-backed one (Ctrl-R search,
-# Ctrl-O cycles atuin filter modes). Must come after ~/.fzf.zsh so __fzfcmd
-# is defined; the widget reuses it.
+# Ctrl-O cycles atuin filter modes). Must come after the `fzf --zsh` eval above
+# so __fzfcmd is defined; the widget reuses it.
 source "$HOME/.zsh/fzf-atuin-widget.zsh"
 
 # csearch <keyword> — fzf picker over Claude Code session transcripts.
