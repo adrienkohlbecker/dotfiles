@@ -13,10 +13,14 @@ if [[ $(uname) == 'Darwin' ]]; then
   export INFOPATH=""
   eval $(/usr/libexec/path_helper -s)
 
-  export HOMEBREW_PREFIX=""
-  export HOMEBREW_CELLAR=""
-  export HOMEBREW_REPOSITORY=""
-  eval "$($HOMEBREW_PATH/bin/brew shellenv)"
+  # Skip on a brew-less host (e.g. a fresh Mac) so we keep path_helper's system
+  # PATH instead of spewing "no such file" from the eval on every shell.
+  if [ -x "$HOMEBREW_PATH/bin/brew" ]; then
+    export HOMEBREW_PREFIX=""
+    export HOMEBREW_CELLAR=""
+    export HOMEBREW_REPOSITORY=""
+    eval "$($HOMEBREW_PATH/bin/brew shellenv)"
+  fi
 
   # unprefixed utils
   export PATH="$HOMEBREW_PATH/opt/findutils/libexec/gnubin:$PATH"
@@ -34,7 +38,7 @@ if [[ $(uname) == 'Darwin' ]]; then
   # LM Studio CLI (lms)
   export PATH="$PATH:$HOME/.lmstudio/bin"
 
-  source "$HOMEBREW_PATH/share/google-cloud-sdk/path.zsh.inc"
+  [ -f "$HOMEBREW_PATH/share/google-cloud-sdk/path.zsh.inc" ] && source "$HOMEBREW_PATH/share/google-cloud-sdk/path.zsh.inc"
 
   # On macOS, /etc/zprofile reorders the path by executing path_helper. The following lines, coupled with code in ~/.zprofile,
   # ensure that the PATH we set in this file take precedence
