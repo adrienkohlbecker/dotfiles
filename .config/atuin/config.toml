@@ -16,28 +16,36 @@ filter_mode = "session"
 ## Max lines the interactive UI occupies.
 inline_height = 14
 
+## Follow the shell's keymap (vi vs emacs) for the search UI bindings.
+keymap_mode = "auto"
+
+## Context lines kept around the selected entry in the inline UI.
+scroll_context_lines = 1
+
 ## Hide the search/inspect tabs row.
 show_tabs = false
 
 ## Enter edits the command in the prompt rather than executing immediately.
 enter_accept = false
 
-## Redaction. secrets_filter (default on, but pinned here) catches AWS/GitHub/
-## Slack/Stripe shapes; history_filter additionally drops no-op commands and
-## anything carrying an obvious credential before it reaches the SQLite store.
+## Redaction. secrets_filter (default on, pinned here as the SOLE secret guard)
+## catches AWS/GitHub/Slack/Stripe shapes before they reach the SQLite store.
+## history_filter below only declutters no-op commands — it is NOT a secret
+## filter: a whole-line-drop regex can't reliably catch every credential shape
+## (--password=x, lowercase api_key=, URL creds, X-Api-Key: ...), so don't lean
+## on it — keep secrets out of argv (use *_FILE / stdin) instead.
 secrets_filter = true
 history_filter = [
     "^(ls|ll|la|pwd|clear|cd|(cd -)|(cd ..)|tig|dotfiles-tig|claude|exit|(podman ps)|(echo $?)|(git remote -v)|(git br))$",
-    "(--?password|--?token|_TOKEN=|_SECRET=|Authorization:|Bearer |op://)",
 ]
-
-[sync]
-## Sync v2 record format.
-records = true
 
 [search]
 ## Enabled filter modes in priority order; [0] is the startup default.
 filters = [ "session", "workspace", "directory", "host" ]
+
+[stats]
+## Group `atuin stats` by the real command, not the wrapper binary.
+common_subcommands = [ "git", "podman", "mise", "cargo", "go" ]
 
 [ai]
 enabled = false
