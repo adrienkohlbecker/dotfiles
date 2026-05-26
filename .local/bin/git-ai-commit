@@ -23,7 +23,7 @@ context=$(
   git log --oneline -15
 )
 
-msg=$(printf '%s\n' "$context" | claude --print --model haiku 'A git diff of staged changes followed by recent commit subjects is provided on stdin. Write a commit message for those staged changes.
+msg=$(printf '%s\n' "$context" | claude --print --model haiku --no-session-persistence 'A git diff of staged changes followed by recent commit subjects is provided on stdin. Write a commit message for those staged changes.
 
 Match the repository'\''s existing subject style and any role/scope prefix convention visible in the recent subjects.
 
