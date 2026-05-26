@@ -72,6 +72,11 @@ if command -v fd >/dev/null 2>&1; then
   export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
 fi
 
+# tealdeer (tldr): keep its config at the XDG path so it's dotfiles-tracked.
+# macOS otherwise defaults to ~/Library/Application Support/tealdeer/. Harmless
+# where tealdeer isn't installed (the fleet); it's just an unread env var there.
+export TEALDEER_CONFIG_DIR="$HOME/.config/tealdeer"
+
 # local binaries
 export PATH="$HOME/.local/bin:$PATH"
 

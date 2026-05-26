@@ -1,10 +1,17 @@
 # macOS-only mise tools, loaded via MISE_ENV=mac (set in ~/.zshenv's Darwin
-# block). Language runtimes live here, not in the global config.toml, so a bare
-# `mise install` on the Linux fleet installs only the cross-platform CLI tools —
-# ruby in particular compiles from source via ruby-build and the servers lack
-# the build deps. Develop-time language pins belong on the workstation.
+# block). Two kinds live here, both kept off the Linux fleet so a bare
+# `mise install` on a server installs only the cross-platform CLI tools from
+# config.toml:
+#   - Language runtimes — ruby in particular compiles from source via ruby-build
+#     and the servers lack the build deps; dev-time pins belong on the workstation.
+#   - Interactive/personal CLI tools — TUIs and helpers wanted only at the
+#     workstation, not on headless hosts. (tmux uses tmux-builds' static
+#     binaries, so no source compile despite its C deps.)
 [tools]
 python = "3.14.0"
 ruby = "3.3.5"
 node = "24.11.1"
 go = "1.25.4"
+tmux = "3.6b"
+yazi = "26.5.6"
+"aqua:tealdeer-rs/tealdeer" = "1.8.1"

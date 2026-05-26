@@ -65,6 +65,20 @@ if command -v eza >/dev/null 2>&1; then
   alias lt='eza --tree --level=2 --group-directories-first --icons=auto'
 fi
 
+# yazi (TUI file manager): the `y` wrapper cd's the shell to wherever you exited
+# in yazi (plain `yazi` leaves you in the original dir). Guarded — mac-only install.
+if command -v yazi >/dev/null 2>&1; then
+  y() {
+    local tmp cwd
+    tmp="$(mktemp -t yazi-cwd.XXXXXX)"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+      builtin cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+  }
+fi
+
 # Prompt theme
 fpath+=("$HOME/.zsh/pure")
 autoload -U promptinit

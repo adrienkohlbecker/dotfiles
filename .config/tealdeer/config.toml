@@ -1,0 +1,8 @@
+# tealdeer (tldr) config. Lives at the XDG path via TEALDEER_CONFIG_DIR (set in
+# ~/.zshenv) rather than macOS's ~/Library/Application Support default, so it's
+# dotfiles-tracked. Only non-default settings are kept here.
+
+# Refresh the page cache in the background (default cadence: 720h / 30 days)
+# instead of erroring until a manual `tldr --update`.
+[updates]
+auto_update = true
