@@ -1,0 +1,5 @@
+bundler
+awesome_print
+rubocop
+rubocop-rspec
+rubocop-rails
