@@ -3,5 +3,17 @@ set -euo pipefail
 
 # Draft a commit message from the staged changes with claude (haiku) and open it
 # in $EDITOR for review before committing. Bound to "E" in tig (status + stage views).
-claude --print --model haiku 'Build commit message from changes staged in git in the current directory. Ignore unstaged changes. Do not mention Claude. Limit commit title to approximately 50 characters. If more explanation is needed, add a blank line below the title, and use a list to add more information, hard-wrapped to 72 characters. Be concise. Output only the commit message, in plain text.' |
+# The backticks inside the prompt are literal instructions for claude, not shell
+# command substitution — keep the prompt single-quoted.
+# shellcheck disable=SC2016
+claude --print --model haiku 'Write a git commit message for the currently staged changes.
+
+First inspect them with `git diff --staged` (ignore unstaged changes), and skim `git log --oneline -15` to match this repository'\''s existing subject style and any role/scope prefix convention.
+
+Rules:
+- Subject: imperative mood, capitalized, no trailing period, ~50 chars (72 hard max), naming what changed.
+- For non-trivial changes add a blank line then a body wrapped at 72 columns explaining the what and, more importantly, the why/motivation and any context a reviewer needs. Prefer prose; use a bullet list only when there are several independent changes. Omit the body entirely for trivial changes.
+- Do not mention Claude, AI, or that the message was generated.
+
+Output only the raw commit message as plain text: no surrounding quotes, no code fences, no commentary.' |
   git commit --gpg-sign --file=- --edit
