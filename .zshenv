@@ -55,8 +55,22 @@ fi
 # editor
 export EDITOR=vim
 
+# Colorized man pages via bat (guarded: bat is a mac-only install here; jammy
+# keeps the default pager). MANROFFOPT=-c fixes groff formatting under bat.
+if command -v bat >/dev/null 2>&1; then
+  export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+  export MANROFFOPT="-c"
+fi
+
 # fzf
 export PATH="$HOME/.zsh/fzf/bin:$PATH"
+# Use fd as fzf's file/dir source (gitignore-aware, skips .git). Guarded: fd is a
+# mac-only install; without it fzf falls back to its built-in walker.
+if command -v fd >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
+fi
 
 # local binaries
 export PATH="$HOME/.local/bin:$PATH"
