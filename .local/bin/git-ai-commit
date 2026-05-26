@@ -10,12 +10,22 @@ fi
 
 # Draft a commit message from the staged changes with claude (haiku) and open it
 # in $EDITOR for review before committing. Bound to "E" in tig (status + stage views).
-# The backticks inside the prompt are literal instructions for claude, not shell
-# command substitution — keep the prompt single-quoted.
-# shellcheck disable=SC2016
-msg=$(claude --print --model haiku 'Write a git commit message for the currently staged changes.
+#
+# The staged diff and recent log are computed here and piped to claude on stdin,
+# rather than letting claude shell out to git itself: this keeps the draft scoped
+# to the exact staged changes this script commits (one process, one cwd — tig may
+# launch us from a subdirectory) and avoids a tool-permission prompt stalling
+# inside the tig keybind.
+context=$(
+  printf '=== staged changes (git diff --staged) ===\n'
+  git diff --staged
+  printf '\n=== recent commit subjects (git log --oneline -15) ===\n'
+  git log --oneline -15
+)
 
-First inspect them with `git diff --staged` (ignore unstaged changes), and skim `git log --oneline -15` to match this repository'\''s existing subject style and any role/scope prefix convention.
+msg=$(printf '%s\n' "$context" | claude --print --model haiku 'A git diff of staged changes followed by recent commit subjects is provided on stdin. Write a commit message for those staged changes.
+
+Match the repository'\''s existing subject style and any role/scope prefix convention visible in the recent subjects.
 
 Rules:
 - Subject: imperative mood, capitalized, no trailing period, ~50 chars (72 hard max), naming what changed.
@@ -24,9 +34,15 @@ Rules:
 
 Output only the raw commit message as plain text: no surrounding quotes, no code fences, no commentary.')
 
-if [ -z "$msg" ]; then
+if [ -z "${msg//[[:space:]]/}" ]; then
   echo "git-ai-commit: claude returned an empty draft" >&2
   exit 1
 fi
 
-printf '%s\n' "$msg" | git commit --gpg-sign --file=- --edit
+# Open the draft in $EDITOR for review (signing follows the repo's commit.gpgsign
+# config). Clearing the buffer to bail makes git exit non-zero with no commit —
+# treat that as a clean cancel rather than letting set -e report a script failure.
+if ! printf '%s\n' "$msg" | git commit --file=- --edit; then
+  echo "git-ai-commit: aborted (empty message)" >&2
+  exit 0
+fi
