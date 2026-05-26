@@ -60,11 +60,12 @@ csearch() {
   )
   [[ -z "$picked" ]] && return 0
 
-  # picked = "<filepath>\t<cwd>\t<display>"
-  local filepath
-  filepath=$(print -r -- "$picked" | cut -f1)
-  local cwd
-  cwd=$(print -r -- "$picked" | cut -f2)
+  # picked = "<filepath>\t<cwd>\t<display>"; split on tab in-shell rather than
+  # forking two `cut` subshells per selection.
+  local -a fields
+  fields=("${(@ps:\t:)picked}")
+  local filepath=$fields[1]
+  local cwd=$fields[2]
   local uuid="${${filepath:t}:r}"
 
   if [[ -d "$cwd" ]]; then
