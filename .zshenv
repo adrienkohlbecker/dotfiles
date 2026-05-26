@@ -40,6 +40,11 @@ if [[ $(uname) == 'Darwin' ]]; then
 
   [ -f "$HOMEBREW_PATH/share/google-cloud-sdk/path.zsh.inc" ] && source "$HOMEBREW_PATH/share/google-cloud-sdk/path.zsh.inc"
 
+  # Load the mac-only language pins (~/.config/mise/config.mac.toml). The fleet
+  # leaves MISE_ENV unset, so a bare `mise install` there sees only the
+  # cross-platform CLI tools in config.toml — never the source-compiled ruby.
+  export MISE_ENV=mac
+
   # On macOS, /etc/zprofile reorders the path by executing path_helper. The following lines, coupled with code in ~/.zprofile,
   # ensure that the PATH we set in this file take precedence
   typeset -U path

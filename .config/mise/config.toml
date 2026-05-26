@@ -1,0 +1,22 @@
+# Cross-platform CLI utilities the shell config depends on. This is the global
+# mise config, loaded everywhere (workstation + Linux fleet), so a bare
+# `mise install` on a server installs exactly these — no apt name quirks like
+# fdfind/batcat, no per-release gaps (e.g. jammy's ancient zoxide 0.4.3).
+# fd/bat/zoxide/atuin/delta use the aqua backend (prebuilt, checksum- and
+# attestation-verified). Language runtimes are NOT here: they live in the
+# mac-only config.mac.toml (loaded via MISE_ENV=mac), kept off the fleet because
+# ruby compiles from source via ruby-build and the servers lack the build deps.
+#
+# eza is pinned to the asdf plugin, not aqua/ubi/github: eza ships no macOS
+# release asset, so every GitHub-asset backend fails on darwin. The asdf plugin
+# downloads prebuilt binaries on both platforms (Linux: eza's official release;
+# macOS: cargo-quickinstall's), but unlike aqua it does NOT verify a checksum —
+# an accepted pragmatic gap. Pinned to the explicit backend so resolution can't
+# drift to the darwin-broken aqua one.
+[tools]
+fd = "10.4.2"
+bat = "0.26.1"
+zoxide = "0.9.9"
+atuin = "18.16.1"
+delta = "0.19.2"
+"asdf:mise-plugins/mise-eza" = "0.23.4"

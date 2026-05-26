@@ -1,0 +1,10 @@
+# macOS-only mise tools, loaded via MISE_ENV=mac (set in ~/.zshenv's Darwin
+# block). Language runtimes live here, not in the global config.toml, so a bare
+# `mise install` on the Linux fleet installs only the cross-platform CLI tools —
+# ruby in particular compiles from source via ruby-build and the servers lack
+# the build deps. Develop-time language pins belong on the workstation.
+[tools]
+python = "3.14.0"
+ruby = "3.3.5"
+node = "24.11.1"
+go = "1.25.4"
