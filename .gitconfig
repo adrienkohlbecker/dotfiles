@@ -9,10 +9,10 @@
   cp = cherry-pick
   # merge without fast forward
   noff = merge --no-ff
-  # delete branch already merger into master
-  roomba = "!git checkout -q $(git dfb) && git pull && git branch --merged $(git dfb) | grep -v $(git dfb) | grep -v '\\*' | xargs -r -n 1 git branch -d"
-  # get default branch (bare name, e.g. "master")
-  dfb = "!git rev-parse --abbrev-ref origin/HEAD | cut -d/ -f2-"
+  # delete branches already merged into the default branch
+  roomba = "!git checkout -q \"$(git dfb)\" && git pull && git branch --merged \"$(git dfb)\" --format='%(refname:short)' | grep -vx \"$(git dfb)\" | xargs -r -I{} git branch -d -- {}"
+  # get default branch (bare name, e.g. "master"); self-heal a missing origin/HEAD
+  dfb = "!git symbolic-ref -q refs/remotes/origin/HEAD >/dev/null 2>&1 || git remote set-head origin --auto >/dev/null 2>&1; git rev-parse --abbrev-ref origin/HEAD | cut -d/ -f2-"
 	recent-branches = ! git for-each-ref --sort=-committerdate --format='%(authorname),%(color:bold yellow)%(refname:short)%(color:reset) (%(color:bold magenta)%(committerdate:relative)%(color:reset)) %(color:cyan)%(objectname:short)%(color:reset) - %(color:dim white)%(contents:subject)%(color:reset)' --color=always refs/heads/ | grep Kohlbecker | cut -d, -f2 | head -n10
 
 [core]
