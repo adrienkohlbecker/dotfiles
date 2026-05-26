@@ -57,6 +57,13 @@ alias tig="command tig status"
 # `dotfiles` is a function in ~/.zshenv (works in non-interactive shells too).
 alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME tig status'
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
+# eza (modern ls) — guarded: mac-only install, jammy keeps coreutils ls.
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --group-directories-first --icons=auto'
+  alias ll='eza -lah --group-directories-first --icons=auto --git'
+  alias la='eza -a --group-directories-first --icons=auto'
+  alias lt='eza --tree --level=2 --group-directories-first --icons=auto'
+fi
 
 # Prompt theme
 fpath+=("$HOME/.zsh/pure")
