@@ -1,3 +1,10 @@
+# Opt into new cops on upgrade rather than the per-run "not enabled" nag.
+# TargetRubyVersion intentionally unset: this global config is inherited by
+# every project, and pinning it here would suppress per-project .ruby-version
+# autodetection.
+AllCops:
+  NewCops: enable
+
 Layout/LineLength:
   Enabled: false
 
