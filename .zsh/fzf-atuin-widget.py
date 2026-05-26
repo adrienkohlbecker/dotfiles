@@ -98,12 +98,23 @@ def build(mode: str) -> None:
                   "\n".join(lines))
 
     # pygments is imported here (not at module top) so the `cycle` path —
-    # invoked on every Ctrl-O — doesn't pay the ~50ms highlighter import.
-    from pygments import highlight
-    from pygments.formatters import TerminalTrueColorFormatter
-    from pygments.lexers import BashLexer
-    lexer = BashLexer()
-    formatter = TerminalTrueColorFormatter(style="dracula")
+    # invoked on every Ctrl-O — doesn't pay the ~50ms highlighter import. If it
+    # can't be imported, fall back to plain rows so Ctrl-R still works (just
+    # uncolored) instead of failing the whole list. (A uv dependency-resolution
+    # failure happens before Python starts, so it can't be caught here.)
+    try:
+        from pygments import highlight
+        from pygments.formatters import TerminalTrueColorFormatter
+        from pygments.lexers import BashLexer
+
+        lexer = BashLexer()
+        formatter = TerminalTrueColorFormatter(style="dracula")
+
+        def render(cmd: str) -> str:
+            return highlight(cmd, lexer, formatter).rstrip("\n")
+    except ImportError:
+        def render(cmd: str) -> str:
+            return cmd
 
     # --cmd-only -r does NOT dedup non-interactively (verified: it returns
     # repeats), so the widget still dedups commands itself.
@@ -117,7 +128,7 @@ def build(mode: str) -> None:
         if cmd in seen:
             continue
         seen.add(cmd)
-        out.write(highlight(cmd, lexer, formatter).rstrip("\n").encode("utf-8"))
+        out.write(render(cmd).encode("utf-8"))
         out.write(b"\n")
 
 
