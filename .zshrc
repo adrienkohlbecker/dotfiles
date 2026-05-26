@@ -2,9 +2,13 @@
 
 source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
 source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
 
 [ -f ~/.fzf.zsh ] || $HOME/.zsh/fzf/install --no-update-rc --no-bash --no-fish --completion --key-bindings
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# support comments in shell commands
+setopt interactivecomments
 
 ## History file configuration
 [ -z "$HISTFILE" ] && HISTFILE="$HOME/.zsh_history"
@@ -21,6 +25,26 @@ setopt hist_ignore_space      # ignore commands that start with space
 setopt hist_verify            # show command with history expansion to user before running it
 setopt share_history          # share command history data
 setopt hist_reduce_blanks     # Remove superfluous blanks before recording entry.
+setopt hist_save_no_dups      # On flush to HISTFILE, drop entries already present (not just consecutive).
+setopt hist_no_store          # Don't record `history` / `fc` invocations themselves.
+setopt hist_fcntl_lock        # Use fcntl() locking on HISTFILE; safer than link()-based with share_history.
+
+# Strip trailing whitespace/newlines (e.g. from bracketed paste) before recording,
+# and drop a small allowlist of no-op commands not worth keeping.
+# hist_reduce_blanks only collapses internal runs, not trailing chars.
+zshaddhistory() {
+  emulate -L zsh
+  setopt extended_glob
+  local trimmed=${1%%[[:space:]]##}
+  case $trimmed in
+    ls|ll|la|pwd|clear|cd|'cd -'|'cd ..') return 1 ;;
+    tig|dotfiles-tig|claude|exit) return 1 ;;
+    'podman ps'|'echo $?'|'git remote -v'|'git br') return 1 ;;
+  esac
+  [[ $trimmed == $1 ]] && return 0
+  print -sr -- $trimmed
+  return 1
+}
 
 # Edit the current command line in $EDITOR
 autoload -U edit-command-line
@@ -65,9 +89,26 @@ if [[ $(uname) == 'DARWIN' ]]; then
   # End of LM Studio CLI section
 fi
 
+eval "$(zoxide init zsh)"
+
+eval "$(mise activate zsh)"
 fpath+=($HOME/.local/share/mise/completions $fpath)
+
+# atuin: SQLite-backed history.
+eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
+
+# Replace stock fzf-history-widget with the atuin-backed one (Ctrl-R search,
+# Ctrl-O cycles atuin filter modes). Must come after ~/.fzf.zsh so __fzfcmd
+# is defined; the widget reuses it.
+source "$HOME/.zsh/fzf-atuin-widget.zsh"
+
+# csearch <keyword> — fzf picker over Claude Code session transcripts.
+source "$HOME/.zsh/claude-search.zsh"
+
 # compinit
 autoload -Uz compinit
 compinit
 
-eval "$(mise activate zsh)"
+
+# Scaleway CLI autocomplete initialization.
+eval "$(scw autocomplete script shell=zsh)"

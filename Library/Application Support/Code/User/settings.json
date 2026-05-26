@@ -48,7 +48,6 @@
             120
         ]
     },
-    "terminal.integrated.enableMultiLinePasteWarning": false,
     "redhat.telemetry.enabled": false,
     "ruby.format": "rubocop",
     "go.toolsManagement.autoUpdate": true,
@@ -153,7 +152,8 @@
     "python.analysis.typeCheckingMode": "standard",
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "diffEditor.ignoreTrimWhitespace": true
     },
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.languageServerMode": "full",
@@ -168,7 +168,30 @@
         "-l",
         "250"
     ],
+    "remote.autoForwardPorts": false,
+    "python-envs.terminal.autoActivationType": "off",
     "editor.formatOnSave": true,
+    "claudeCode.preferredLocation": "panel",
+    "terminal.integrated.initialHint": false,
+    "window.confirmSaveUntitledWorkspace": false,
+    "task.allowAutomaticTasks": "on",
+    "window.confirmBeforeClose": "keyboardOnly",
     "claudeCode.useTerminal": true,
-    "remote.autoForwardPorts": false
+    "terminal.integrated.confirmOnExit": "hasChildProcesses",
+    "terminal.integrated.enableVisualBell": true,
+    "terminal.integrated.macOptionClickForcesSelection": true,
+    "terminal.integrated.persistentSessionScrollback": 1000,
+    "claudeCodeChat.environment.variables": {},
+    "terminal.integrated.profiles.linux": {
+        "zsh": {
+            "path": "/bin/zsh",
+            "args": ["-i"]
+        }
+    },
+    "terminal.integrated.profiles.osx": {
+        "zsh": {
+            "path": "/bin/zsh",
+            "args": ["-i"]
+        }
+    }
 }
