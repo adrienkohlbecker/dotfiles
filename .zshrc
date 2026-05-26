@@ -26,20 +26,14 @@ setopt hist_save_no_dups      # On flush to HISTFILE, drop entries already prese
 setopt hist_no_store          # Don't record `history` / `fc` invocations themselves.
 setopt hist_fcntl_lock        # Use fcntl() locking on HISTFILE; safer than link()-based with share_history.
 
-# Strip trailing whitespace/newlines (e.g. from bracketed paste) before recording,
-# and drop a small allowlist of no-op commands not worth keeping.
-# hist_reduce_blanks only collapses internal runs, not trailing chars.
-# The allowlist matches the *exact* trimmed string: `git br` is dropped but
-# `git branch` / `git br -a` are still recorded.
+# Strip trailing whitespace/newlines (e.g. from bracketed paste) before recording.
+# hist_reduce_blanks only collapses internal runs, not trailing chars. The no-op
+# command denylist lives solely in atuin's history_filter (~/.config/atuin/config.toml),
+# the backend Ctrl-R actually searches.
 zshaddhistory() {
   emulate -L zsh
   setopt extended_glob
   local trimmed=${1%%[[:space:]]##}
-  case $trimmed in
-    ls|ll|la|pwd|clear|cd|'cd -'|'cd ..') return 1 ;;
-    tig|dotfiles-tig|claude|exit) return 1 ;;
-    'podman ps'|'echo $?'|'git remote -v'|'git br') return 1 ;;
-  esac
   [[ $trimmed == $1 ]] && return 0
   print -sr -- $trimmed
   return 1
