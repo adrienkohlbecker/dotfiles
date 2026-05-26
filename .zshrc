@@ -92,9 +92,13 @@ fi
 # atuin widget below).
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# mise must activate before the inits below — zoxide and atuin are now
+# mise-managed, so their binaries are only on PATH after activation runs.
 eval "$(mise activate zsh)"
 
-eval "$(zoxide init zsh)"
+# --cmd cd shadows `cd`: every cd trains the db, `cd <partial>` frecency-jumps to
+# the best match, and `cdi` opens an fzf picker over visited dirs.
+eval "$(zoxide init zsh --cmd cd)"
 
 # atuin: SQLite-backed history.
 eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
