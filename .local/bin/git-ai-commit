@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Refuse to draft a message when nothing is staged — avoids an empty AI commit
+# (tig binds this in both status and stage views, where staging may be empty).
+if git diff --staged --quiet; then
+  echo "git-ai-commit: nothing staged" >&2
+  exit 1
+fi
+
 # Draft a commit message from the staged changes with claude (haiku) and open it
 # in $EDITOR for review before committing. Bound to "E" in tig (status + stage views).
 # The backticks inside the prompt are literal instructions for claude, not shell
