@@ -15,7 +15,7 @@
         "*.svg": "svgPreview.previewEditor",
         "*.tsv": "default"
     },
-    "security.workspace.trust.untrustedFiles": "open",
+    "security.workspace.trust.untrustedFiles": "prompt",
     "remote.SSH.remotePlatform": {
         "homelab": "linux"
     },
@@ -174,7 +174,7 @@
     "claudeCode.preferredLocation": "panel",
     "terminal.integrated.initialHint": false,
     "window.confirmSaveUntitledWorkspace": false,
-    "task.allowAutomaticTasks": "on",
+    "task.allowAutomaticTasks": "off",
     "window.confirmBeforeClose": "keyboardOnly",
     "claudeCode.useTerminal": true,
     "terminal.integrated.confirmOnExit": "hasChildProcesses",
