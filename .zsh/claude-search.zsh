@@ -34,17 +34,18 @@ csearch() {
   # Empty query → cached list-all. Non-empty → rg-filter to *.jsonl, then
   # format via the cached list-stdin path. {q} is fzf's current query;
   # rg -F treats it as a literal substring.
-  local reload="if [ -z {q} ]; then \"$helper\" list-all; else rg -l -i -F -g '*.jsonl' -- {q} \"$projects\" 2>/dev/null | \"$helper\" list-stdin; fi"
+  local reload="if [ -z {q} ]; then \"$helper\" list-all; else rg -l -i -F -g '*.jsonl' -- {q} \"$projects\" 2>/dev/null | \"$helper\" list-stdin; fi || :"
 
   local picked
   picked=$(
     : | fzf \
+          --with-shell 'sh -c' \
           --ansi \
           --disabled \
           --no-sort \
           --delimiter=$'\t' \
           --with-nth=3 \
-          --bind "start:reload:$reload" \
+          --bind "start:reload-sync:$reload" \
           --bind "change:reload(sleep 0.1; $reload)" \
           --preview="$helper preview {1} {q}" \
           --preview-window='right:55%:wrap:follow' \
