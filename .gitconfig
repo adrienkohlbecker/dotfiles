@@ -70,7 +70,8 @@
 	defaultBranch = master
 [merge]
   log = true
-  # diff3 (not zdiff3): zdiff3 needs git >= 2.35, Ubuntu jammy ships 2.34
+  # diff3 base (zdiff3 needs git >= 2.35, jammy ships 2.34); macOS opts up to
+  # zdiff3 via the gitdir:/Users/ includeIf at the bottom of this file
   conflictstyle = diff3
 [rebase]
   autoSquash = true
@@ -88,6 +89,10 @@
 	allowedSignersFile = ~/.ssh/allowed_signers
 [include]
   path = ~/.gitconfig.local
+# macOS-only overrides. Repos live under /Users/ on macOS (Linux uses /home/),
+# so this is an OS proxy — it never matches on jammy. Used to opt up to zdiff3.
+[includeIf "gitdir:/Users/"]
+  path = ~/.gitconfig.macos
 # Per-tree identity override (uncomment + create the file to use a work email
 # under ~/Work/, etc.):
 # [includeIf "gitdir:~/Work/"]

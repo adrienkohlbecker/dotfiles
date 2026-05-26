@@ -1,0 +1,5 @@
+# Loaded only for repos under /Users/ (macOS) via the includeIf in ~/.gitconfig.
+# macOS git is >= 2.35, so opt up to the better zdiff3 conflict style here while
+# the base ~/.gitconfig stays on diff3 for hosts with older git (jammy, 2.34).
+[merge]
+  conflictstyle = zdiff3
