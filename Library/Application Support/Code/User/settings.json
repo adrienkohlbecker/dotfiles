@@ -193,5 +193,6 @@
             "path": "/bin/zsh",
             "args": ["-i"]
         }
-    }
+    },
+    "editor.fontFamily": "MesloLGM Nerd Font Mono"
 }
