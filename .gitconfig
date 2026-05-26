@@ -58,7 +58,7 @@
 [user]
 	name = Adrien Kohlbecker
 	email = adrien.kohlbecker@gmail.com
-	signingkey = ~/.ssh/id_rsa.pub
+	signingkey = ~/.ssh/id_ed25519.pub
 [init]
 	defaultBranch = master
 [merge]
