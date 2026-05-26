@@ -2,10 +2,6 @@
 bind main B !git rebase -i %(commit)
 bind main ! !git revert %(commit)
 
-# Move in diff with arrow keys
-bind diff <Up> move-up
-bind diff <Down> move-down
-
 # Ammend commit
 bind status + !git commit --amend
 bind status P !gh pr create --web
