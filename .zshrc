@@ -92,9 +92,9 @@ fi
 # atuin widget below).
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-eval "$(zoxide init zsh)"
-
 eval "$(mise activate zsh)"
+
+eval "$(zoxide init zsh)"
 
 # atuin: SQLite-backed history.
 eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
