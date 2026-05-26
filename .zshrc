@@ -1,9 +1,5 @@
 # .zshrc Loaded after .zshenv and .zprofile for interactive shells. This is you at the terminal. A better default dotfile for certain updates, such as PROMPT, because this is the only time PROMPT really matters.
 
-source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
-source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
-
 [ -f ~/.fzf.zsh ] || $HOME/.zsh/fzf/install --no-update-rc --no-bash --no-fish --completion --key-bindings
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -20,10 +16,11 @@ setopt inc_append_history     # write immediately after each command
 setopt hist_find_no_dups      # don't show dups in Ctrl+R
 setopt extended_history       # record timestamp of command in HISTFILE
 setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
-setopt hist_ignore_dups       # ignore duplicated commands history list
+setopt hist_ignore_all_dups   # drop any older duplicate of a new entry, not just consecutive ones
 setopt hist_ignore_space      # ignore commands that start with space
 setopt hist_verify            # show command with history expansion to user before running it
 setopt share_history          # share command history data
+setopt hist_lex_words         # split entries into words lexically so dedup is correct across sessions
 setopt hist_reduce_blanks     # Remove superfluous blanks before recording entry.
 setopt hist_save_no_dups      # On flush to HISTFILE, drop entries already present (not just consecutive).
 setopt hist_no_store          # Don't record `history` / `fc` invocations themselves.
@@ -32,6 +29,8 @@ setopt hist_fcntl_lock        # Use fcntl() locking on HISTFILE; safer than link
 # Strip trailing whitespace/newlines (e.g. from bracketed paste) before recording,
 # and drop a small allowlist of no-op commands not worth keeping.
 # hist_reduce_blanks only collapses internal runs, not trailing chars.
+# The allowlist matches the *exact* trimmed string: `git br` is dropped but
+# `git branch` / `git br -a` are still recorded.
 zshaddhistory() {
   emulate -L zsh
   setopt extended_glob
@@ -70,29 +69,33 @@ autoload -U promptinit
 promptinit
 [ ! -d "$HOME/.zsh/pure" ] || prompt pure
 
-if [[ $(uname) == 'DARWIN' ]]; then
+if [[ $(uname) == 'Darwin' ]]; then
   ################################################################
-  # macOS specific settings
+  # macOS specific settings (interactive: completions + aliases)
+  # PATH/env for macOS lives in .zshenv so non-interactive shells get it too.
   ################################################################
 
-  source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
+  source "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc"
 
   # Brew completions
   fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
 
-  export PATH="/opt/homebrew/opt/dotnet@8/bin:$PATH"
-
   alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
+fi
 
-  # Added by LM Studio CLI (lms)
-  export PATH="$PATH:/Users/ak/.lmstudio/bin"
-  # End of LM Studio CLI section
+# Completion system — must run before the tool inits below (zoxide/mise/atuin/scw
+# all call compdef). Rebuild the dump at most once a day, otherwise load the cache.
+fpath+=($HOME/.local/share/mise/completions $fpath)
+autoload -Uz compinit
+if [[ -n ~/.zcompdump(Nmh+24) ]]; then
+  compinit
+else
+  compinit -C
 fi
 
 eval "$(zoxide init zsh)"
 
 eval "$(mise activate zsh)"
-fpath+=($HOME/.local/share/mise/completions $fpath)
 
 # atuin: SQLite-backed history.
 eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
@@ -105,10 +108,14 @@ source "$HOME/.zsh/fzf-atuin-widget.zsh"
 # csearch <keyword> — fzf picker over Claude Code session transcripts.
 source "$HOME/.zsh/claude-search.zsh"
 
-# compinit
-autoload -Uz compinit
-compinit
-
-
 # Scaleway CLI autocomplete initialization.
 eval "$(scw autocomplete script shell=zsh)"
+
+# Machine-local overrides (untracked, not in the dotfiles repo)
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
+# zsh-syntax-highlighting must be sourced last so it wraps every widget defined above
+# (atuin/fzf/edit-command-line). autosuggestions is sourced just before it.
+source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)

@@ -21,18 +21,20 @@ if [[ $(uname) == 'Darwin' ]]; then
   # unprefixed utils
   export PATH="$HOMEBREW_PATH/opt/findutils/libexec/gnubin:$PATH"
   export PATH="$HOMEBREW_PATH/opt/grep/libexec/gnubin:$PATH"
-  #export PATH="$HOMEBREW_PATH/opt/gnu-sed/libexec/gnubin:$PATH"
   export PATH="$HOMEBREW_PATH/opt/gnu-tar/libexec/gnubin:$PATH"
-  #export PATH="$HOMEBREW_PATH/opt/coreutils/libexec/gnubin:$PATH"
   export PATH="$HOMEBREW_PATH/opt/curl/bin:$PATH"
   export PATH="$HOMEBREW_PATH/opt/postgresql@12/bin:$PATH"
+  export PATH="$HOMEBREW_PATH/opt/dotnet@8/bin:$PATH"
   export PATH="$HOME/.platformio/penv/bin:$PATH"
 
   # Gopath
   export GOPATH=$HOME/.gopath
   export PATH=$GOPATH/bin:$PATH
 
-  source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
+  # LM Studio CLI (lms)
+  export PATH="$PATH:$HOME/.lmstudio/bin"
+
+  source "$HOMEBREW_PATH/share/google-cloud-sdk/path.zsh.inc"
 
   # On macOS, /etc/zprofile reorders the path by executing path_helper. The following lines, coupled with code in ~/.zprofile,
   # ensure that the PATH we set in this file take precedence
@@ -49,3 +51,6 @@ export PATH="$HOME/.zsh/fzf/bin:$PATH"
 
 # local binaries
 export PATH="$HOME/.local/bin:$PATH"
+
+# Machine-local overrides (untracked, not in the dotfiles repo)
+[ -f ~/.zshenv.local ] && source ~/.zshenv.local
