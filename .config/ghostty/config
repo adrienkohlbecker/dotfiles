@@ -7,7 +7,8 @@ font-size = 12
 maximize = true
 minimum-contrast = 2
 mouse-hide-while-typing = true
-scrollback-limit = 1000000
+# bytes, not lines (default is 10MB); per-surface, allocated lazily
+scrollback-limit = 100000000
 shell-integration = zsh
 shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo,path
 theme = One Double Dark
