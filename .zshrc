@@ -1,7 +1,8 @@
 # .zshrc Loaded after .zshenv and .zprofile for interactive shells. This is you at the terminal. A better default dotfile for certain updates, such as PROMPT, because this is the only time PROMPT really matters.
 
-[ -f ~/.fzf.zsh ] || $HOME/.zsh/fzf/install --no-update-rc --no-bash --no-fish --completion --key-bindings
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# fzf: bootstrap-install on first run (guarded so a not-yet-checked-out submodule
+# doesn't error). Sourced lower down, after compinit, since it registers compdefs.
+[ -f ~/.fzf.zsh ] || [ ! -x "$HOME/.zsh/fzf/install" ] || "$HOME/.zsh/fzf/install" --no-update-rc --no-bash --no-fish --completion --key-bindings
 
 # support comments in shell commands
 setopt interactivecomments
@@ -61,7 +62,7 @@ alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 fpath+=("$HOME/.zsh/pure")
 autoload -U promptinit
 promptinit
-[ ! -d "$HOME/.zsh/pure" ] || prompt pure
+[ -f "$HOME/.zsh/pure/pure.zsh" ] && prompt pure
 
 if [[ $(uname) == 'Darwin' ]]; then
   ################################################################
@@ -69,7 +70,7 @@ if [[ $(uname) == 'Darwin' ]]; then
   # PATH/env for macOS lives in .zshenv so non-interactive shells get it too.
   ################################################################
 
-  source "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc"
+  [ -f "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc" ] && source "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc"
 
   # Brew completions
   fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
@@ -87,6 +88,10 @@ else
   compinit -C
 fi
 
+# fzf keybindings/completion (after compinit; defines __fzfcmd, reused by the
+# atuin widget below).
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 eval "$(zoxide init zsh)"
 
 eval "$(mise activate zsh)"
@@ -103,13 +108,16 @@ source "$HOME/.zsh/fzf-atuin-widget.zsh"
 source "$HOME/.zsh/claude-search.zsh"
 
 # Scaleway CLI autocomplete initialization.
-eval "$(scw autocomplete script shell=zsh)"
+command -v scw >/dev/null && eval "$(scw autocomplete script shell=zsh)"
 
 # Machine-local overrides (untracked, not in the dotfiles repo)
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # zsh-syntax-highlighting must be sourced last so it wraps every widget defined above
 # (atuin/fzf/edit-command-line). autosuggestions is sourced just before it.
-source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
-source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
+# Guarded so a not-yet-checked-out submodule doesn't hard-error on a fresh clone.
+[ -f "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
+if [ -f "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+  source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+  ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
+fi
