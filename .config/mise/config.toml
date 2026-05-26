@@ -20,3 +20,8 @@ zoxide = "0.9.9"
 atuin = "18.16.1"
 delta = "0.19.2"
 "asdf:mise-plugins/mise-eza" = "0.23.4"
+
+[settings]
+
+[settings.ruby]
+compile = false
