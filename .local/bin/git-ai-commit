@@ -13,7 +13,7 @@ fi
 # The backticks inside the prompt are literal instructions for claude, not shell
 # command substitution — keep the prompt single-quoted.
 # shellcheck disable=SC2016
-claude --print --model haiku 'Write a git commit message for the currently staged changes.
+msg=$(claude --print --model haiku 'Write a git commit message for the currently staged changes.
 
 First inspect them with `git diff --staged` (ignore unstaged changes), and skim `git log --oneline -15` to match this repository'\''s existing subject style and any role/scope prefix convention.
 
@@ -22,5 +22,11 @@ Rules:
 - For non-trivial changes add a blank line then a body wrapped at 72 columns explaining the what and, more importantly, the why/motivation and any context a reviewer needs. Prefer prose; use a bullet list only when there are several independent changes. Omit the body entirely for trivial changes.
 - Do not mention Claude, AI, or that the message was generated.
 
-Output only the raw commit message as plain text: no surrounding quotes, no code fences, no commentary.' |
-  git commit --gpg-sign --file=- --edit
+Output only the raw commit message as plain text: no surrounding quotes, no code fences, no commentary.')
+
+if [ -z "$msg" ]; then
+  echo "git-ai-commit: claude returned an empty draft" >&2
+  exit 1
+fi
+
+printf '%s\n' "$msg" | git commit --gpg-sign --file=- --edit
