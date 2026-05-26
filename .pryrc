@@ -21,16 +21,10 @@ Pry.config.ls.public_method_color = :green
 Pry.config.ls.protected_method_color = :yellow
 Pry.config.ls.private_method_color = :bright_black
 
-# Colorized pretty-printing for all pry output. Prefer amazing_print (the
-# maintained successor); both expose the same .ai method. Degrade silently.
+# Colorized pretty-printing for all pry output via amazing_print's .ai method.
 begin
   require 'amazing_print'
   Pry.config.print = proc { |output, value| output.puts value.ai }
 rescue LoadError
-  begin
-    require 'awesome_print'
-    Pry.config.print = proc { |output, value| output.puts value.ai }
-  rescue LoadError
-    warn 'gem install amazing_print  # <-- highly recommended'
-  end
+  warn 'gem install amazing_print  # <-- highly recommended'
 end

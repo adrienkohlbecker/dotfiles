@@ -1,6 +1,5 @@
 bundler
 amazing_print
-awesome_print
 rubocop
 rubocop-rspec
 rubocop-rails
