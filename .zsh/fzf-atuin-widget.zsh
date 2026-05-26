@@ -1,8 +1,9 @@
 # Atuin-backed Ctrl-R history widget. Source from .zshrc *after* ~/.fzf.zsh
 # (which defines __fzfcmd, reused below).
 #
-# Requires fzf ≥ 0.61 (transform, --ghost, change-ghost), bat on PATH, and
-# python3 with sqlite3 in stdlib (system python on macOS is fine).
+# Requires fzf ≥ 0.61 (transform, --ghost, change-ghost) and `uv` on PATH — the
+# helper is a uv-run script that pulls pygments for highlighting (see its header
+# for why uv rather than the ambient python3).
 #
 # Filter cycle: session → workspace → host → session …
 # Ctrl-O fires a `transform` action that reads $FZF_GHOST to find the current
@@ -15,10 +16,9 @@
 # It can't be a zsh function: fzf spawns child sh processes for reload/
 # transform actions which don't see the parent zsh's function table.
 #
-# Persistent cache lives in atuin's own history.db as a custom column
-# `fzf_atuin_highlighted` on the history table. atuin commands are immutable
-# per uuid, so cached entries never go stale. The column is added
-# idempotently on every helper invocation via PRAGMA table_info.
+# Highlighting is computed on the fly per invocation — no cache (atuin returns
+# in tens of ms and pygments highlights the set in about the same; see the
+# helper header for the rationale).
 
 # Capture the helper path at source time; ${0:A:h} resolves the directory
 # of the sourced .zsh file (inside the function, $0 would mean the function

@@ -32,9 +32,10 @@ import sys
 import traceback
 
 SELF = os.path.abspath(__file__)
-# Strip C0 control bytes (newlines are encoded as ↵ separately) so a recorded
-# escape sequence can't inject into the fzf list.
-_CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+# Strip C0+C1 control bytes (newlines are encoded as ↵ separately) so a recorded
+# escape sequence can't inject into the fzf list. The C1 range (0x80-0x9f) covers
+# the 8-bit CSI introducer 0x9b a terminal in 8-bit mode would act on.
+_CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
 
 
 def _list_err(short: str, detail: str = "") -> None:
@@ -77,7 +78,7 @@ def build(mode: str) -> None:
         proc = subprocess.run(
             ["atuin", "search", "--filter-mode", mode, "-r",
              "--author", "$all-user",
-             "--format", "{uuid}{command}", "--print0"],
+             "--cmd-only", "--print0"],
             capture_output=True, check=False,
         )
     except FileNotFoundError:
@@ -104,13 +105,12 @@ def build(mode: str) -> None:
     lexer = BashLexer()
     formatter = TerminalTrueColorFormatter(style="dracula")
 
+    # --cmd-only -r does NOT dedup non-interactively (verified: it returns
+    # repeats), so the widget still dedups commands itself.
     seen: set[str] = set()
     out = sys.stdout.buffer
     for rec in proc.stdout.split(b"\0"):
-        if len(rec) < 32:
-            continue
-        # rec[:32] is the uuid (was only a cache key — no cache now, so skip it).
-        raw = _CTRL.sub("", rec[32:].decode("utf-8", errors="replace"))
+        raw = _CTRL.sub("", rec.decode("utf-8", errors="replace"))
         if not raw.strip():
             continue
         cmd = raw.replace("\n", "↵")
