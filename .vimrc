@@ -74,6 +74,12 @@ set signcolumn=auto
 " Enable fzf plugin
 set rtp+=~/.zsh/fzf
 
+" Vendored plugins auto-load from ~/.vim/pack/plugins/start/ (vim 8+ native
+" packages, added as dotfiles submodules — no plugin manager):
+"   vim-commentary  gcc / gc{motion}        toggle comments
+"   vim-surround    cs\"' / ds( / ys{motion} change/delete/add surrounding pairs
+"   vim-repeat      .                       make the above repeatable with .
+
 " Reselect visual block after indent (so > > > works without re-selecting)
 xnoremap < <gv
 xnoremap > >gv
