@@ -51,7 +51,8 @@ bindkey "^[[B" history-beginning-search-forward
 alias history="builtin fc -l -i -D"
 alias tig="command tig status"
 # `dotfiles` is a function in ~/.zshenv (works in non-interactive shells too).
-alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME tig status'
+# dotfiles-tig: tig in the dotfiles repo (path resolved by _dotfiles_dir).
+dotfiles-tig() { local d; d="$(_dotfiles_dir)" || return 1; (builtin cd -- "$d" && command tig status) }
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
 
 # mtmux <host> [session] — mosh in and attach (or create) a persistent tmux
@@ -65,11 +66,18 @@ if command -v mosh >/dev/null 2>&1; then
   }
 fi
 
-# Prompt theme
-fpath+=("$HOME/.zsh/pure")
-autoload -U promptinit
-promptinit
-[ -f "$HOME/.zsh/pure/pure.zsh" ] && prompt pure
+# Prompt theme (pure, installed via the mise http backend — see config.toml).
+# mise creates several version-alias symlinks per tool; any resolves to the same
+# content, so glob the install dir and take one. Guard skips on a host where
+# `mise install` hasn't run yet.
+_pure=( "$HOME"/.local/share/mise/installs/http-pure/*(-/N[1]) )
+if (( $#_pure )); then
+  fpath+=("$_pure[1]")
+  autoload -U promptinit
+  promptinit
+  prompt pure
+fi
+unset _pure
 
 if [[ $(uname) == 'Darwin' ]]; then
   ################################################################
@@ -149,15 +157,19 @@ command -v scw >/dev/null && eval "$(scw autocomplete script shell=zsh)"
 # Machine-local overrides (untracked, not in the dotfiles repo)
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
-# zsh-syntax-highlighting must be sourced after every widget-defining init above
-# (atuin/fzf/edit-command-line) so it wraps them. autosuggestions is sourced just
-# before it. Guarded so a not-yet-checked-out submodule doesn't hard-error on a
-# fresh clone.
-[ -f "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
-if [ -f "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-  source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+# zsh-autosuggestions + zsh-syntax-highlighting, installed via the mise http
+# backend (see config.toml). Highlighting must load after every widget-defining
+# init above (atuin/fzf/edit-command-line) so it wraps them; autosuggestions just
+# before it. Globs resolve one of mise's version-alias dirs; the guard skips a
+# plugin not yet installed (fresh host before `mise install`).
+_as=( "$HOME"/.local/share/mise/installs/http-zsh-autosuggestions/*/zsh-autosuggestions.zsh(N[1]) )
+(( $#_as )) && source "$_as[1]"
+_sh=( "$HOME"/.local/share/mise/installs/http-zsh-syntax-highlighting/*/zsh-syntax-highlighting.zsh(N[1]) )
+if (( $#_sh )); then
+  source "$_sh[1]"
   ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
 fi
+unset _as _sh
 
 # zoxide last: its doctor warns unless `zoxide init` runs at the very end of the
 # config, so its chpwd hook is the last one registered and no later init reorders

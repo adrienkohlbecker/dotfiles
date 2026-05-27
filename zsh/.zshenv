@@ -81,10 +81,22 @@ export TEALDEER_CONFIG_DIR="$HOME/.config/tealdeer"
 # local binaries
 export PATH="$HOME/.local/bin:$PATH"
 
-# dotfiles bare-repo wrapper — a function (not a .zshrc alias) so it resolves in
-# non-interactive shells and scripts too; aliases are only expanded interactively.
+# dotfiles repo helpers — functions (not .zshrc aliases) so they resolve in
+# non-interactive shells and scripts too. Since the stow migration the repo is a
+# normal git repo: ~/Work/dotfiles on the workstation, ~/.dotfiles on the fleet.
+# _dotfiles_dir picks whichever is a real repo (the old bare ~/.dotfiles has no
+# .git subdir, so it's never matched on the Mac).
+_dotfiles_dir() {
+  local d
+  for d in "$HOME/Work/dotfiles" "$HOME/.dotfiles"; do
+    [ -d "$d/.git" ] && { print -r -- "$d"; return 0; }
+  done
+  return 1
+}
 dotfiles() {
-  /usr/bin/env git -C "$HOME" --git-dir="$HOME/.dotfiles" --work-tree="$HOME" "$@"
+  local d
+  d="$(_dotfiles_dir)" || { print -u2 -- "dotfiles: no repo at ~/Work/dotfiles or ~/.dotfiles"; return 1; }
+  /usr/bin/env git -C "$d" "$@"
 }
 
 # Machine-local overrides (untracked, not in the dotfiles repo)

@@ -71,11 +71,20 @@ set ttimeout ttimeoutlen=100
 " Show the sign column only when something populates it (no sign plugins yet)
 set signcolumn=auto
 
-" Vendored plugins auto-load from ~/.vim/pack/plugins/start/ (vim 8+ native
-" packages, added as dotfiles submodules — no plugin manager):
+" Plugins come from the mise http backend (see ~/.config/mise/config.toml), not
+" git submodules: add each plugin's mise install dir to runtimepath. resolve() +
+" a seen-set dedups mise's version-alias symlinks so each plugin loads once.
 "   vim-commentary  gcc / gc{motion}        toggle comments
 "   vim-surround    cs\"' / ds( / ys{motion} change/delete/add surrounding pairs
 "   vim-repeat      .                       make the above repeatable with .
+let s:seen = {}
+for s:p in glob('~/.local/share/mise/installs/http-vim-*/*', 0, 1)
+  let s:r = resolve(s:p)
+  if isdirectory(s:r) && !has_key(s:seen, s:r)
+    let s:seen[s:r] = 1
+    let &runtimepath .= ',' . s:p
+  endif
+endfor
 
 " Reselect visual block after indent (so > > > works without re-selecting)
 xnoremap < <gv
