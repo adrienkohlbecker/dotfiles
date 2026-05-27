@@ -1,29 +1,29 @@
 #!/usr/bin/env -S uv run --script --quiet
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["pygments"]
+# dependencies = ["tree-sitter", "tree-sitter-bash"]
 # ///
 """fzf-atuin helper. Invoked from fzf-atuin-widget.zsh.
 
 Modes:
   fzf-atuin-widget.py <session-preload|workspace|host>
-      Emit a NUL-free, one-row-per-command, pygments-highlighted list to
-      stdout. \\n in source commands is encoded as ↵ so multi-line commands
+      Emit a NUL-free, one-row-per-command, tree-sitter-bash-highlighted list
+      to stdout. \\n in source commands is encoded as ↵ so multi-line commands
       stay on one fzf row; the widget decodes back when assigning $LBUFFER.
 
   fzf-atuin-widget.py cycle
       Read $FZF_GHOST, emit the fzf action chain to advance one step in the
       session-preload → workspace → host cycle.
 
-Highlighting is done on the fly (no cache): atuin returns in ~tens of ms and
-pygments highlights the distinct command set in about the same, so a sidecar
-sqlite cache wasn't worth its on-disk footprint or its coupling to atuin's
-internals.
+Highlighting is done on the fly (no cache): tree-sitter-bash parses the whole
+distinct command set in a couple of ms — fast enough that the sidecar sqlite
+cache an earlier bat-based version needed (bat paid a process spawn per command)
+is gone, along with its on-disk footprint and coupling to atuin's internals.
 
 Why uv-script-with-inline-deps instead of plain `python3`: $PATH's python3
-depends on which venv is active for the user's cwd at Ctrl-R time, and
-most of them don't have pygments. `uv run --script` resolves+caches the
-dep set independent of any ambient venv, so the widget works everywhere.
+depends on which venv is active for the user's cwd at Ctrl-R time, and most of
+them don't have tree-sitter / tree-sitter-bash. `uv run --script` resolves+caches
+the dep set independent of any ambient venv, so the widget works everywhere.
 """
 import os
 import re
@@ -36,6 +36,81 @@ SELF = os.path.abspath(__file__)
 # escape sequence can't inject into the fzf list. The C1 range (0x80-0x9f) covers
 # the 8-bit CSI introducer 0x9b a terminal in 8-bit mode would act on.
 _CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
+
+# Colors mirror zsh-syntax-highlighting's *default* ZSH_HIGHLIGHT_STYLES so the
+# Ctrl-R popup matches the live prompt. Named 16-color SGR (not truecolor) on
+# purpose: both the prompt and the popup then resolve through the same terminal
+# palette, so the greens/yellows are identical whatever theme is loaded. If you
+# customize ZSH_HIGHLIGHT_STYLES, update these to match.
+_RESET = "\033[0m"
+_GREEN = "\033[32m"    # commands / builtins / functions / aliases
+_MAGENTA = "\033[35m"  # reserved words, operators, redirections, subst delimiters
+_CYAN = "\033[36m"     # options (-x / --long)
+_YELLOW = "\033[33m"   # quoted strings
+_BLUE = "\033[34m"     # variables: assignments + $var inside double quotes
+_GREY = "\033[1;30m"   # comments (z-sy-h comment=fg=black,bold)
+
+# Reserved words (→ magenta). Keyword literals only — `{`, `}`, `[[`, `]]` are
+# skipped because `{`/`}` also delimit ${…} expansions.
+_RESERVED = frozenset({
+    "if", "then", "else", "elif", "fi", "for", "while", "until",
+    "do", "done", "case", "esac", "in", "function", "select", "time", "coproc",
+})
+# Operators (→ magenta): command separators and redirection operators, grouped
+# with reserved words and substitution delimiters under one "shell syntax" hue.
+_SEPARATORS = frozenset({"|", "||", "&&", "&", ";", ";;", "|&"})
+_REDIRECT = frozenset({
+    ">", "<", ">>", "<<", "<<-", "<<<", ">&", "<&", "&>", "&>>", ">|",
+})
+_SUBST_OPEN = frozenset({"$(", "`", "<(", ">("})
+_SUBST_NODES = frozenset({"command_substitution", "process_substitution"})
+_STRING_NODES = frozenset({"string", "raw_string", "ansi_c_string"})
+_EXPANSION_NODES = frozenset({"expansion", "simple_expansion"})
+
+
+def _token_color(node):
+    """SGR code for a tree-sitter-bash leaf, matching the shared z-sy-h palette.
+
+    Returns None for tokens left unstyled (plain args, paths, bare $vars) so
+    they render in the terminal's default fg — the popup equivalent of a
+    ZSH_HIGHLIGHT_STYLES entry set to `none`. Keep in sync with the
+    ZSH_HIGHLIGHT_STYLES block in ~/.zshrc.
+    """
+    t = node.type
+    parent = node.parent
+    pt = parent.type if parent is not None else ""
+    if t == "comment":
+        return _GREY
+    if pt == "command_name":
+        return _GREEN
+    if t in _RESERVED:
+        return _MAGENTA
+    if t in _SUBST_OPEN or (t in (")", "`") and pt in _SUBST_NODES):
+        return _MAGENTA
+    if t in _SEPARATORS or t in _REDIRECT:
+        return _MAGENTA
+    # Ancestor scan: an assignment (FOO=bar) is blue throughout; inside a
+    # double-quoted string an expansion ($var) is blue and the rest yellow.
+    # Seed in_string with this leaf's own type for the single-token raw_string.
+    in_string = t in _STRING_NODES
+    in_expansion = in_assign = False
+    anc = parent
+    while anc is not None:
+        at = anc.type
+        if at == "variable_assignment":
+            in_assign = True
+        elif at in _STRING_NODES:
+            in_string = True
+        elif at in _EXPANSION_NODES:
+            in_expansion = True
+        anc = anc.parent
+    if in_assign:
+        return _BLUE
+    if in_string:
+        return _BLUE if in_expansion else _YELLOW
+    if t == "word" and node.text[:1] == b"-":
+        return _CYAN
+    return None
 
 
 def _list_err(short: str, detail: str = "") -> None:
@@ -97,38 +172,67 @@ def build(mode: str) -> None:
         _list_err(f"atuin search failed (exit {proc.returncode}): {summary[:80]}",
                   "\n".join(lines))
 
-    # pygments is imported here (not at module top) so the `cycle` path —
-    # invoked on every Ctrl-O — doesn't pay the ~50ms highlighter import. If it
-    # can't be imported, fall back to plain rows so Ctrl-R still works (just
-    # uncolored) instead of failing the whole list. (A uv dependency-resolution
-    # failure happens before Python starts, so it can't be caught here.)
+    # tree-sitter-bash is imported here (not at module top) so the `cycle` path
+    # — invoked on every Ctrl-O — doesn't pay the parser import. If it can't be
+    # imported, fall back to plain rows so Ctrl-R still works (just uncolored)
+    # instead of failing the whole list. (A uv dependency-resolution failure
+    # happens before Python starts, so it can't be caught here.)
     try:
-        from pygments import highlight
-        from pygments.formatters import TerminalTrueColorFormatter
-        from pygments.lexers import BashLexer
+        import tree_sitter_bash as ts_bash
+        from tree_sitter import Language, Parser
 
-        lexer = BashLexer()
-        formatter = TerminalTrueColorFormatter(style="dracula")
+        parser = Parser(Language(ts_bash.language()))
 
         def render(cmd: str) -> str:
-            return highlight(cmd, lexer, formatter).rstrip("\n")
+            # Parse the raw text (real newlines) so the grammar sees the true
+            # line structure, then encode \n as ↵ in the output so a multi-line
+            # command stays one fzf row. Walk leaves left-to-right, emitting the
+            # whitespace gaps between them verbatim and each leaf wrapped in its
+            # role color; `cursor` (a byte offset) tracks how far we've emitted.
+            data = cmd.encode("utf-8")
+            leaves: list = []
+
+            def collect(node) -> None:
+                if node.child_count == 0:
+                    leaves.append(node)
+                    return
+                for child in node.children:
+                    collect(child)
+
+            collect(parser.parse(data).root_node)
+
+            parts: list[str] = []
+            cursor = 0
+            for leaf in leaves:
+                start, end = leaf.start_byte, leaf.end_byte
+                if end <= cursor:
+                    continue  # zero-width / overlapping node (e.g. inside ERROR)
+                if start > cursor:
+                    parts.append(data[cursor:start].decode("utf-8", "replace"))
+                text = data[start:end].decode("utf-8", "replace")
+                color = _token_color(leaf)
+                parts.append(color + text + _RESET if color else text)
+                cursor = end
+            if cursor < len(data):
+                parts.append(data[cursor:].decode("utf-8", "replace"))
+            return "".join(parts).replace("\n", "↵")
     except ImportError:
         def render(cmd: str) -> str:
-            return cmd
+            return cmd.replace("\n", "↵")
 
     # --cmd-only -r does NOT dedup non-interactively (verified: it returns
-    # repeats), so the widget still dedups commands itself.
+    # repeats), so the widget still dedups commands itself. Dedup on the raw
+    # text; render() applies the ↵ encoding.
     seen: set[str] = set()
     out = sys.stdout.buffer
     for rec in proc.stdout.split(b"\0"):
         raw = _CTRL.sub("", rec.decode("utf-8", errors="replace"))
         if not raw.strip():
             continue
-        cmd = raw.replace("\n", "↵")
-        if cmd in seen:
+        if raw in seen:
             continue
-        seen.add(cmd)
-        out.write(render(cmd).encode("utf-8"))
+        seen.add(raw)
+        out.write(render(raw).encode("utf-8"))
         out.write(b"\n")
 
 

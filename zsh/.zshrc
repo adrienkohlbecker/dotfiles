@@ -168,6 +168,23 @@ _sh=( "$HOME"/.local/share/mise/installs/http-zsh-syntax-highlighting/*/zsh-synt
 if (( $#_sh )); then
   source "$_sh[1]"
   ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
+  # Enriched palette shared with the atuin Ctrl-R popup so the prompt and the
+  # history list highlight identically (see _token_color in fzf-atuin-widget.py
+  # — keep the two in sync). Named colors, not hex, so both resolve through the
+  # terminal theme. Only keys that differ from z-sy-h defaults are set; commands
+  # stay green, strings yellow, comments grey, substitution delimiters magenta,
+  # unknown-token red, path underline. magenta = "shell syntax" (keywords +
+  # operators), cyan = options, blue = variables.
+  ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=magenta'
+  ZSH_HIGHLIGHT_STYLES[single-hyphen-option]='fg=cyan'
+  ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg=cyan'
+  ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=magenta'
+  ZSH_HIGHLIGHT_STYLES[redirection]='fg=magenta'
+  ZSH_HIGHLIGHT_STYLES[assign]='fg=blue'
+  ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=blue'
+  ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=blue'
+  ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=blue'
+  ZSH_HIGHLIGHT_STYLES[global-alias]='fg=green'
 fi
 unset _as _sh
 
