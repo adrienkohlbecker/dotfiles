@@ -132,10 +132,6 @@ if command -v yazi >/dev/null 2>&1; then
   }
 fi
 
-# --cmd cd shadows `cd`: every cd trains the db, `cd <partial>` frecency-jumps to
-# the best match, and `cdi` opens an fzf picker over visited dirs.
-eval "$(zoxide init zsh --cmd cd)"
-
 # atuin: SQLite-backed history.
 eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
 
@@ -153,11 +149,19 @@ command -v scw >/dev/null && eval "$(scw autocomplete script shell=zsh)"
 # Machine-local overrides (untracked, not in the dotfiles repo)
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
-# zsh-syntax-highlighting must be sourced last so it wraps every widget defined above
-# (atuin/fzf/edit-command-line). autosuggestions is sourced just before it.
-# Guarded so a not-yet-checked-out submodule doesn't hard-error on a fresh clone.
+# zsh-syntax-highlighting must be sourced after every widget-defining init above
+# (atuin/fzf/edit-command-line) so it wraps them. autosuggestions is sourced just
+# before it. Guarded so a not-yet-checked-out submodule doesn't hard-error on a
+# fresh clone.
 [ -f "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
 if [ -f "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
   source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
   ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
 fi
+
+# zoxide last: its doctor warns unless `zoxide init` runs at the very end of the
+# config, so its chpwd hook is the last one registered and no later init reorders
+# it out. Safe after syntax-highlighting — zoxide adds a chpwd hook and shell
+# functions, no ZLE widgets that would need wrapping. `--cmd cd` shadows `cd`:
+# every cd trains the db, `cd <partial>` frecency-jumps, `cdi` opens an fzf picker.
+eval "$(zoxide init zsh --cmd cd)"
