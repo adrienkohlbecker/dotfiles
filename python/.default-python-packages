@@ -1,8 +1,0 @@
-pip>=21
-pipenv
-ansible
-boto
-pylama
-botocore
-boto3
-netaddr
