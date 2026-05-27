@@ -4,15 +4,25 @@
 # not mise. This file lives at the repo root and is NOT a stow package — it's
 # repo tooling, never symlinked into $HOME.
 
+# The gnupg package deploys ~/.gnupg; stow creates that dir with the default
+# umask, but gpg refuses (and warns about) a homedir with group/other access, so
+# tighten it to 0700 after linking.
+
 [tasks.stow]
 description = "Link all packages into $HOME (adds new files)"
 dir = "{{ config_root }}"
-run = "stow --target=$HOME --no-folding --verbose */"
+run = [
+  "stow --target=$HOME --no-folding --verbose */",
+  "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
+]
 
 [tasks.restow]
 description = "Re-link all packages — cleans stale links after deletes/renames"
 dir = "{{ config_root }}"
-run = "stow --target=$HOME --no-folding --restow --verbose */"
+run = [
+  "stow --target=$HOME --no-folding --restow --verbose */",
+  "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
+]
 
 [tasks.unstow]
 description = "Remove all of this repo's symlinks from $HOME"
