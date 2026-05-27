@@ -39,14 +39,14 @@ uv = "0.11.16"
 # source-only repos otherwise, but http fetches any tarball). .zshrc sources the
 # zsh ones and .vimrc rtp-adds the vim ones from each tool's mise install dir;
 # strip_components=1 drops the archive's top <repo>-<tag> wrapper dir.
-"http:pure" = { version = "v1.28.1", url = "https://github.com/sindresorhus/pure/archive/refs/tags/{{version}}.tar.gz", strip_components = 1 }
-"http:zsh-autosuggestions" = { version = "v0.7.1", url = "https://github.com/zsh-users/zsh-autosuggestions/archive/refs/tags/{{version}}.tar.gz", strip_components = 1 }
-"http:zsh-syntax-highlighting" = { version = "0.8.0-alpha1-pre-redrawhook", url = "https://github.com/zsh-users/zsh-syntax-highlighting/archive/refs/tags/{{version}}.tar.gz", strip_components = 1 }
-"http:vim-surround" = { version = "v2.2", url = "https://github.com/tpope/vim-surround/archive/refs/tags/{{version}}.tar.gz", strip_components = 1 }
-"http:vim-commentary" = { version = "v1.3", url = "https://github.com/tpope/vim-commentary/archive/refs/tags/{{version}}.tar.gz", strip_components = 1 }
+"http:pure" = { version = "v1.28.1", url = "https://github.com/sindresorhus/pure/archive/refs/tags/{{ version }}.tar.gz", strip_components = 1 }
+"http:zsh-autosuggestions" = { version = "v0.7.1", url = "https://github.com/zsh-users/zsh-autosuggestions/archive/refs/tags/{{ version }}.tar.gz", strip_components = 1 }
+"http:zsh-syntax-highlighting" = { version = "0.8.0-alpha1-pre-redrawhook", url = "https://github.com/zsh-users/zsh-syntax-highlighting/archive/refs/tags/{{ version }}.tar.gz", strip_components = 1 }
+"http:vim-surround" = { version = "v2.2", url = "https://github.com/tpope/vim-surround/archive/refs/tags/{{ version }}.tar.gz", strip_components = 1 }
+"http:vim-commentary" = { version = "v1.3", url = "https://github.com/tpope/vim-commentary/archive/refs/tags/{{ version }}.tar.gz", strip_components = 1 }
 # vim-repeat's last tag (v1.2) predates its plugin/repeat.vim — the `.`-repeat
 # hook lives there, not in autoload — so pin the commit (matches the old submodule).
-"http:vim-repeat" = { version = "6584602", url = "https://github.com/tpope/vim-repeat/archive/{{version}}.tar.gz", strip_components = 1 }
+"http:vim-repeat" = { version = "6584602", url = "https://github.com/tpope/vim-repeat/archive/{{ version }}.tar.gz", strip_components = 1 }
 
 [settings]
 
