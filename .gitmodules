@@ -7,9 +7,6 @@
 [submodule ".zsh/zsh-syntax-highlighting"]
 	path = zsh/.zsh/zsh-syntax-highlighting
 	url = https://github.com/zsh-users/zsh-syntax-highlighting.git
-[submodule ".zsh/fzf"]
-	path = zsh/.zsh/fzf
-	url = https://github.com/junegunn/fzf.git
 [submodule ".vim/pack/plugins/start/vim-surround"]
 	path = vim/.vim/pack/plugins/start/vim-surround
 	url = https://github.com/tpope/vim-surround.git

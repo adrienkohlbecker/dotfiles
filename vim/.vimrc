@@ -71,9 +71,6 @@ set ttimeout ttimeoutlen=100
 " Show the sign column only when something populates it (no sign plugins yet)
 set signcolumn=auto
 
-" Enable fzf plugin
-set rtp+=~/.zsh/fzf
-
 " Vendored plugins auto-load from ~/.vim/pack/plugins/start/ (vim 8+ native
 " packages, added as dotfiles submodules — no plugin manager):
 "   vim-commentary  gcc / gc{motion}        toggle comments

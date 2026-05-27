@@ -12,10 +12,9 @@
 # aws/minio credential_process helpers). uv is pinned here (and dropped from
 # ~/.default-python-packages) so a single mise-managed copy is the one on PATH —
 # the former pip-into-python copy shadow-raced it — and so uv reaches the fleet
-# too, which has no mise python. fzf now comes from here for the shell (binary +
-# `fzf --zsh` keybindings/completion, wired in .zshrc after `mise activate`);
-# the ~/.zsh/fzf git submodule it superseded is kept only for vim's fzf.vim
-# plugin (rtp+= in .vimrc), whose `fzf` calls resolve to this mise copy.
+# too, which has no mise python. fzf comes from here entirely now: binary +
+# `fzf --zsh` keybindings/completion (wired in .zshrc after `mise activate`),
+# replacing the old ~/.zsh/fzf git submodule (dropped — vim's `:FZF` went with it).
 #
 # eza is pinned to the asdf plugin, not aqua/ubi/github: eza ships no macOS
 # release asset, so every GitHub-asset backend fails on darwin. The asdf plugin
