@@ -1,0 +1,20 @@
+# Repo-local mise tasks for the GNU stow symlinks this repo deploys into $HOME.
+# Run them from anywhere inside the repo (dir is pinned to the repo root); `*/`
+# targets every package dir. stow itself comes from brew (mac) / apt (fleet),
+# not mise. This file lives at the repo root and is NOT a stow package — it's
+# repo tooling, never symlinked into $HOME.
+
+[tasks.stow]
+description = "Link all packages into $HOME (adds new files)"
+dir = "{{ config_root }}"
+run = "stow --target=$HOME --no-folding --verbose */"
+
+[tasks.restow]
+description = "Re-link all packages — cleans stale links after deletes/renames"
+dir = "{{ config_root }}"
+run = "stow --target=$HOME --no-folding --restow --verbose */"
+
+[tasks.unstow]
+description = "Remove all of this repo's symlinks from $HOME"
+dir = "{{ config_root }}"
+run = "stow --target=$HOME --delete --verbose */"
