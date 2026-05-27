@@ -5,7 +5,7 @@
 # helper is a uv-run script that pulls pygments for highlighting (see its header
 # for why uv rather than the ambient python3).
 #
-# Filter cycle: session → workspace → host → session …
+# Filter cycle: session-preload → workspace → host → session-preload …
 # Ctrl-O fires a `transform` action that reads $FZF_GHOST to find the current
 # mode, picks the next one, and emits `reload(...)+change-ghost(...)`. fzf
 # stays alive throughout — no relaunch, no flicker.
@@ -31,7 +31,7 @@ fzf-atuin-history-widget() {
   # fzf reads $FZF_DEFAULT_OPTS itself, so we don't need to embed it. CLI args
   # for everything else; $FZF_CTRL_R_OPTS appended last so user overrides win.
   selected=$(
-    "$_FZF_ATUIN_HELPER" session | $(__fzfcmd) \
+    "$_FZF_ATUIN_HELPER" session-preload | $(__fzfcmd) \
       --with-shell 'sh -c' \
       --height "${FZF_TMUX_HEIGHT:-40%}" \
       --scheme=history \
@@ -40,7 +40,7 @@ fzf-atuin-history-widget() {
       --query="$LBUFFER" \
       +m \
       --info=inline-right \
-      --ghost="filter: session    Ctrl-O: cycle    Ctrl-R: toggle sort" \
+      --ghost="filter: session-preload    Ctrl-O: cycle    Ctrl-R: toggle sort" \
       --bind="ctrl-o:transform($_FZF_ATUIN_HELPER cycle)" \
       ${=FZF_CTRL_R_OPTS:-}
   )

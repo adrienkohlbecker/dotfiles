@@ -6,14 +6,14 @@
 """fzf-atuin helper. Invoked from fzf-atuin-widget.zsh.
 
 Modes:
-  fzf-atuin-widget.py <session|workspace|host>
+  fzf-atuin-widget.py <session-preload|workspace|host>
       Emit a NUL-free, one-row-per-command, pygments-highlighted list to
       stdout. \\n in source commands is encoded as ↵ so multi-line commands
       stay on one fzf row; the widget decodes back when assigning $LBUFFER.
 
   fzf-atuin-widget.py cycle
       Read $FZF_GHOST, emit the fzf action chain to advance one step in the
-      session → workspace → host cycle.
+      session-preload → workspace → host cycle.
 
 Highlighting is done on the fly (no cache): atuin returns in ~tens of ms and
 pygments highlights the distinct command set in about the same, so a sidecar
@@ -56,12 +56,12 @@ def cycle() -> None:
     # Wrap the whole body so errors become a visible ghost-text update.
     try:
         ghost = os.environ.get("FZF_GHOST", "")
-        if "session" in ghost:
+        if "session-preload" in ghost:
             n = "workspace"
         elif "workspace" in ghost:
             n = "host"
         else:
-            n = "session"
+            n = "session-preload"
         sys.stdout.write(
             f"reload({SELF} {n})+change-ghost(filter: {n}    Ctrl-O: cycle    Ctrl-R: toggle sort)"
         )
@@ -137,10 +137,10 @@ if __name__ == "__main__":
     try:
         if arg == "cycle":
             cycle()
-        elif arg in ("session", "workspace", "host"):
+        elif arg in ("session-preload", "workspace", "host"):
             build(arg)
         else:
-            sys.exit(f"usage: {sys.argv[0]} <session|workspace|host|cycle>")
+            sys.exit(f"usage: {sys.argv[0]} <session-preload|workspace|host|cycle>")
     except KeyboardInterrupt:
         # Ctrl-C during a slow cold backfill — exit silently with conventional
         # code so the parent shell sees 130.

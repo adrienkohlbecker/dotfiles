@@ -11,7 +11,7 @@ workspaces = true
 filter_mode_shell_up_key_binding = "workspace"
 
 ## Startup filter mode is search.filters[0] below ("session"); kept in sync here.
-filter_mode = "session"
+filter_mode = "session-preload"
 
 ## Max lines the interactive UI occupies.
 inline_height = 14
@@ -41,7 +41,10 @@ history_filter = [
 
 [search]
 ## Enabled filter modes in priority order; [0] is the startup default.
-filters = [ "session", "workspace", "directory", "host" ]
+filters = [ "session-preload", "workspace", "directory", "host" ]
+
+# Default: only show human-authored commands
+authors = ["$all-user"]
 
 [stats]
 ## Group `atuin stats` by the real command, not the wrapper binary.
