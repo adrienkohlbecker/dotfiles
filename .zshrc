@@ -53,13 +53,6 @@ alias tig="command tig status"
 # `dotfiles` is a function in ~/.zshenv (works in non-interactive shells too).
 alias dotfiles-tig='/usr/bin/env GIT_DIR=$HOME/.dotfiles GIT_WORK_TREE=$HOME tig status'
 alias dkr='docker run -ti --rm -v $(pwd):$(pwd) -w $(pwd)'
-# eza (modern ls) — guarded: mac-only install, jammy keeps coreutils ls.
-if command -v eza >/dev/null 2>&1; then
-  alias ls='eza --group-directories-first --icons=auto'
-  alias ll='eza -lah --group-directories-first --icons=auto --git'
-  alias la='eza -a --group-directories-first --icons=auto'
-  alias lt='eza --tree --level=2 --group-directories-first --icons=auto'
-fi
 
 # mtmux <host> [session] — mosh in and attach (or create) a persistent tmux
 # session on the host, so a dropped link never loses the session. mosh keeps the
@@ -111,6 +104,17 @@ eval "$(mise activate zsh)"
 # below, which reuses fzf's __fzfcmd. `fzf --zsh` replaces the old ~/.zsh/fzf
 # submodule's generated ~/.fzf.zsh.
 command -v fzf >/dev/null && eval "$(fzf --zsh)"
+
+# eza (modern ls). Defined here, after `mise activate`, rather than in the alias
+# block above: eza is mise-managed (config.toml, all hosts), so the guard only
+# passes once mise is on PATH — placing it earlier silently fell back to plain
+# ls except where a brew eza happened to be present.
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --group-directories-first --icons=auto'
+  alias ll='eza -lah --group-directories-first --icons=auto --git'
+  alias la='eza -a --group-directories-first --icons=auto'
+  alias lt='eza --tree --level=2 --group-directories-first --icons=auto'
+fi
 
 # yazi (TUI file manager): the `y` wrapper cd's the shell to wherever you exited
 # in yazi (plain `yazi` leaves you in the original dir). Defined here, after

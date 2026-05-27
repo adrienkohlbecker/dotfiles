@@ -6,4 +6,3 @@ pylama
 botocore
 boto3
 netaddr
-uv

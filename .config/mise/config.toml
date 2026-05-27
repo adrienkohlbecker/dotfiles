@@ -9,10 +9,13 @@
 #
 # fzf, ripgrep, jq and uv back interactive shell pieces in the dotfiles (the
 # atuin Ctrl-R widget, the csearch transcript browser, the statusline and the
-# aws/minio credential_process helpers). fzf now comes from here for the shell
-# (binary + `fzf --zsh` keybindings/completion, wired in .zshrc after `mise
-# activate`); the ~/.zsh/fzf git submodule it superseded is kept only for vim's
-# fzf.vim plugin (rtp+= in .vimrc), whose `fzf` calls resolve to this mise copy.
+# aws/minio credential_process helpers). uv is pinned here (and dropped from
+# ~/.default-python-packages) so a single mise-managed copy is the one on PATH —
+# the former pip-into-python copy shadow-raced it — and so uv reaches the fleet
+# too, which has no mise python. fzf now comes from here for the shell (binary +
+# `fzf --zsh` keybindings/completion, wired in .zshrc after `mise activate`);
+# the ~/.zsh/fzf git submodule it superseded is kept only for vim's fzf.vim
+# plugin (rtp+= in .vimrc), whose `fzf` calls resolve to this mise copy.
 #
 # eza is pinned to the asdf plugin, not aqua/ubi/github: eza ships no macOS
 # release asset, so every GitHub-asset backend fails on darwin. The asdf plugin
