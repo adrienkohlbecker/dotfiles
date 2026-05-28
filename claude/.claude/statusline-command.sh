@@ -32,11 +32,16 @@ input=$(head -c 65536)
   IFS= read -r effort
 } <<EOF
 $(printf '%s' "$input" | jq -r '
-  def clean: gsub("[[:cntrl:]]"; "");
+  # Strip control chars from strings; pass numbers (e.g. epoch resets_at) through
+  # untouched — gsub errors on a non-string, and jq -r stringifies it anyway.
+  def clean: if type == "string" then gsub("[[:cntrl:]]"; "") else . end;
+  # One copy of the round/coerce rule: ctx is "remaining", the rate windows are
+  # "100 − used". A non-number yields "" and is skipped downstream.
+  def numpct(x): if (x | type) == "number" then (x | round) else "" end;
+  def rempct(x): if (x | type) == "number" then ((100 - x) | round) else "" end;
   (.workspace.current_dir // "" | clean),
   (.model.display_name // "" | clean),
-  (if (.context_window.remaining_percentage | type) == "number"
-     then (.context_window.remaining_percentage | round) else "" end),
+  numpct(.context_window.remaining_percentage),
   (.output_style.name // "" | if . == "default" then "" else . end | clean),
   (if .exceeds_200k_tokens then "1" else "" end),
   (.session_name // "" | clean),
@@ -44,12 +49,10 @@ $(printf '%s' "$input" | jq -r '
   (.worktree.name // "" | clean),
   (.worktree.branch // "" | clean),
   (.workspace.git_worktree // "" | clean),
-  (if (.rate_limits.five_hour.used_percentage | type) == "number"
-     then ((100 - .rate_limits.five_hour.used_percentage) | round) else "" end),
-  (if (.rate_limits.seven_day.used_percentage | type) == "number"
-     then ((100 - .rate_limits.seven_day.used_percentage) | round) else "" end),
-  (.rate_limits.five_hour.resets_at // ""),
-  (.rate_limits.seven_day.resets_at // ""),
+  rempct(.rate_limits.five_hour.used_percentage),
+  rempct(.rate_limits.seven_day.used_percentage),
+  (.rate_limits.five_hour.resets_at // "" | clean),
+  (.rate_limits.seven_day.resets_at // "" | clean),
   (.session_id // "" | clean),
   (.effort.level // "" | clean)
 ')
@@ -61,11 +64,15 @@ EOF
 esc=$(printf '\033')
 dim="${esc}[2m"; red="${esc}[31m"; yel="${esc}[33m"; grn="${esc}[32m"; cyan="${esc}[36m"; mag="${esc}[35m"; bold="${esc}[1m"; rst="${esc}[0m"
 
-# Clamp a label to the line's one-row budget. Best-effort (byte-wise via cut),
-# guarded on length so the common short-label case forks nothing.
+# Clamp a label to the line's one-row budget. ${#1} is an upper bound on the
+# character count (bytes >= chars), so a label within budget by that measure is
+# within it by characters too — the common short-label case forks nothing. When
+# it might overflow, awk decides and slices on character boundaries (its length
+# and substr share a unit, char-based in a UTF-8 locale), so a multibyte label
+# is never cut mid-codepoint the way `cut -c` would under LC_ALL=C.
 _trunc() {
   if [ "${#1}" -gt "$2" ]; then
-    printf '%s…' "$(printf '%s' "$1" | cut -c1-"$2")"
+    printf '%s' "$1" | awk -v n="$2" '{ if (length($0) > n) printf "%s…", substr($0, 1, n); else printf "%s", $0 }'
   else
     printf '%s' "$1"
   fi
@@ -76,52 +83,104 @@ dir_name=${current_dir##*/}
 dir_name=$(_trunc "$dir_name" 24)
 
 # --- git section ---
-# One `git status --porcelain=v2 --branch` instead of ~8 calls. git status can
-# stall on large/slow repos and this runs on every refresh, so the rendered
-# segment is cached per (session, dir) for a few seconds. Keying on the dir too
-# means a `cd` mid-session refreshes immediately instead of showing a stale repo.
+# Read-only git, hardened against a hostile repo: a planted .git/config could
+# point core.fsmonitor/pager at an arbitrary program that would then run on
+# every refresh. OPTIONAL_LOCKS=0 also keeps `status` from touching the index,
+# so its mtime stays meaningful for the cache-freshness check below.
+_git() { GIT_OPTIONAL_LOCKS=0 git -C "$current_dir" -c core.fsmonitor=false -c core.pager=cat "$@"; }
+
+# Epoch mtime of a file, portable across BSD (`stat -f`) and GNU (`stat -c`).
+_mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null; }
+
 git_info=""
 now=$(date +%s)
-cache_file=""
-if [ -n "$session_id" ]; then
-  key=$(printf '%s' "${session_id}${current_dir}" | cksum | cut -d' ' -f1)
-  cache_file="${TMPDIR:-/tmp}/statusline-git-${key}"
-fi
 
-cached=""
-if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
-  mtime=$(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null)
-  if [ -n "$mtime" ] && [ "$((now - mtime))" -lt 5 ]; then
-    cached=1
-    git_info=$(cat "$cache_file")
+# Resolve the repo once (single fork): the work-tree gate AND the git dir. The
+# gate guards against bare repos / `.git` dirs, where porcelain v2 still prints
+# `# branch.head` and would render a phantom branch for a location with no work
+# tree. Outside any repo rev-parse exits non-zero and prints nothing.
+inwork=""
+gitdir=""
+if [ -n "$current_dir" ]; then
+  gitmeta=$(_git rev-parse --is-inside-work-tree --absolute-git-dir 2>/dev/null)
+  if [ -n "$gitmeta" ]; then
+    {
+      IFS= read -r inwork
+      IFS= read -r gitdir
+    } <<EOF_META
+$gitmeta
+EOF_META
   fi
 fi
 
-if [ -z "$cached" ]; then
-  # Gate on a real work tree: inside a bare repo or a `.git` dir, porcelain v2
-  # still prints `# branch.head`, which would render a phantom branch for a
-  # location that has no working copy.
-  if [ -n "$current_dir" ] \
-    && [ "$(git -C "$current_dir" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]; then
-    gitout=$(git -C "$current_dir" status --porcelain=v2 --branch 2>/dev/null)
+if [ "$inwork" = "true" ]; then
+  # Cache the rendered git segment per (session, dir) in a private 0700 dir —
+  # never the shared /tmp root, where a predictable name invites a symlink or a
+  # planted file that the cache read would emit to the terminal verbatim. The
+  # two key parts are newline-joined (clean strips newlines from both) so the
+  # key can't collide across a split like ("ab","cd") vs ("a","bcd").
+  cache_file=""
+  if [ -n "$session_id" ]; then
+    cache_dir="${TMPDIR:-/tmp}/claude-statusline-$(id -u)"
+    if mkdir -p "$cache_dir" 2>/dev/null && chmod 700 "$cache_dir" 2>/dev/null; then
+      key=$(printf '%s\n%s' "$session_id" "$current_dir" | cksum | cut -d' ' -f1)
+      cache_file="${cache_dir}/git-${key}"
+    fi
+  fi
 
-    # `# branch.head <name>` — or literally "(detached)", which v2 can't expand.
+  # Fresh when the cache is newer than HEAD/index (so a commit or a stage drops
+  # it at once) AND under a 5s ceiling — the backstop for state mtime can't see,
+  # i.e. a plain unstaged edit to a tracked file. Refuse a symlink: the content
+  # reaches the terminal unfiltered.
+  cached=""
+  if [ -n "$cache_file" ] && [ -f "$cache_file" ] && [ ! -h "$cache_file" ]; then
+    cmt=$(_mtime "$cache_file")
+    if [ -n "$cmt" ] && [ "$((now - cmt))" -lt 5 ]; then
+      newest=$(_mtime "$gitdir/HEAD"); newest=${newest:-0}
+      imt=$(_mtime "$gitdir/index")
+      [ "${imt:-0}" -gt "$newest" ] 2>/dev/null && newest=$imt
+      if [ "$cmt" -ge "$newest" ] 2>/dev/null; then
+        cached=1
+        git_info=$(cat "$cache_file")
+      fi
+    fi
+  fi
+
+  if [ -z "$cached" ]; then
+    gitout=$(_git status --porcelain=v2 --branch 2>/dev/null)
+
+    # One awk pass over the porcelain buffer for all three derived fields:
+    #   branch — `# branch.head <name>` (or literally "(detached)", which v2
+    #            can't expand)
+    #   ab     — `# branch.ab +A -B`, present only with an upstream
+    #   state  — `u` (unmerged) and/or `d` (tracked 1/2 changes); untracked (?)
+    #            is intentionally not counted
+    gitparse=$(printf '%s\n' "$gitout" | awk '
+      /^# branch.head / { head = $3 }
+      /^# branch.ab / { ab = $3" "$4 }
+      /^u /{ u = 1 } /^[12] /{ d = 1 }
+      END { print head; print ab; print (u ? "u" : "") (d ? "d" : "") }
+    ')
+    {
+      IFS= read -r branch
+      IFS= read -r ab
+      IFS= read -r state
+    } <<EOF_PARSE
+$gitparse
+EOF_PARSE
+
     # A detached HEAD is a non-standard state, so it renders yellow (vs dim).
     branch_color=$dim
-    branch=$(printf '%s\n' "$gitout" | awk '/^# branch.head / {print $3; exit}')
     if [ "$branch" = "(detached)" ]; then
       # One describe: --tags shows an exact tag if HEAD is on one, --always
       # falls back to the abbreviated SHA otherwise.
-      b=$(git -C "$current_dir" describe --tags --always --abbrev=7 HEAD 2>/dev/null)
+      b=$(_git describe --tags --always --abbrev=7 HEAD 2>/dev/null)
       branch="($b)"
       branch_color=$yel
     fi
     branch=$(_trunc "$branch" 24)
 
-    # Worktree state from the 1/2 (tracked changes) and u (unmerged) entries;
-    # untracked (?) is intentionally not counted. Conflicts outrank plain dirt
-    # and render a red ✗; a plain dirty tree renders a yellow *.
-    state=$(printf '%s\n' "$gitout" | awk '/^u /{u=1} /^[12] /{d=1} END {print (u ? "u" : "") (d ? "d" : "")}')
+    # Conflicts outrank plain dirt: a red ✗ vs a yellow * for a plain dirty tree.
     marker=""
     case $state in
       *u*) marker="${red}✗${rst}" ;;
@@ -130,22 +189,27 @@ if [ -z "$cached" ]; then
 
     # A git operation in progress (rebase/merge/...) is the loudest non-standard
     # state: flag it in bold red. porcelain v2 doesn't report it, so probe the
-    # well-known sentinel paths under the git dir.
+    # well-known sentinel paths under the git dir; for a rebase, append the
+    # step/total progress (the most useful thing to see mid-operation).
     op=""
-    gitdir=$(git -C "$current_dir" rev-parse --absolute-git-dir 2>/dev/null)
-    if [ -n "$gitdir" ]; then
-      if [ -d "$gitdir/rebase-merge" ] || [ -d "$gitdir/rebase-apply" ]; then op="rebase"
-      elif [ -f "$gitdir/MERGE_HEAD" ]; then op="merge"
-      elif [ -f "$gitdir/CHERRY_PICK_HEAD" ]; then op="cherry-pick"
-      elif [ -f "$gitdir/REVERT_HEAD" ]; then op="revert"
-      elif [ -f "$gitdir/BISECT_LOG" ]; then op="bisect"
-      fi
+    if [ -d "$gitdir/rebase-merge" ]; then
+      op="rebase"
+      n=$(cat "$gitdir/rebase-merge/msgnum" 2>/dev/null)
+      t=$(cat "$gitdir/rebase-merge/end" 2>/dev/null)
+      [ -n "$n" ] && [ -n "$t" ] && op="rebase ${n}/${t}"
+    elif [ -d "$gitdir/rebase-apply" ]; then
+      op="rebase"
+      n=$(cat "$gitdir/rebase-apply/next" 2>/dev/null)
+      t=$(cat "$gitdir/rebase-apply/last" 2>/dev/null)
+      [ -n "$n" ] && [ -n "$t" ] && op="rebase ${n}/${t}"
+    elif [ -f "$gitdir/MERGE_HEAD" ]; then op="merge"
+    elif [ -f "$gitdir/CHERRY_PICK_HEAD" ]; then op="cherry-pick"
+    elif [ -f "$gitdir/REVERT_HEAD" ]; then op="revert"
+    elif [ -f "$gitdir/BISECT_LOG" ]; then op="bisect"
     fi
 
-    # Ahead/behind from `# branch.ab +A -B` (only present when an upstream
-    # exists): unpushed commits green, unpulled commits yellow.
+    # Ahead/behind from `# branch.ab +A -B`: unpushed green, unpulled yellow.
     arrows=""
-    ab=$(printf '%s\n' "$gitout" | awk '/^# branch.ab / {print $3" "$4; exit}')
     if [ -n "$ab" ]; then
       ahead=${ab%% *}; ahead=${ahead#+}
       behind=${ab##* }; behind=${behind#-}
@@ -157,8 +221,14 @@ if [ -z "$cached" ]; then
     [ -n "$op" ] && git_part="${git_part} ${bold}${red}${op}${rst}"
     [ -n "$arrows" ] && git_part="${git_part} ${arrows}"
     git_info="$git_part"
+
+    # Atomic publish: write a temp then rename, so a concurrent refresh never
+    # reads a half-written (colour-truncated) segment.
+    if [ -n "$cache_file" ] && [ -n "$git_info" ]; then
+      tmp="${cache_file}.$$"
+      printf '%s' "$git_info" >"$tmp" 2>/dev/null && mv -f "$tmp" "$cache_file" 2>/dev/null
+    fi
   fi
-  [ -n "$cache_file" ] && printf '%s' "$git_info" >"$cache_file" 2>/dev/null
 fi
 
 # date(1) reads an epoch with -r on BSD/macOS but with -d @ on GNU coreutils
@@ -193,8 +263,10 @@ if [ -n "$rem_7d" ]; then
   reset_7d=""
   if [ -n "$rl_7d_reset" ]; then
     # 7d window can land days out: one date call yields "YYYYMMDD|Day HH:MM",
-    # then drop the weekday prefix when it resets today.
-    parts=$(_epoch_date "$rl_7d_reset" '+%Y%m%d|%a %H:%M')
+    # then drop the weekday prefix when it resets today. LC_TIME=C keeps the
+    # weekday stable English ("Thu") on the French fleet, not "jeu."; the
+    # %Y%m%d "is it today" compare below is locale-agnostic (digits only).
+    parts=$(export LC_TIME=C; _epoch_date "$rl_7d_reset" '+%Y%m%d|%a %H:%M')
     if [ -n "$parts" ]; then
       day=${parts%%|*}
       disp=${parts#*|}
@@ -213,9 +285,15 @@ line="${dim}${dir_name}${rst}"
 # Worktree: prefer the --worktree-session fields (they carry a branch); fall back
 # to workspace.git_worktree, which is populated for any linked git worktree.
 wt_label=""
-if [ -n "$worktree_name" ]; then
+if [ -n "$worktree_name" ] || [ -n "$worktree_branch" ]; then
   wt_label="$worktree_name"
-  [ -n "$worktree_branch" ] && wt_label="${worktree_name}:${worktree_branch}"
+  if [ -n "$worktree_branch" ]; then
+    if [ -n "$wt_label" ]; then
+      wt_label="${wt_label}:${worktree_branch}"
+    else
+      wt_label="$worktree_branch"
+    fi
+  fi
 elif [ -n "$ws_git_worktree" ]; then
   wt_label="$ws_git_worktree"
 fi
