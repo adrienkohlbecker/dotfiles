@@ -111,10 +111,10 @@
     "claude-md-management@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "remember@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "terraform@claude-plugins-official": true
+    "skill-creator@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
+  "effortLevel": "xhigh",
   "tui": "fullscreen",
   "editorMode": "normal",
   "verbose": true,
