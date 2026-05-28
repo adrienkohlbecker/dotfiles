@@ -2,11 +2,17 @@
 # Claude Code status line. Reads session JSON on stdin, prints one colored line.
 # Deliberately NO `set -e`: a statusline must degrade gracefully, never abort —
 # a non-numeric field or a missing git repo must not blank the whole line.
-input=$(cat)
+
+# Cap the read: legitimate session JSON is well under 64 KiB, and the script runs
+# on every refresh, so an unbounded `cat` would re-buffer a pathological payload
+# each keystroke.
+input=$(head -c 65536)
 
 # Single jq pass: one field per line, fixed order, read positionally below.
 # `// ""` keeps every field present so the line count stays stable even when
-# a field is absent (one parse, one fork — not one jq per field).
+# a field is absent (one parse, one fork — not one jq per field). The numeric
+# fields are also rounded here (ctx, and 100−used for each rate window) so the
+# shell does no float math downstream — a non-number yields "" and is skipped.
 {
   IFS= read -r current_dir
   IFS= read -r model_name
@@ -18,16 +24,18 @@ input=$(cat)
   IFS= read -r worktree_name
   IFS= read -r worktree_branch
   IFS= read -r ws_git_worktree
-  IFS= read -r rl_5h
-  IFS= read -r rl_7d
+  IFS= read -r rem_5h
+  IFS= read -r rem_7d
   IFS= read -r rl_5h_reset
   IFS= read -r rl_7d_reset
+  IFS= read -r session_id
 } <<EOF
 $(printf '%s' "$input" | jq -r '
   def clean: gsub("[[:cntrl:]]"; "");
   (.workspace.current_dir // "" | clean),
   (.model.display_name // "" | clean),
-  (.context_window.remaining_percentage // ""),
+  (if (.context_window.remaining_percentage | type) == "number"
+     then (.context_window.remaining_percentage | round) else "" end),
   (.output_style.name // "" | if . == "default" then "" else . end | clean),
   (if .exceeds_200k_tokens then "1" else "" end),
   (.session_name // "" | clean),
@@ -35,10 +43,13 @@ $(printf '%s' "$input" | jq -r '
   (.worktree.name // "" | clean),
   (.worktree.branch // "" | clean),
   (.workspace.git_worktree // "" | clean),
-  (.rate_limits.five_hour.used_percentage // ""),
-  (.rate_limits.seven_day.used_percentage // ""),
+  (if (.rate_limits.five_hour.used_percentage | type) == "number"
+     then ((100 - .rate_limits.five_hour.used_percentage) | round) else "" end),
+  (if (.rate_limits.seven_day.used_percentage | type) == "number"
+     then ((100 - .rate_limits.seven_day.used_percentage) | round) else "" end),
   (.rate_limits.five_hour.resets_at // ""),
-  (.rate_limits.seven_day.resets_at // "")
+  (.rate_limits.seven_day.resets_at // ""),
+  (.session_id // "" | clean)
 ')
 EOF
 
@@ -48,43 +59,95 @@ EOF
 esc=$(printf '\033')
 dim="${esc}[2m"; red="${esc}[31m"; yel="${esc}[33m"; cyan="${esc}[36m"; mag="${esc}[35m"; rst="${esc}[0m"
 
-dir_name=$(basename "$current_dir")
+# Clamp a label to the line's one-row budget. Best-effort (byte-wise via cut),
+# guarded on length so the common short-label case forks nothing.
+_trunc() {
+  if [ "${#1}" -gt "$2" ]; then
+    printf '%s…' "$(printf '%s' "$1" | cut -c1-"$2")"
+  else
+    printf '%s' "$1"
+  fi
+}
 
-# --- git section: one `git status --porcelain=v2 --branch` instead of ~8 calls ---
+dir_name=${current_dir##*/}
+[ -z "$dir_name" ] && dir_name=$current_dir   # current_dir is "/" (or empty)
+dir_name=$(_trunc "$dir_name" 24)
+
+# --- git section ---
+# One `git status --porcelain=v2 --branch` instead of ~8 calls. git status can
+# stall on large/slow repos and this runs on every refresh, so the rendered
+# segment is cached per (session, dir) for a few seconds. Keying on the dir too
+# means a `cd` mid-session refreshes immediately instead of showing a stale repo.
 git_info=""
-gitout=$(git -C "$current_dir" status --porcelain=v2 --branch 2>/dev/null)
-if [ -n "$gitout" ]; then
-  # `# branch.head <name>` — or literally "(detached)", which v2 can't expand
-  branch=$(printf '%s\n' "$gitout" | awk '/^# branch.head / {print $3; exit}')
-  if [ "$branch" = "(detached)" ]; then
-    b=$(git -C "$current_dir" describe --tags --exact-match HEAD 2>/dev/null) \
-      || b=$(git -C "$current_dir" rev-parse --short HEAD 2>/dev/null)
-    branch="($b)"
+now=$(date +%s)
+cache_file=""
+if [ -n "$session_id" ]; then
+  key=$(printf '%s' "${session_id}${current_dir}" | cksum | cut -d' ' -f1)
+  cache_file="${TMPDIR:-/tmp}/statusline-git-${key}"
+fi
+
+cached=""
+if [ -n "$cache_file" ] && [ -f "$cache_file" ]; then
+  mtime=$(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null)
+  if [ -n "$mtime" ] && [ "$((now - mtime))" -lt 5 ]; then
+    cached=1
+    git_info=$(cat "$cache_file")
   fi
+fi
 
-  # Dirty: any staged/unstaged tracked change (1/2) or unmerged (u). Untracked
-  # (?) is excluded, matching the prior diff-based check.
-  dirty=""
-  printf '%s\n' "$gitout" | grep -q '^[12u] ' && dirty="*"
+if [ -z "$cached" ]; then
+  # Gate on a real work tree: inside a bare repo or a `.git` dir, porcelain v2
+  # still prints `# branch.head`, which would render a phantom branch for a
+  # location that has no working copy.
+  if [ -n "$current_dir" ] \
+    && [ "$(git -C "$current_dir" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]; then
+    gitout=$(git -C "$current_dir" status --porcelain=v2 --branch 2>/dev/null)
 
-  # Ahead/behind from `# branch.ab +A -B` (only present when an upstream exists)
-  arrows=""
-  ab=$(printf '%s\n' "$gitout" | awk '/^# branch.ab / {print $3" "$4; exit}')
-  if [ -n "$ab" ]; then
-    ahead=${ab%% *}; ahead=${ahead#+}
-    behind=${ab##* }; behind=${behind#-}
-    [ "${ahead:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇡${ahead}"
-    [ "${behind:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇣${behind}"
+    # `# branch.head <name>` — or literally "(detached)", which v2 can't expand.
+    branch=$(printf '%s\n' "$gitout" | awk '/^# branch.head / {print $3; exit}')
+    if [ "$branch" = "(detached)" ]; then
+      # One describe: --tags shows an exact tag if HEAD is on one, --always
+      # falls back to the abbreviated SHA otherwise.
+      b=$(git -C "$current_dir" describe --tags --always --abbrev=7 HEAD 2>/dev/null)
+      branch="($b)"
+    fi
+    branch=$(_trunc "$branch" 24)
+
+    # Dirty: any staged/unstaged tracked change (1/2) or unmerged (u). Untracked
+    # (?) is intentionally not counted, so a worktree with only new files reads
+    # clean.
+    dirty=""
+    printf '%s\n' "$gitout" | grep -q '^[12u] ' && dirty="*"
+
+    # Ahead/behind from `# branch.ab +A -B` (only present when an upstream exists).
+    arrows=""
+    ab=$(printf '%s\n' "$gitout" | awk '/^# branch.ab / {print $3" "$4; exit}')
+    if [ -n "$ab" ]; then
+      ahead=${ab%% *}; ahead=${ahead#+}
+      behind=${ab##* }; behind=${behind#-}
+      [ "${ahead:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇡${ahead}"
+      [ "${behind:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇣${behind}"
+    fi
+
+    git_part="${branch}${dirty}"
+    [ -n "$arrows" ] && git_part="${git_part} ${arrows}"
+    git_info="${dim}${git_part}${rst}"
   fi
+  [ -n "$cache_file" ] && printf '%s' "$git_info" >"$cache_file" 2>/dev/null
+fi
 
-  git_part="${branch}${dirty}"
-  [ -n "$arrows" ] && git_part="${git_part} ${arrows}"
-  git_info="${dim}${git_part}${rst}"
+# date(1) reads an epoch with -r on BSD/macOS but with -d @ on GNU coreutils
+# (where -r means "reference file's mtime"). Pick the right reader once so the
+# reset times work on both the mac and the Linux fleet.
+if date -r 0 +%s >/dev/null 2>&1; then
+  _epoch_date() { date -r "$1" "$2" 2>/dev/null; }
+else
+  _epoch_date() { date -d "@$1" "$2" 2>/dev/null; }
 fi
 
 # --- rate limit section ---
-# "5h:NN% 7d:NN%" in remaining framing (100 - used). resets_at is Unix epoch
-# seconds (per the statusline schema), so date -r is the correct reader.
+# "5h:NN% 7d:NN%" in remaining framing (jq already emitted 100 − used, rounded).
+# resets_at is Unix epoch seconds (per the statusline schema).
 # Color per field: >50% remaining = dim, 20-50% = yellow, <20% = red.
 _rl_color() {
   pct=$1
@@ -93,28 +156,26 @@ _rl_color() {
   else printf '%s' "$dim"; fi
 }
 rate_info=""
-if [ -n "$rl_5h" ]; then
-  rem_5h=$(printf '%.0f' "$(echo "$rl_5h" | awk '{print 100 - $1}')")
+if [ -n "$rem_5h" ]; then
   reset_5h=""
   if [ -n "$rl_5h_reset" ]; then
-    t=$(date -r "$rl_5h_reset" '+%H:%M' 2>/dev/null)
+    t=$(_epoch_date "$rl_5h_reset" '+%H:%M')
     [ -n "$t" ] && reset_5h="↻${t}"
   fi
   rate_info="${rate_info}$(_rl_color "$rem_5h")5h:${rem_5h}%${reset_5h}${rst}"
 fi
-if [ -n "$rl_7d" ]; then
-  rem_7d=$(printf '%.0f' "$(echo "$rl_7d" | awk '{print 100 - $1}')")
+if [ -n "$rem_7d" ]; then
   reset_7d=""
   if [ -n "$rl_7d_reset" ]; then
-    # Same-day -> HH:MM; otherwise "Day HH:MM" (7d window can be days out)
-    today=$(date '+%Y%m%d')
-    reset_day=$(date -r "$rl_7d_reset" '+%Y%m%d' 2>/dev/null)
-    if [ "$reset_day" = "$today" ]; then
-      t=$(date -r "$rl_7d_reset" '+%H:%M' 2>/dev/null)
-    else
-      t=$(date -r "$rl_7d_reset" '+%a %H:%M' 2>/dev/null)
+    # 7d window can land days out: one date call yields "YYYYMMDD|Day HH:MM",
+    # then drop the weekday prefix when it resets today.
+    parts=$(_epoch_date "$rl_7d_reset" '+%Y%m%d|%a %H:%M')
+    if [ -n "$parts" ]; then
+      day=${parts%%|*}
+      disp=${parts#*|}
+      [ "$day" = "$(date '+%Y%m%d')" ] && disp=${disp#* }
+      reset_7d="↻${disp}"
     fi
-    [ -n "$t" ] && reset_7d="↻${t}"
   fi
   [ -n "$rate_info" ] && rate_info="${rate_info} "
   rate_info="${rate_info}$(_rl_color "$rem_7d")7d:${rem_7d}%${reset_7d}${rst}"
@@ -133,18 +194,18 @@ if [ -n "$worktree_name" ]; then
 elif [ -n "$ws_git_worktree" ]; then
   wt_label="$ws_git_worktree"
 fi
+wt_label=$(_trunc "$wt_label" 24)
 [ -n "$wt_label" ] && line="${line}  ${mag}⎇ ${wt_label}${rst}"
 
-line="${line}  ${cyan}${model_name}${rst}"
-[ -n "$agent_name" ] && line="${line}  ${mag}@${agent_name}${rst}"
-[ -n "$session_name" ] && line="${line}  ${dim}{${session_name}}${rst}"
+[ -n "$model_name" ] && line="${line}  ${cyan}${model_name}${rst}"
+[ -n "$agent_name" ] && line="${line}  ${mag}@$(_trunc "$agent_name" 24)${rst}"
+[ -n "$session_name" ] && line="${line}  ${dim}{$(_trunc "$session_name" 24)}${rst}"
 [ -n "$output_style" ] && line="${line}  ${dim}[${output_style}]${rst}"
 if [ -n "$remaining" ]; then
-  rem=$(printf '%.0f' "$remaining")
   if [ -n "$ctx_warning" ]; then
-    line="${line}  ${red}ctx:${rem}%${rst}"
+    line="${line}  ${red}ctx:${remaining}%${rst}"
   else
-    line="${line}  ${dim}ctx:${rem}%${rst}"
+    line="${line}  ${dim}ctx:${remaining}%${rst}"
   fi
 fi
 [ -n "$rate_info" ] && line="${line}  ${rate_info}"
