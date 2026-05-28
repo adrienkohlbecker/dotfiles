@@ -7,9 +7,15 @@ list-all                  Walk ~/.claude/projects/ and emit one tab-separated
                           `display` is pre-rendered with ANSI colors and
                           fixed-width columns for fzf.
 
-search <query>            Same row format, but only transcripts containing
-                          every whitespace-separated term in <query> somewhere
-                          (file-level AND via chained `rg -F` scans).
+search <query>            Same row format, ranked by relevance over the
+                          conversation PROSE (user/assistant message text only,
+                          NOT tool output or pasted files — those make common
+                          words match everything). An `rg -F` union scan narrows
+                          candidates, then each is scored by per-term occurrence
+                          counts in its prose. Rows order by (distinct terms
+                          matched desc, total occurrences desc, newest first):
+                          multi-term and frequently-discussed matches float up;
+                          a term seen only in tool output scores zero and drops.
 
 preview <file> [<query>]  Render the transcript with optional term highlight.
                           With a non-empty query, emit ONLY the turns whose
@@ -17,8 +23,11 @@ preview <file> [<query>]  Render the transcript with optional term highlight.
                           = full transcript, no highlight.
 
 Schema reference (Claude Code session JSONL):
-  type        'user' | 'assistant' | 'summary' | ...
+  type        'user' | 'assistant' | 'ai-title' | ...
   message     { role, content }; content is str | [block, ...]
+  aiTitle     on type=='ai-title': model-generated session title, refined as
+              the conversation grows (the picker's display title). Preferred
+              over the first user prompt, which is often just '/clear'.
   cwd         working directory at session start
   entrypoint  'cli' | 'claude-vscode' | 'sdk-cli' (programmatic; excluded)
   isSidechain bool; pure-True sessions are subagent traces (excluded)
@@ -37,7 +46,11 @@ from pathlib import Path
 
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
 
-MAX_LINES_PER_FILE = 200  # cwd / entrypoint / first_user usually within ~10
+# cwd / entrypoint / first_user land within ~10 lines; the first ai-title
+# record lands by ~line 285 in the wild, so 300 captures a title for every
+# session that has one. The scan early-exits once all fields are filled, so
+# this cap only bounds the rare title-less session.
+MAX_LINES_PER_FILE = 300
 
 # Display column widths. Tweak to taste — fzf will further truncate the
 # display column if the terminal is narrow.
@@ -117,6 +130,34 @@ _WRAPPER_PREFIXES = (
     "[tool_result]",
 )
 
+# Cheap substring prefilter for the scan window: only JSON-parse lines that can
+# carry a field _scan_file cares about. The assistant/tool/attachment records
+# that make up the bulk of a transcript are skipped without parsing, which is
+# what keeps list-all fast over hundreds of multi-thousand-line files.
+_SCAN_MARKERS = (
+    "ai-title",
+    '"cwd"',
+    "entrypoint",
+    '"type":"user"',
+    '"type": "user"',
+    "isSidechain",
+)
+
+# Lines carrying pasted files / tool output / snapshots / system records rather
+# than conversation prose. search() skips these before scoring so a common word
+# in command output or a pasted file can't inflate a transcript's relevance.
+# Only definitively non-prose carriers are listed: a real user/assistant turn
+# never contains these substrings, so skipping the whole line can't drop prose.
+# Bytes, because the scoring pass reads files in binary for speed.
+_NOISE_MARKERS = (
+    b'"tool_result"',
+    b"toolUseResult",
+    b'"type":"attachment"',
+    b'"type": "attachment"',
+    b"file-history-snapshot",
+    b'"type":"system"',
+)
+
 
 def normalize_first_user(text: str) -> str | None:
     """Strip Claude Code wrapper markup from a candidate first-user prompt.
@@ -140,13 +181,19 @@ def normalize_first_user(text: str) -> str | None:
 
 
 def _scan_file(path: Path, mtime: float) -> tuple[str, str] | None:
-    """Return (cwd, summary) for the transcript, or None to exclude.
+    """Return (cwd, title) for the transcript, or None to exclude.
 
-    `summary` is the first real user prompt (wrappers stripped). Reads up
-    to MAX_LINES_PER_FILE records — enough to capture metadata and a
-    couple of user turns even when the session opens with wrapper noise.
+    `title` is the model-generated ai-title (the picker's own display title),
+    falling back to the first real user prompt (wrappers stripped) when the
+    session predates that feature or has none yet — without the fallback most
+    rows would read '/clear', since that is the first user turn after a resume.
+
+    Reads up to MAX_LINES_PER_FILE records, early-exiting once every field is
+    filled; a cheap substring prefilter (_SCAN_MARKERS) skips JSON-parsing the
+    assistant/tool/attachment bulk.
     """
     cwd = ""
+    ai_title = ""
     summary = ""
     entrypoint = ""
     sidechain_states: set[bool] = set()
@@ -156,10 +203,16 @@ def _scan_file(path: Path, mtime: float) -> tuple[str, str] | None:
             for i, line in enumerate(fh):
                 if i >= MAX_LINES_PER_FILE:
                     break
+                if not any(m in line for m in _SCAN_MARKERS):
+                    continue
                 try:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
+                # ai-title is rewritten as the session grows; keep the latest
+                # one within the window.
+                if rec.get("type") == "ai-title" and isinstance(rec.get("aiTitle"), str):
+                    ai_title = rec["aiTitle"].strip()
                 if not cwd and isinstance(rec.get("cwd"), str):
                     cwd = rec["cwd"]
                 if not entrypoint and isinstance(rec.get("entrypoint"), str):
@@ -174,7 +227,7 @@ def _scan_file(path: Path, mtime: float) -> tuple[str, str] | None:
                         cleaned = normalize_first_user(text)
                         if cleaned:
                             summary = cleaned
-                if cwd and entrypoint and summary:
+                if cwd and entrypoint and ai_title and summary:
                     break
     except OSError:
         return None
@@ -185,14 +238,15 @@ def _scan_file(path: Path, mtime: float) -> tuple[str, str] | None:
         return None
     if cwd.startswith(("/private/tmp", "/tmp", "/private/var/folders", "/var/folders")):
         return None
-    if not cwd or not summary:
+    title = ai_title or summary
+    if not cwd or not title:
         # Likely a synthetic / aborted session — skip rather than show noise.
         return None
 
-    return (cwd, summary[:SUMMARY_MAX])
+    return (cwd, title[:SUMMARY_MAX])
 
 
-def _format_row(path: Path, mtime: float, cwd: str, summary: str) -> str:
+def _format_row(path: Path, mtime: float, cwd: str, title: str) -> str:
     rt = reltime(mtime).rjust(RELTIME_WIDTH)
     # cwd is transcript-controlled: strip control bytes and collapse tab/newline
     # before it reaches column 2 (a newline would split the row) or the colored
@@ -200,33 +254,40 @@ def _format_row(path: Path, mtime: float, cwd: str, summary: str) -> str:
     # filesystem, so it needs no scrub.
     cwd = _CTRL.sub("", cwd.replace("\t", " ").replace("\n", " "))
     cwd_disp = truncate_left(collapse_home(cwd), CWD_WIDTH)
-    summary_one_line = _CTRL.sub("", summary.replace("\t", " ").replace("\n", " "))
+    # title is transcript-controlled (ai-title or user prompt) — same scrub.
+    title_one_line = _CTRL.sub("", title.replace("\t", " ").replace("\n", " "))
     display = (
-        f"{DIM}{rt}{RST}  {CYAN}{cwd_disp}{RST}  {summary_one_line}"
+        f"{DIM}{rt}{RST}  {CYAN}{cwd_disp}{RST}  {title_one_line}"
     )
     # Internal columns first (filepath, cwd), then the display column.
     return f"{path}\t{cwd}\t{display}"
 
 
-def _emit_rows(paths: list[str]) -> None:
-    files_with_mt = []
+def _with_mtime(paths) -> list[tuple[float, str]]:
+    out: list[tuple[float, str]] = []
     for p in paths:
         try:
-            files_with_mt.append((os.path.getmtime(p), p))
+            out.append((os.path.getmtime(p), p))
         except OSError:
             continue
-    files_with_mt.sort(reverse=True)
+    return out
 
-    for mtime, p in files_with_mt:
+
+def _emit_rows(ordered: list[tuple[float, str]]) -> None:
+    """Emit one row per (mtime, path), preserving the given order (fzf runs
+    with --no-sort, so emission order is display order)."""
+    for mtime, p in ordered:
         scan = _scan_file(Path(p), mtime)
         if scan is None:
             continue
-        cwd, summary = scan
-        print(_format_row(Path(p), mtime, cwd, summary))
+        cwd, title = scan
+        print(_format_row(Path(p), mtime, cwd, title))
 
 
 def list_all() -> None:
-    _emit_rows(glob.glob(str(PROJECTS_DIR / "*" / "*.jsonl")))
+    rows = _with_mtime(glob.glob(str(PROJECTS_DIR / "*" / "*.jsonl")))
+    rows.sort(reverse=True)  # newest first
+    _emit_rows(rows)
 
 
 def _rg_files(args: list[str]) -> list[str] | None:
@@ -250,38 +311,112 @@ def _rg_files(args: list[str]) -> list[str] | None:
     return [p for p in proc.stdout.split("\0") if p]
 
 
-def search(query: str) -> None:
-    """Filtered list: transcripts containing ALL whitespace-separated terms.
+def _prose_text(rec) -> str:
+    """User/assistant message text only — excludes tool_use/tool_result and
+    thinking blocks, which carry incidental keyword noise rather than the
+    conversation's topic."""
+    if rec.get("type") not in ("user", "assistant"):
+        return ""
+    msg = rec.get("message")
+    if not isinstance(msg, dict):
+        return ""
+    content = msg.get("content", "")
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return ""
+    return "\n".join(
+        b.get("text", "")
+        for b in content
+        if isinstance(b, dict) and b.get("type") == "text"
+    )
 
-    File-level AND via chained ripgrep `-F` scans: a transcript matches when
-    every term appears somewhere in it (not necessarily the same turn). `-F`
-    is memchr-fast even on the multi-kilobyte single lines JSONL records produce
-    — a PCRE2 lookahead chain is pathologically slow there. Each pass narrows
-    the file set the next term searches.
+
+def _prose_term_counts(path: str, terms_lc: list[bytes]) -> list[int]:
+    """Per-term case-insensitive occurrence count within the transcript's prose.
+
+    Reads bytes and skips noise-carrier lines (_NOISE_MARKERS) cheaply, then
+    JSON-parses only the survivors that contain a term and counts within their
+    text blocks. The byte skip + substring prefilter keep this off the hot path
+    for the bulk of a transcript (tool output), so a full corpus scan stays a
+    couple of seconds even though every candidate file is read end to end.
+    """
+    counts = [0] * len(terms_lc)
+    try:
+        with open(path, "rb") as fh:
+            for line in fh:
+                if any(n in line for n in _NOISE_MARKERS):
+                    continue
+                low = line.lower()
+                if not any(t in low for t in terms_lc):
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                text = _prose_text(rec).lower().encode()
+                if not text:
+                    continue
+                for i, t in enumerate(terms_lc):
+                    counts[i] += text.count(t)
+    except OSError:
+        pass
+    return counts
+
+
+def search(query: str) -> None:
+    """Relevance-ranked list scored on conversation PROSE, not full content.
+
+    Why prose-only: ripgrep over raw JSONL matches a term *anywhere* — command
+    output, pasted file contents, system records — so common words ('swap',
+    'ecc', ...) match nearly every transcript and the ranking collapses to plain
+    recency. Scoring only user/assistant message text restores the signal: a
+    session genuinely *about* a topic mentions it repeatedly in prose; one that
+    merely ran a command whose output contained the word does not.
+
+    Pipeline: an `rg -F` union scan (any term, full content) cheaply narrows the
+    candidates — a term absent from the whole file is absent from its prose too,
+    so this never drops a real match — restricted to the same top-level
+    transcript set list_all() shows. Each candidate is then prose-scored in
+    Python and ranked by (distinct terms matched desc, total prose occurrences
+    desc, mtime desc): matching every term beats matching fewer, more mentions
+    beats fewer, ties break to the most recent.
     """
     terms = query.split()
     if not terms:
         list_all()
         return
-    # First term scans the whole projects tree; subsequent terms scan only the
-    # surviving file list (a few thousand uuid-named paths, well under ARG_MAX).
-    files = _rg_files(["-g", "*.jsonl", "--", terms[0], str(PROJECTS_DIR)])
-    if files is None:
-        return
-    for term in terms[1:]:
-        if not files:
-            break
-        files = _rg_files(["--", term, *files])
-        if files is None:
+    universe = set(glob.glob(str(PROJECTS_DIR / "*" / "*.jsonl")))
+    candidates: set[str] = set()
+    for term in terms:
+        hits = _rg_files(["-g", "*.jsonl", "--", term, str(PROJECTS_DIR)])
+        if hits is None:
             return
-    _emit_rows(files)
+        candidates.update(hits)
+    candidates &= universe
+    if not candidates:
+        return
+    terms_lc = [t.lower().encode() for t in terms]
+    ranked: list[tuple[int, int, float, str]] = []
+    for path in candidates:
+        counts = _prose_term_counts(path, terms_lc)
+        distinct = sum(1 for c in counts if c)
+        if not distinct:
+            continue
+        try:
+            mtime = os.path.getmtime(path)
+        except OSError:
+            continue
+        ranked.append((distinct, sum(counts), mtime, path))
+    ranked.sort(reverse=True)  # distinct desc, total desc, mtime desc
+    _emit_rows([(mtime, path) for _, _, mtime, path in ranked])
 
 
 def preview(file: str, query: str = "") -> None:
-    # search() matches transcripts containing every term *somewhere* (file-level
-    # AND), so show every turn matching ANY term, each highlighted — that
-    # surfaces each term's context and never renders an empty preview for a
-    # transcript the list matched.
+    # search() ranks transcripts containing ANY term (scored by term count), so
+    # show every turn matching ANY term, each highlighted — that surfaces each
+    # present term's context and never renders an empty preview for a transcript
+    # the list matched.
     terms = query.split()
     pats = [re.compile(re.escape(t), re.IGNORECASE) for t in terms]
 

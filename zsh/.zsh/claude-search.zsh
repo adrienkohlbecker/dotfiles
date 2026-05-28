@@ -3,18 +3,22 @@
 # Usage:  csearch
 #
 # Empty query lists every transcript under ~/.claude/projects/ (newest first,
-# SDK/subagent/tempdir sessions excluded). As you type, fzf reloads the list to
-# the transcripts whose full JSONL content (user prompts, assistant turns, tool
-# results, the lot) contains every space-separated term somewhere — chained
-# `rg -F` scans, a file-level AND rather than one literal phrase. The preview
-# pane renders the selected conversation, showing turns matching any term (or
-# the whole transcript when the query is empty). Enter resumes the session via
-# `claude --resume <uuid>` from its original cwd.
+# SDK/subagent/tempdir sessions excluded). As you type, fzf reloads the list,
+# ranked by relevance over the conversation PROSE — the user prompts and
+# assistant replies, NOT tool output, pasted files, or system records, which
+# would otherwise make common words match nearly every transcript. An `rg -F`
+# union scan narrows candidates, then each is scored by per-term occurrence
+# count in its prose; rows order by (distinct terms matched, total occurrences,
+# recency), so the sessions actually *about* your terms rise to the top. The
+# preview pane renders the selected conversation, showing turns matching any
+# term (or the whole transcript when the query is empty). Enter resumes the
+# session via `claude --resume <uuid>` from its original cwd.
 #
 # Row layout:
 #   col 1  filepath (hidden — preview / resume input)
 #   col 2  cwd (hidden — resume cd target)
-#   col 3  display string (colored reltime / cwd / summary)
+#   col 3  display string (colored reltime / cwd / title — ai-title, else
+#          first user prompt)
 #
 # Requires: ripgrep, fzf, python3 (stdlib only). Paired helper at
 # ~/.zsh/claude-search.py.
@@ -48,10 +52,10 @@ csearch() {
           --delimiter=$'\t' \
           --with-nth=3 \
           --bind "start:reload-sync:$reload" \
-          --bind "change:reload(sleep 0.1; $reload)" \
+          --bind "change:reload(sleep 0.2; $reload)" \
           --preview="\"$helper\" preview {1} {q}" \
           --preview-window='right:55%:wrap:follow' \
-          --header='claude transcripts — type to filter by full content (rg -F -i)' \
+          --header='claude transcripts — type terms to rank by relevance (prose, not tool output)' \
           --header-first \
           --prompt='› ' \
           --pointer='▶' \
