@@ -190,6 +190,12 @@ EOF_PARSE
       branch="($b)"
       branch_color=$yel
     fi
+    # Strip control chars before this hostile-repo-derived value reaches the
+    # terminal via the verbatim printf '%s' below. git's ref-format rules forbid
+    # them in a branch/tag name, but a hand-planted ref/packed-refs can smuggle
+    # an ESC past those create-time checks — same guard the session fields get
+    # through `clean`.
+    branch=$(printf '%s' "$branch" | tr -d '[:cntrl:]')
     branch=$(_trunc "$branch" $fw)
 
     # Conflicts outrank plain dirt: a red ✗ vs a yellow * for a plain dirty tree.
