@@ -29,6 +29,7 @@ input=$(head -c 65536)
   IFS= read -r rl_5h_reset
   IFS= read -r rl_7d_reset
   IFS= read -r session_id
+  IFS= read -r effort
 } <<EOF
 $(printf '%s' "$input" | jq -r '
   def clean: gsub("[[:cntrl:]]"; "");
@@ -49,7 +50,8 @@ $(printf '%s' "$input" | jq -r '
      then ((100 - .rate_limits.seven_day.used_percentage) | round) else "" end),
   (.rate_limits.five_hour.resets_at // ""),
   (.rate_limits.seven_day.resets_at // ""),
-  (.session_id // "" | clean)
+  (.session_id // "" | clean),
+  (.effort.level // "" | clean)
 ')
 EOF
 
@@ -57,7 +59,7 @@ EOF
 # never '%b'. A field value containing a literal "\033[..." must be printed
 # verbatim, not interpreted into control sequences (terminal-injection guard).
 esc=$(printf '\033')
-dim="${esc}[2m"; red="${esc}[31m"; yel="${esc}[33m"; cyan="${esc}[36m"; mag="${esc}[35m"; rst="${esc}[0m"
+dim="${esc}[2m"; red="${esc}[31m"; yel="${esc}[33m"; grn="${esc}[32m"; cyan="${esc}[36m"; mag="${esc}[35m"; bold="${esc}[1m"; rst="${esc}[0m"
 
 # Clamp a label to the line's one-row budget. Best-effort (byte-wise via cut),
 # guarded on length so the common short-label case forks nothing.
@@ -104,34 +106,57 @@ if [ -z "$cached" ]; then
     gitout=$(git -C "$current_dir" status --porcelain=v2 --branch 2>/dev/null)
 
     # `# branch.head <name>` — or literally "(detached)", which v2 can't expand.
+    # A detached HEAD is a non-standard state, so it renders yellow (vs dim).
+    branch_color=$dim
     branch=$(printf '%s\n' "$gitout" | awk '/^# branch.head / {print $3; exit}')
     if [ "$branch" = "(detached)" ]; then
       # One describe: --tags shows an exact tag if HEAD is on one, --always
       # falls back to the abbreviated SHA otherwise.
       b=$(git -C "$current_dir" describe --tags --always --abbrev=7 HEAD 2>/dev/null)
       branch="($b)"
+      branch_color=$yel
     fi
     branch=$(_trunc "$branch" 24)
 
-    # Dirty: any staged/unstaged tracked change (1/2) or unmerged (u). Untracked
-    # (?) is intentionally not counted, so a worktree with only new files reads
-    # clean.
-    dirty=""
-    printf '%s\n' "$gitout" | grep -q '^[12u] ' && dirty="*"
+    # Worktree state from the 1/2 (tracked changes) and u (unmerged) entries;
+    # untracked (?) is intentionally not counted. Conflicts outrank plain dirt
+    # and render a red ✗; a plain dirty tree renders a yellow *.
+    state=$(printf '%s\n' "$gitout" | awk '/^u /{u=1} /^[12] /{d=1} END {print (u ? "u" : "") (d ? "d" : "")}')
+    marker=""
+    case $state in
+      *u*) marker="${red}✗${rst}" ;;
+      *d*) marker="${yel}*${rst}" ;;
+    esac
 
-    # Ahead/behind from `# branch.ab +A -B` (only present when an upstream exists).
+    # A git operation in progress (rebase/merge/...) is the loudest non-standard
+    # state: flag it in bold red. porcelain v2 doesn't report it, so probe the
+    # well-known sentinel paths under the git dir.
+    op=""
+    gitdir=$(git -C "$current_dir" rev-parse --absolute-git-dir 2>/dev/null)
+    if [ -n "$gitdir" ]; then
+      if [ -d "$gitdir/rebase-merge" ] || [ -d "$gitdir/rebase-apply" ]; then op="rebase"
+      elif [ -f "$gitdir/MERGE_HEAD" ]; then op="merge"
+      elif [ -f "$gitdir/CHERRY_PICK_HEAD" ]; then op="cherry-pick"
+      elif [ -f "$gitdir/REVERT_HEAD" ]; then op="revert"
+      elif [ -f "$gitdir/BISECT_LOG" ]; then op="bisect"
+      fi
+    fi
+
+    # Ahead/behind from `# branch.ab +A -B` (only present when an upstream
+    # exists): unpushed commits green, unpulled commits yellow.
     arrows=""
     ab=$(printf '%s\n' "$gitout" | awk '/^# branch.ab / {print $3" "$4; exit}')
     if [ -n "$ab" ]; then
       ahead=${ab%% *}; ahead=${ahead#+}
       behind=${ab##* }; behind=${behind#-}
-      [ "${ahead:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇡${ahead}"
-      [ "${behind:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}⇣${behind}"
+      [ "${ahead:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}${grn}⇡${ahead}${rst}"
+      [ "${behind:-0}" -gt 0 ] 2>/dev/null && arrows="${arrows}${yel}⇣${behind}${rst}"
     fi
 
-    git_part="${branch}${dirty}"
+    git_part="${branch_color}${branch}${rst}${marker}"
+    [ -n "$op" ] && git_part="${git_part} ${bold}${red}${op}${rst}"
     [ -n "$arrows" ] && git_part="${git_part} ${arrows}"
-    git_info="${dim}${git_part}${rst}"
+    git_info="$git_part"
   fi
   [ -n "$cache_file" ] && printf '%s' "$git_info" >"$cache_file" 2>/dev/null
 fi
@@ -181,7 +206,7 @@ if [ -n "$rem_7d" ]; then
   rate_info="${rate_info}$(_rl_color "$rem_7d")7d:${rem_7d}%${reset_7d}${rst}"
 fi
 
-# --- assemble: dir  git  [worktree]  model  [agent]  [session]  [style]  ctx  usage ---
+# --- assemble: dir  git  [worktree]  model[ effort]  [agent]  [session]  [style]  ctx  usage ---
 line="${dim}${dir_name}${rst}"
 [ -n "$git_info" ] && line="${line}  ${git_info}"
 
@@ -197,10 +222,22 @@ fi
 wt_label=$(_trunc "$wt_label" 24)
 [ -n "$wt_label" ] && line="${line}  ${mag}⎇ ${wt_label}${rst}"
 
-[ -n "$model_name" ] && line="${line}  ${cyan}${model_name}${rst}"
+if [ -n "$model_name" ]; then
+  line="${line}  ${cyan}${model_name}${rst}"
+  # Effort tier sits tight to the model; higher tiers escalate in color since
+  # they are the non-standard, attention-worthy settings.
+  if [ -n "$effort" ]; then
+    case $effort in
+      high|xhigh) effort_color=$yel ;;
+      max|ultra) effort_color=$red ;;
+      *) effort_color=$dim ;;
+    esac
+    line="${line} ${effort_color}${effort}${rst}"
+  fi
+fi
 [ -n "$agent_name" ] && line="${line}  ${mag}@$(_trunc "$agent_name" 24)${rst}"
 [ -n "$session_name" ] && line="${line}  ${dim}{$(_trunc "$session_name" 24)}${rst}"
-[ -n "$output_style" ] && line="${line}  ${dim}[${output_style}]${rst}"
+[ -n "$output_style" ] && line="${line}  ${yel}[${output_style}]${rst}"
 if [ -n "$remaining" ]; then
   if [ -n "$ctx_warning" ]; then
     line="${line}  ${red}ctx:${remaining}%${rst}"
