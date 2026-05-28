@@ -78,9 +78,21 @@ _trunc() {
   fi
 }
 
+# Per-field truncation budget, scaled to the terminal width Claude Code exports
+# in COLUMNS (≈ a quarter of the line per field). Falls back to 24 when COLUMNS
+# is absent (older clients — it can't be probed, since our stdout is captured,
+# not a tty) or non-numeric. Clamped so a narrow window still shows something
+# and a very wide one doesn't let a single field sprawl across the line.
+fw=24
+if [ -n "${COLUMNS:-}" ] && [ "$COLUMNS" -gt 0 ] 2>/dev/null; then
+  fw=$((COLUMNS / 4))
+  [ "$fw" -lt 10 ] && fw=10
+  [ "$fw" -gt 40 ] && fw=40
+fi
+
 dir_name=${current_dir##*/}
 [ -z "$dir_name" ] && dir_name=$current_dir   # current_dir is "/" (or empty)
-dir_name=$(_trunc "$dir_name" 24)
+dir_name=$(_trunc "$dir_name" $fw)
 
 # --- git section ---
 # Read-only git, hardened against a hostile repo: a planted .git/config could
@@ -178,7 +190,7 @@ EOF_PARSE
       branch="($b)"
       branch_color=$yel
     fi
-    branch=$(_trunc "$branch" 24)
+    branch=$(_trunc "$branch" $fw)
 
     # Conflicts outrank plain dirt: a red ✗ vs a yellow * for a plain dirty tree.
     marker=""
@@ -297,7 +309,7 @@ if [ -n "$worktree_name" ] || [ -n "$worktree_branch" ]; then
 elif [ -n "$ws_git_worktree" ]; then
   wt_label="$ws_git_worktree"
 fi
-wt_label=$(_trunc "$wt_label" 24)
+wt_label=$(_trunc "$wt_label" $fw)
 [ -n "$wt_label" ] && line="${line}  ${mag}⎇ ${wt_label}${rst}"
 
 if [ -n "$model_name" ]; then
@@ -313,8 +325,8 @@ if [ -n "$model_name" ]; then
     line="${line} ${effort_color}${effort}${rst}"
   fi
 fi
-[ -n "$agent_name" ] && line="${line}  ${mag}@$(_trunc "$agent_name" 24)${rst}"
-[ -n "$session_name" ] && line="${line}  ${dim}{$(_trunc "$session_name" 24)}${rst}"
+[ -n "$agent_name" ] && line="${line}  ${mag}@$(_trunc "$agent_name" $fw)${rst}"
+[ -n "$session_name" ] && line="${line}  ${dim}{$(_trunc "$session_name" $fw)}${rst}"
 [ -n "$output_style" ] && line="${line}  ${yel}[${output_style}]${rst}"
 if [ -n "$remaining" ]; then
   if [ -n "$ctx_warning" ]; then
