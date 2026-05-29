@@ -188,9 +188,17 @@ if (( $#_sh )); then
 fi
 unset _as _sh
 
-# zoxide last: its doctor warns unless `zoxide init` runs at the very end of the
-# config, so its chpwd hook is the last one registered and no later init reorders
-# it out. Safe after syntax-highlighting — zoxide adds a chpwd hook and shell
-# functions, no ZLE widgets that would need wrapping. `--cmd cd` shadows `cd`:
-# every cd trains the db, `cd <partial>` frecency-jumps, `cdi` opens an fzf picker.
+# zoxide last so its chpwd hook is the last one registered and no later init
+# reorders it out. Safe after syntax-highlighting — zoxide adds a chpwd hook and
+# shell functions, no ZLE widgets that would need wrapping. `--cmd cd` shadows
+# `cd`: every cd trains the db, `cd <partial>` frecency-jumps, `cdi` opens an fzf
+# picker.
+#
+# _ZO_DOCTOR=0 silences zoxide's startup doctor. The doctor's heuristic ("is
+# __zoxide_hook still in chpwd_functions when cd runs?") false-positives in any
+# non-interactive shell that empties the hook arrays after sourcing this file —
+# e.g. command-runner harnesses that clear chpwd_functions/precmd_functions so
+# the prompt/mise/atuin hooks don't fire per command. The cd function survives
+# but its hook doesn't, so the doctor warns even though placement here is correct.
+_ZO_DOCTOR=0
 eval "$(zoxide init zsh --cmd cd)"
