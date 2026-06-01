@@ -10,6 +10,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "claude-opus-4-6",
   "hooks": {
     "PostToolUse": [
       {
@@ -64,5 +65,6 @@
   "preferredNotifChannel": "auto",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "skipWorkflowUsageWarning": true
 }
