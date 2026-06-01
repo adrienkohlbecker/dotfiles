@@ -48,7 +48,7 @@ bindkey "^[[A" history-beginning-search-backward
 bindkey "^[[B" history-beginning-search-forward
 
 # command aliases
-alias history="builtin fc -l -i -D"
+alias history="builtin fc -l -i -D 1"
 alias tig="command tig status"
 # `dotfiles` is a function in ~/.zshenv (works in non-interactive shells too).
 # dotfiles-tig: tig in the dotfiles repo (path resolved by _dotfiles_dir).
