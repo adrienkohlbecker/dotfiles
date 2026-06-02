@@ -1,6 +1,5 @@
 {
     "gitProjectManager.baseProjectsFolders": [
-
         "~/Work",
     ],
     "workbench.startupEditor": "newUntitledFile",
@@ -93,7 +92,7 @@
     "editor.formatOnSaveMode": "modifications",
     "git.autofetch": "all",
     "cSpell.language": "en,fr",
-    "workbench.colorTheme": "One Dark Pro",
+    "workbench.colorTheme": "Dracula Theme",
     "oneDarkPro.editorTheme": "One Dark Pro Darker",
     "workbench.iconTheme": "material-icon-theme",
     "cSpell.userWords": [

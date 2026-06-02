@@ -28,7 +28,7 @@ syntax on
 filetype plugin indent on
 
 " Colorscheme (silent! so a missing scheme doesn't error at startup)
-silent! colorscheme onedark
+silent! colorscheme dracula
 
 " Enable relative line numbers
 set number relativenumber

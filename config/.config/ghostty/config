@@ -14,5 +14,5 @@ mouse-hide-while-typing = true
 scrollback-limit = 100000000
 shell-integration = zsh
 shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo,path
-theme = One Double Dark
+theme = dracula
 keybind = global:super+alt+shift+ctrl+t=toggle_quick_terminal
