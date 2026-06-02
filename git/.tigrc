@@ -35,10 +35,10 @@ bind refs B @git branch %(prompt) %(branch)
 bind refs C ?@git checkout %(branch)
 
 # copy commit hash to clipboard
-bind main  Y @sh -c "echo -n %(commit) | pbcopy"
-bind diff  Y @sh -c "echo -n %(commit) | pbcopy"
-bind log   Y @sh -c "echo -n %(commit) | pbcopy"
-bind blame Y @sh -c "echo -n %(commit) | pbcopy"
+bind main  Y @sh -c "printf '%s' %(commit) | pbcopy"
+bind diff  Y @sh -c "printf '%s' %(commit) | pbcopy"
+bind log   Y @sh -c "printf '%s' %(commit) | pbcopy"
+bind blame Y @sh -c "printf '%s' %(commit) | pbcopy"
 
 # open file in editor
 bind status V !$EDITOR %(file)

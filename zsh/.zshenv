@@ -55,6 +55,10 @@ fi
 # editor
 export EDITOR=vim
 
+# less: raw ANSI colors + mouse scrolling
+export LESS="-R --mouse"
+export SYSTEMD_LESS="$LESS"
+
 # bat: Dracula theme + colorized man pages. Guarded: bat is a mac-only install
 # here; jammy keeps the default pager. MANROFFOPT=-c fixes groff formatting.
 # BAT_THEME also propagates to delta (git pager) which inherits it.
