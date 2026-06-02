@@ -167,38 +167,20 @@ _as=( "$HOME"/.local/share/mise/installs/http-zsh-autosuggestions/*/zsh-autosugg
 _sh=( "$HOME"/.local/share/mise/installs/http-zsh-syntax-highlighting/*/zsh-syntax-highlighting.zsh(N[1]) )
 if (( $#_sh )); then
   source "$_sh[1]"
+  _dr=( "$HOME"/.local/share/mise/installs/http-dracula-zsh-syntax-highlighting/*/zsh-syntax-highlighting.sh(N[1]) )
+  if (( $#_dr )); then
+    source "$_dr[1]"
+  fi
   ZSH_HIGHLIGHT_HIGHLIGHTERS+=(brackets)
-  # Enriched palette shared with the atuin Ctrl-R popup so the prompt and the
-  # history list highlight identically (see _token_color in fzf-atuin-widget.py
-  # — keep the two in sync). Named colors, not hex, so both resolve through the
-  # terminal theme. Only keys that differ from z-sy-h defaults are set; commands
-  # stay green, strings yellow, comments grey, substitution delimiters magenta,
-  # unknown-token red, path underline. magenta = "shell syntax" (keywords +
-  # operators), cyan = options, blue = variables.
-  ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=magenta'
-  ZSH_HIGHLIGHT_STYLES[single-hyphen-option]='fg=cyan'
-  ZSH_HIGHLIGHT_STYLES[double-hyphen-option]='fg=cyan'
-  ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=magenta'
-  ZSH_HIGHLIGHT_STYLES[redirection]='fg=magenta'
-  ZSH_HIGHLIGHT_STYLES[assign]='fg=blue'
-  ZSH_HIGHLIGHT_STYLES[dollar-double-quoted-argument]='fg=blue'
-  ZSH_HIGHLIGHT_STYLES[back-double-quoted-argument]='fg=blue'
-  ZSH_HIGHLIGHT_STYLES[back-dollar-quoted-argument]='fg=blue'
-  ZSH_HIGHLIGHT_STYLES[global-alias]='fg=green'
+  # Dracula theme (sourced above) handles ZSH_HIGHLIGHT_STYLES via hex. The
+  # Ctrl-R popup (fzf-atuin-widget.py _token_color) mirrors the same palette
+  # using SGR codes — keep the two in sync when changing themes.
 fi
-unset _as _sh
+unset _as _sh _dr
 
 # zoxide last so its chpwd hook is the last one registered and no later init
 # reorders it out. Safe after syntax-highlighting — zoxide adds a chpwd hook and
 # shell functions, no ZLE widgets that would need wrapping. `--cmd cd` shadows
 # `cd`: every cd trains the db, `cd <partial>` frecency-jumps, `cdi` opens an fzf
 # picker.
-#
-# _ZO_DOCTOR=0 silences zoxide's startup doctor. The doctor's heuristic ("is
-# __zoxide_hook still in chpwd_functions when cd runs?") false-positives in any
-# non-interactive shell that empties the hook arrays after sourcing this file —
-# e.g. command-runner harnesses that clear chpwd_functions/precmd_functions so
-# the prompt/mise/atuin hooks don't fire per command. The cd function survives
-# but its hook doesn't, so the doctor warns even though placement here is correct.
-_ZO_DOCTOR=0
 eval "$(zoxide init zsh --cmd cd)"

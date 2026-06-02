@@ -37,27 +37,27 @@ SELF = os.path.abspath(__file__)
 # the 8-bit CSI introducer 0x9b a terminal in 8-bit mode would act on.
 _CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
 
-# Colors mirror zsh-syntax-highlighting's *default* ZSH_HIGHLIGHT_STYLES so the
-# Ctrl-R popup matches the live prompt. Named 16-color SGR (not truecolor) on
-# purpose: both the prompt and the popup then resolve through the same terminal
-# palette, so the greens/yellows are identical whatever theme is loaded. If you
-# customize ZSH_HIGHLIGHT_STYLES, update these to match.
+# Colors follow the Dracula palette. The Dracula zsh-syntax-highlighting theme
+# leaves some tokens at foreground (#F8F8F2) that tree-sitter can reliably
+# distinguish — redirections, assignments, $var inside strings, substitution
+# delimiters — so the popup colors those more richly than the live prompt.
+# 16-color SGR where the Dracula terminal palette maps correctly; truecolor for
+# Dracula orange (no 16-color equivalent).
 _RESET = "\033[0m"
-_GREEN = "\033[32m"    # commands / builtins / functions / aliases
-_MAGENTA = "\033[35m"  # reserved words, operators, redirections, subst delimiters
-_CYAN = "\033[36m"     # options (-x / --long)
-_YELLOW = "\033[33m"   # quoted strings
-_BLUE = "\033[34m"     # variables: assignments + $var inside double quotes
-_GREY = "\033[1;30m"   # comments (z-sy-h comment=fg=black,bold)
+_GREEN = "\033[32m"                   # commands / functions / aliases
+_CYAN = "\033[36m"                    # reserved words / builtins
+_ORANGE = "\033[38;2;255;184;108m"    # options (-x / --long)
+_MAGENTA = "\033[35m"                 # separators / redirections / subst delimiters
+_YELLOW = "\033[33m"                  # quoted strings
+_PURPLE = "\033[34m"                  # assignments / $var in strings (Dracula #BD93F9)
+_GREY = "\033[90m"                    # comments
 
-# Reserved words (→ magenta). Keyword literals only — `{`, `}`, `[[`, `]]` are
+# Reserved words (→ cyan). Keyword literals only — `{`, `}`, `[[`, `]]` are
 # skipped because `{`/`}` also delimit ${…} expansions.
 _RESERVED = frozenset({
     "if", "then", "else", "elif", "fi", "for", "while", "until",
     "do", "done", "case", "esac", "in", "function", "select", "time", "coproc",
 })
-# Operators (→ magenta): command separators and redirection operators, grouped
-# with reserved words and substitution delimiters under one "shell syntax" hue.
 _SEPARATORS = frozenset({"|", "||", "&&", "&", ";", ";;", "|&"})
 _REDIRECT = frozenset({
     ">", "<", ">>", "<<", "<<-", "<<<", ">&", "<&", "&>", "&>>", ">|",
@@ -69,12 +69,12 @@ _EXPANSION_NODES = frozenset({"expansion", "simple_expansion"})
 
 
 def _token_color(node):
-    """SGR code for a tree-sitter-bash leaf, matching the shared z-sy-h palette.
+    """SGR code for a tree-sitter-bash leaf using the Dracula palette.
 
-    Returns None for tokens left unstyled (plain args, paths, bare $vars) so
-    they render in the terminal's default fg — the popup equivalent of a
-    ZSH_HIGHLIGHT_STYLES entry set to `none`. Keep in sync with the
-    ZSH_HIGHLIGHT_STYLES block in ~/.zshrc.
+    Matches the Dracula z-sy-h theme for tokens it colors, and adds richer
+    highlighting for tokens the theme leaves at foreground but tree-sitter can
+    reliably distinguish: redirections, assignments, $var inside strings, and
+    substitution delimiters.
     """
     t = node.type
     parent = node.parent
@@ -84,14 +84,11 @@ def _token_color(node):
     if pt == "command_name":
         return _GREEN
     if t in _RESERVED:
-        return _MAGENTA
+        return _CYAN
     if t in _SUBST_OPEN or (t in (")", "`") and pt in _SUBST_NODES):
         return _MAGENTA
     if t in _SEPARATORS or t in _REDIRECT:
         return _MAGENTA
-    # Ancestor scan: an assignment (FOO=bar) is blue throughout; inside a
-    # double-quoted string an expansion ($var) is blue and the rest yellow.
-    # Seed in_string with this leaf's own type for the single-token raw_string.
     in_string = t in _STRING_NODES
     in_expansion = in_assign = False
     anc = parent
@@ -105,11 +102,11 @@ def _token_color(node):
             in_expansion = True
         anc = anc.parent
     if in_assign:
-        return _BLUE
+        return _PURPLE
     if in_string:
-        return _BLUE if in_expansion else _YELLOW
+        return _PURPLE if in_expansion else _YELLOW
     if t == "word" and node.text[:1] == b"-":
-        return _CYAN
+        return _ORANGE
     return None
 
 
