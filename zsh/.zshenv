@@ -55,8 +55,10 @@ fi
 # editor
 export EDITOR=vim
 
-# Colorized man pages via bat (guarded: bat is a mac-only install here; jammy
-# keeps the default pager). MANROFFOPT=-c fixes groff formatting under bat.
+# bat: Dracula theme + colorized man pages. Guarded: bat is a mac-only install
+# here; jammy keeps the default pager. MANROFFOPT=-c fixes groff formatting.
+# BAT_THEME also propagates to delta (git pager) which inherits it.
+export BAT_THEME="Dracula"
 if command -v bat >/dev/null 2>&1; then
   export MANPAGER="sh -c 'col -bx | bat -l man -p'"
   export MANROFFOPT="-c"
