@@ -7,7 +7,11 @@ bind status + !git commit --amend
 bind status P !gh pr create --web
 bind status L !glab mr create --remove-source-branch
 
-# remove file (confirm first — rm is irreversible for untracked files)
+# discard file changes (confirm first — irreversible for unstaged work)
+bind status X ?@git checkout -- %(file)
+bind stage  X ?@git checkout -- %(file)
+
+# remove file (confirm first — irreversible for untracked files)
 bind status <Delete> ?@rm %(file)
 bind stage <Delete> ?@rm %(file)
 
@@ -29,6 +33,17 @@ bind refs M !git merge --no-ff %(branch)
 bind refs B @git branch %(prompt) %(branch)
 
 bind refs C ?@git checkout %(branch)
+
+# copy commit hash to clipboard
+bind main  Y @sh -c "echo -n %(commit) | pbcopy"
+bind diff  Y @sh -c "echo -n %(commit) | pbcopy"
+bind log   Y @sh -c "echo -n %(commit) | pbcopy"
+bind blame Y @sh -c "echo -n %(commit) | pbcopy"
+
+# open file in editor
+bind status V !$EDITOR %(file)
+bind stage  V !$EDITOR %(file)
+bind blame  V !$EDITOR +%(lineno) %(file)
 
 # open current commit in delta (syntax-highlighted diff)
 bind main  D !sh -c "git show %(commit) | delta --paging=always"
