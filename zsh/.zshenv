@@ -99,5 +99,13 @@ dotfiles() {
   /usr/bin/env git -C "$d" "$@"
 }
 
+# _ZO_DOCTOR=0 silences zoxide's startup doctor. The doctor's heuristic ("is
+# __zoxide_hook still in chpwd_functions when cd runs?") false-positives in any
+# non-interactive shell that empties the hook arrays after sourcing this file —
+# e.g. command-runner harnesses that clear chpwd_functions/precmd_functions so
+# the prompt/mise/atuin hooks don't fire per command. The cd function survives
+# but its hook doesn't, so the doctor warns even though placement here is correct.
+_ZO_DOCTOR=0
+
 # Machine-local overrides (untracked, not in the dotfiles repo)
 [ -f ~/.zshenv.local ] && source ~/.zshenv.local
