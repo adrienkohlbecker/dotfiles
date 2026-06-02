@@ -52,7 +52,7 @@ uv = "0.11.16"
 "http:dracula-vim" = { version = "4f06875", url = "https://github.com/dracula/vim/archive/{{ version }}.tar.gz", strip_components = 1, postinstall = "mkdir -p $HOME/.vim/pack/themes/start; ln -s $MISE_TOOL_INSTALL_PATH/dracula $HOME/.vim/pack/themes/start/dracula" }
 
 [hooks]
-postinstall = "command -v code >/dev/null && code --install-extension dracula-theme.theme-dracula || true"
+postinstall = "command -v code >/dev/null && (code --list-extensions | grep -qx dracula-theme.theme-dracula || code --install-extension dracula-theme.theme-dracula) || true"
 
 [settings]
 experimental = true # enable hooks
