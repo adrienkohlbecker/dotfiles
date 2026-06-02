@@ -68,8 +68,6 @@ set reference-format = "[branch] <tag> {remote}"
 set wrap-lines = true
 # enable mouse scroll / selection
 set mouse = true
-# word-level emphasis in diffs: tig auto-finds git's contrib/diff-highlight and
-# recolors the changed spans with the tig theme (it only reads the script's
-# \e[7m/\e[27m region markers — it can't render a full colorizer like delta).
-# Degrades silently where the script is absent (e.g. the jammy fleet).
+# word-level emphasis in diffs via a ~/.local/bin wrapper that probes known
+# contrib paths and falls back to cat where diff-highlight isn't installed.
 set diff-highlight = true

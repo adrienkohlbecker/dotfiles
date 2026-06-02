@@ -1,0 +1,13 @@
+#!/bin/sh
+# Wrapper for tig's diff-highlight: delegates to git's contrib script when
+# available, otherwise passes through unchanged so tig doesn't error on
+# systems where it isn't installed (e.g. Ubuntu).
+for p in \
+  /usr/local/share/git-core/contrib/diff-highlight/diff-highlight \
+  /usr/share/doc/git/contrib/diff-highlight/diff-highlight \
+  /usr/share/git-core/contrib/diff-highlight; do
+  if [ -x "$p" ]; then
+    exec "$p"
+  fi
+done
+exec cat
