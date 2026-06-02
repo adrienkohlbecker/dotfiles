@@ -55,7 +55,6 @@
     },
     "files.insertFinalNewline": true,
     "editor.foldingStrategy": "auto",
-    "editor.defaultFoldingRangeProvider": "zokugun.explicit-folding",
     "[asm]": {
         "editor.rulers": [
             {
