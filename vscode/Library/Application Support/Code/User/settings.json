@@ -141,5 +141,16 @@
     "search.exclude": {
         "**/.terraform/**": true,
         "**/.venv/**": true
-    }
+    },
+    "editor.renderWhitespace": "boundary",
+    "editor.smoothScrolling": true,
+    "editor.find.autoFindInSelection": "multiline",
+    "editor.linkedEditing": true,
+    "editor.formatOnPaste": true,
+    "git.autoStash": true,
+    "diffEditor.experimental.showMoves": true,
+    "workbench.list.smoothScrolling": true,
+    "terminal.integrated.smoothScrolling": true,
+    "shellcheck.customArgs": ["-x"],
+    "go.lintTool": "golangci-lint"
 }
