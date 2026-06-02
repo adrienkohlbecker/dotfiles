@@ -8,8 +8,12 @@ bind status P !gh pr create --web
 bind status L !glab mr create --remove-source-branch
 
 # remove file (confirm first — rm is irreversible for untracked files)
-bind status D ?@rm %(file)
-bind stage D ?@rm %(file)
+bind status <Delete> ?@rm %(file)
+bind stage <Delete> ?@rm %(file)
+
+# open file diff in delta (syntax-highlighted)
+bind status D !sh -c "git diff HEAD -- %(file) | delta --paging=always"
+bind stage  D !sh -c "git diff HEAD -- %(file) | delta --paging=always"
 
 bind status = !git roomba
 bind status B !git rebase --continue
@@ -25,6 +29,12 @@ bind refs M !git merge --no-ff %(branch)
 bind refs B @git branch %(prompt) %(branch)
 
 bind refs C ?@git checkout %(branch)
+
+# open current commit in delta (syntax-highlighted diff)
+bind main  D !sh -c "git show %(commit) | delta --paging=always"
+bind diff  D !sh -c "git show %(commit) | delta --paging=always"
+bind log   D !sh -c "git show %(commit) | delta --paging=always"
+bind blame D !sh -c "git show %(commit) | delta --paging=always"
 
 bind generic S !git push %(branch)
 bind status S !git push
