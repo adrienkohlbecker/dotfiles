@@ -105,6 +105,7 @@ _git() { GIT_OPTIONAL_LOCKS=0 git -C "$current_dir" -c core.fsmonitor=false -c c
 _mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null; }
 
 git_info=""
+branch=""
 now=$(date +%s)
 
 # Resolve the repo once (single fork): the work-tree gate AND the git dir. The
@@ -296,12 +297,15 @@ if [ -n "$rem_7d" ]; then
   rate_info="${rate_info}$(_rl_color "$rem_7d")7d:${rem_7d}%${reset_7d}${rst}"
 fi
 
-# --- assemble: dir  git  [worktree]  model[ effort]  [agent]  [session]  [style]  ctx  usage ---
-line="${dim}${dir_name}${rst}"
-[ -n "$git_info" ] && line="${line}  ${git_info}"
-
-# Worktree: prefer the --worktree-session fields (they carry a branch); fall back
-# to workspace.git_worktree, which is populated for any linked git worktree.
+# --- deduplication helpers ---
+# Determine the effective worktree label BEFORE deciding whether to print the
+# dir, so we can suppress tokens already shown elsewhere.
+#
+# Priority: --worktree session fields (name + branch) > workspace.git_worktree.
+# The ⎇ label is omitted when every colon-separated token it would display is
+# already contained in either dir_name or the plain-text git branch — the
+# common case where the worktree name, branch, and directory basename are all
+# the same string (e.g. "zbm-recovery" appearing four times).
 wt_label=""
 if [ -n "$worktree_name" ] || [ -n "$worktree_branch" ]; then
   wt_label="$worktree_name"
@@ -315,8 +319,59 @@ if [ -n "$worktree_name" ] || [ -n "$worktree_branch" ]; then
 elif [ -n "$ws_git_worktree" ]; then
   wt_label="$ws_git_worktree"
 fi
+
+# Returns 0 (true) when every colon-separated token in $1 is a substring of
+# either $2 or $3.
+_all_tokens_seen() {
+  _label="$1"; _ref1="$2"; _ref2="$3"
+  _rest="$_label"
+  while [ -n "$_rest" ]; do
+    _tok="${_rest%%:*}"
+    # Advance: if no ':' left, both sides equal — clear rest to end the loop.
+    if [ "$_rest" = "$_tok" ]; then _rest=""; else _rest="${_rest#*:}"; fi
+    [ -z "$_tok" ] && continue
+    # Token must appear as a substring in at least one reference string.
+    case "$_ref1" in *"$_tok"*) continue ;; esac
+    case "$_ref2" in *"$_tok"*) continue ;; esac
+    return 1   # found a token not seen in either reference
+  done
+  return 0
+}
+
+# Plain-text branch for duplicate checks (strip ANSI escape sequences).
+branch_plain=$(printf '%s' "$branch" | sed 's/'"${esc}"'\[[0-9;]*m//g')
+
+# Suppress ⎇ when all its tokens are already visible in dir_name or branch.
+show_wt=1
+if [ -n "$wt_label" ] && _all_tokens_seen "$wt_label" "$dir_name" "$branch_plain"; then
+  show_wt=0
+fi
+
+# Suppress dir_name when it exactly matches the git branch AND we are inside a
+# named worktree — the branch already appears via git_info, so the dir adds
+# nothing new.
+show_dir=1
+in_worktree=0
+if [ -n "$worktree_name" ] || [ -n "$worktree_branch" ] || [ -n "$ws_git_worktree" ]; then
+  in_worktree=1
+fi
+if [ "$in_worktree" = "1" ] && [ "$dir_name" = "$branch_plain" ]; then
+  show_dir=0
+fi
+
+# --- assemble: [dir]  git  [⎇ worktree]  model[ effort]  [agent]  [session]  [style]  ctx  usage ---
+line=""
+if [ "$show_dir" = "1" ]; then
+  line="${dim}${dir_name}${rst}"
+fi
+if [ -n "$git_info" ]; then
+  if [ -n "$line" ]; then line="${line}  ${git_info}"; else line="$git_info"; fi
+fi
+
 wt_label=$(_trunc "$wt_label" $fw)
-[ -n "$wt_label" ] && line="${line}  ${mag}⎇ ${wt_label}${rst}"
+if [ -n "$wt_label" ] && [ "$show_wt" = "1" ]; then
+  line="${line}  ${mag}⎇ ${wt_label}${rst}"
+fi
 
 if [ -n "$model_name" ]; then
   line="${line}  ${cyan}${model_name}${rst}"
