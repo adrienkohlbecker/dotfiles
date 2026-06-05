@@ -114,10 +114,6 @@
     "python.analysis.typeEvaluation.strictSetInference": true,
     "python.analysis.autoFormatStrings": true,
     "python.analysis.autoImportCompletions": true,
-    "black-formatter.args": [
-        "-l",
-        "250"
-    ],
     "remote.autoForwardPorts": false,
     "python-envs.terminal.autoActivationType": "off",
     "editor.formatOnSave": true,
@@ -151,6 +147,8 @@
     "diffEditor.experimental.showMoves": true,
     "workbench.list.smoothScrolling": true,
     "terminal.integrated.smoothScrolling": true,
-    "shellcheck.customArgs": ["-x"],
+    "shellcheck.customArgs": [
+        "-x"
+    ],
     "go.lintTool": "golangci-lint"
 }
