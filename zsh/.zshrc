@@ -75,6 +75,7 @@ if (( $#_pure )); then
   fpath+=("$_pure[1]")
   autoload -U promptinit
   promptinit
+  zstyle ':prompt:pure:prompt:success' color green
   prompt pure
 fi
 unset _pure
