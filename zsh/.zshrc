@@ -86,22 +86,35 @@ if [[ $(uname) == 'Darwin' ]]; then
   # PATH/env for macOS lives in .zshenv so non-interactive shells get it too.
   ################################################################
 
-  [ -f "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc" ] && source "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc"
-
-  # Brew completions
-  fpath+=($HOMEBREW_PATH/share/zsh/site-functions)
-
   alias qmk='PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-gcc-bin@8/bin:$PATH" qmk'
 fi
 
+# Managed completions — brew ships stale _mise/_uv for mise-managed versions;
+# regenerate on every shell start (~110ms) and prepend to fpath so these win.
+_managed_comp="$HOME/.local/share/mise/completions"
+[[ -d "$_managed_comp" ]] || mkdir -p "$_managed_comp"
+mise completion zsh > "$_managed_comp/_mise" 2>/dev/null
+"$HOME/.local/share/mise/shims/uv" generate-shell-completion zsh > "$_managed_comp/_uv" 2>/dev/null
+unset _managed_comp
+
 # Completion system — must run before the tool inits below (zoxide/mise/atuin/scw
 # all call compdef). Rebuild the dump at most once a day, otherwise load the cache.
-fpath+=($HOME/.local/share/mise/completions $fpath)
+# brew shellenv (in .zshenv) already adds homebrew's site-functions to fpath AND
+# exports FPATH; typeset -U deduplicates after the prepend.
+typeset -U fpath
+fpath=($HOME/.local/share/mise/completions $fpath)
 autoload -Uz compinit
 if [[ -n ~/.zcompdump(Nmh+24) ]]; then
   compinit
 else
   compinit -C
+fi
+
+# gcloud argcomplete (bash-style). Sourced after compinit so its guarded
+# `if ! compdef; then compinit` no-ops instead of triggering an early uncached
+# compinit.
+if [[ $(uname) == 'Darwin' ]]; then
+  [ -f "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc" ] && source "$HOMEBREW_PATH/share/google-cloud-sdk/completion.zsh.inc"
 fi
 
 # mise must activate before the inits below — fzf, zoxide and atuin are all
