@@ -386,8 +386,6 @@ if [ -n "$model_name" ]; then
     line="${line} ${effort_color}${effort}${rst}"
   fi
 fi
-[ -n "$agent_name" ] && line="${line}  ${mag}@$(_trunc "$agent_name" $fw)${rst}"
-[ -n "$session_name" ] && line="${line}  ${dim}{$(_trunc "$session_name" $fw)}${rst}"
 [ -n "$output_style" ] && line="${line}  ${yel}[${output_style}]${rst}"
 if [ -n "$remaining" ]; then
   if [ -n "$ctx_warning" ]; then
@@ -397,5 +395,7 @@ if [ -n "$remaining" ]; then
   fi
 fi
 [ -n "$rate_info" ] && line="${line}  ${rate_info}"
+[ -n "$agent_name" ] && line="${line}  ${mag}@$(_trunc "$agent_name" $fw)${rst}"
+[ -n "$session_name" ] && line="${line}  ${dim}{$(_trunc "$session_name" $fw)}${rst}"
 
 printf '%s' "$line"
