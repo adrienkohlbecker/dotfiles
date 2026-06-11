@@ -21,6 +21,14 @@
             "command": "atuin hook claude-code"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ak/Work/ostinote/.venv/bin/ostinote hook post-tool --agent claude"
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
@@ -41,6 +49,26 @@
           {
             "type": "command",
             "command": "atuin hook claude-code"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ak/Work/ostinote/.venv/bin/ostinote hook session-start --agent claude"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/ak/Work/ostinote/.venv/bin/ostinote hook session-end --agent claude"
           }
         ]
       }
