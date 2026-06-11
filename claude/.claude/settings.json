@@ -4,9 +4,7 @@
       "Bash(shellcheck *)",
       "Bash(git add *)",
       "Bash(grep *)",
-      "WebSearch",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:github.com)"
+      "WebSearch"
     ],
     "defaultMode": "auto"
   },
