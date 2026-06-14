@@ -7,12 +7,17 @@
 # The gnupg package deploys ~/.gnupg; stow creates that dir with the default
 # umask, but gpg refuses (and warns about) a homedir with group/other access, so
 # tighten it to 0700 after linking.
+#
+# Most packages use --no-folding so shared trees like ~/.config stay real
+# directories. The agents package allows folding so ~/.agents/skills/<skill> is
+# a symlinked skill directory, which Codex discovers correctly.
 
 [tasks.stow]
 description = "Link all packages into $HOME (adds new files)"
 dir = "{{ config_root }}"
 run = [
-  "stow --target=$HOME --no-folding --verbose */",
+  "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --verbose \"$package\"; done",
+  "stow --target=$HOME --verbose agents/",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
 ]
 
@@ -20,7 +25,8 @@ run = [
 description = "Re-link all packages — cleans stale links after deletes/renames"
 dir = "{{ config_root }}"
 run = [
-  "stow --target=$HOME --no-folding --restow --verbose */",
+  "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --restow --verbose \"$package\"; done",
+  "stow --target=$HOME --restow --verbose agents/",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
 ]
 
