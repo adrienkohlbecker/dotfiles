@@ -17,5 +17,8 @@ Signing key is `~/.ssh/id_ed25519.pub` (migrated from the 2019 `id_rsa` in 2026-
 ## Gotchas
 
 - **`.zshenv`, not `.zprofile`** — PATH/env setup lives in `.zshenv` deliberately so non-login shells (launchd/GUI-spawned, scripts, agent shell tools) get the full Homebrew/mise/GNU PATH. Don't "simplify" it into `.zprofile`.
-- **Ubuntu jammy compatibility** — these configs (notably `.gitconfig`) are also used on Ubuntu jammy (22.04) hosts running **git 2.34.1**. Avoid config keys that only exist in git >= 2.35 and fatally error there (e.g. `merge.conflictstyle = zdiff3` → "unknown style"; `diff3` is pinned for this reason). Keys merely *ignored* by old git (e.g. `index.skipHash`, git >= 2.40) are fine. The mac runs git 2.51, so "works locally" is not proof it works fleet-wide.
+- **Ubuntu jammy compatibility** — these configs (notably `.gitconfig`) are also used on Ubuntu jammy (22.04) hosts running **git 2.34.1**. Any config key that only exists in a newer git *fatally errors* there, so prefer the cross-version-safe value:
+  - `conflictstyle = diff3` (universal), not `zdiff3` (needs git >= 2.35 → "unknown style" on merge) — this is why it's pinned to `diff3`.
+  - Keys merely *ignored* by old git are fine to add — e.g. `index.skipHash` (git >= 2.40) is ignored on 2.34, honoured on the mac (git 2.51).
+  - The mac runs git 2.51, so a feature working locally is not proof it works fleet-wide. The operator flags this as a recurring concern ("the zdiff3/diff3 issue on ubuntu jammy").
 - **Never set `core.fsmonitor = true` globally** — a legacy **bare** repo with work-tree `$HOME` still exists at `~/.dotfiles` (no longer the deployment mechanism, but physically present). A global fsmonitor makes any git op on it spawn `git fsmonitor--daemon` to watch the *entire* home dir, which hangs `git add`/`commit`. `core.untrackedCache=true` is safe globally; enable fsmonitor per-repo if wanted.
