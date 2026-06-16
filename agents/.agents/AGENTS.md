@@ -37,3 +37,9 @@ Use commits liberally and commit often. Commit each self-contained change separa
 Write the title in the imperative mood, capitalized, no trailing punctuation, aiming for ~50 characters; prefix it with the affected system or module when that makes the scope clearer. A subject alone is often enough; when it isn't, add a blank line followed by one or two short paragraphs (hard-wrapped to 72 columns) explaining why the change was needed and what it changes, preferring lists over prose for detailed changes.
 
 When a worktree holds several independent findings, land them as separate commits via `/split_worktree_commits` rather than one batch commit.
+
+## Reference
+
+Cross-repo facts whose detail lives in a linked file under `~/Work/dotfiles/agents/.agents/notes/`. The pointers below are always in context; read the file when a hook is relevant. Add a pointer here only for facts that apply across repos — repo-specific knowledge belongs in that repo's own memory/docs.
+
+- Dotfiles repo (stow layout, editing workflow, SSH signing, jammy compat, fsmonitor hazard) → `~/Work/dotfiles/agents/.agents/notes/dotfiles.md`
