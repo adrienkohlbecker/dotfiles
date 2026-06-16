@@ -19,6 +19,7 @@ run = [
   "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --verbose \"$package\"; done",
   "stow --target=$HOME --verbose agents/",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
+  "./bin/.local/bin/codex-config-sync --fragment agents/.codex/config.dotfiles.toml",
 ]
 
 [tasks.restow]
@@ -28,9 +29,20 @@ run = [
   "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --restow --verbose \"$package\"; done",
   "stow --target=$HOME --restow --verbose agents/",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
+  "./bin/.local/bin/codex-config-sync --fragment agents/.codex/config.dotfiles.toml",
 ]
 
 [tasks.unstow]
 description = "Remove all of this repo's symlinks from $HOME"
 dir = "{{ config_root }}"
 run = "stow --target=$HOME --delete --verbose */"
+
+[tasks.codex-config-sync]
+description = "Merge dotfiles-managed Codex config into ~/.codex/config.toml"
+dir = "{{ config_root }}"
+run = "./bin/.local/bin/codex-config-sync --fragment agents/.codex/config.dotfiles.toml"
+
+[tasks.codex-config-check]
+description = "Check whether ~/.codex/config.toml matches the dotfiles-managed Codex config"
+dir = "{{ config_root }}"
+run = "./bin/.local/bin/codex-config-sync --check --fragment agents/.codex/config.dotfiles.toml"

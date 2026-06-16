@@ -1,0 +1,73 @@
+# Dotfiles-managed Codex preferences.
+#
+# Codex does not support TOML includes for the always-loaded user config, so this
+# file is merged into ~/.codex/config.toml by `codex-config-sync`. Keep generated
+# local state (project trust, hook hashes, marketplace paths, app MCP wiring) in
+# the live config only.
+
+approvals_reviewer = "auto_review"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+service_tier = "default"
+plan_mode_reasoning_effort = "xhigh"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true
+writable_roots = [
+    "~/.local/share/mise",
+    "~/.local/state/mise",
+    "~/Library/Caches",
+    "~/.cache",
+    "~/.ansible",
+]
+
+[tui]
+terminal_title = ["activity", "project-name", "run-state"]
+status_line = [
+    "model-with-reasoning",
+    "current-dir",
+    "git-branch",
+    "branch-changes",
+    "run-state",
+    "permissions",
+    "approval-mode",
+    "context-remaining",
+    "five-hour-limit",
+    "weekly-limit",
+    "task-progress",
+]
+status_line_use_colors = true
+theme = "dracula"
+pet = "rocky"
+
+[features]
+terminal_resize_reflow = true
+memories = true
+js_repl = false
+codex_git_commit = true
+
+[plugins]
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[desktop]
+conversationDetailMode = "STEPS_COMMANDS"
+ambient-suggestions-enabled = true
+show-context-window-usage = true

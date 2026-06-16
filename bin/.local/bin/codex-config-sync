@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: codex-config-sync [--check] [--fragment PATH] [--config PATH]
+
+Merge dotfiles-managed Codex preferences into ~/.codex/config.toml while
+preserving local-only state that Codex writes there itself.
+EOF
+}
+
+check=false
+fragment="${CODEX_CONFIG_DOTFILES:-$HOME/.codex/config.dotfiles.toml}"
+config="${CODEX_CONFIG:-${CODEX_HOME:-$HOME/.codex}/config.toml}"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --check)
+      check=true
+      shift
+      ;;
+    --fragment)
+      fragment="${2:?missing path after --fragment}"
+      shift 2
+      ;;
+    --config)
+      config="${2:?missing path after --config}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'codex-config-sync: unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+python3 - "$fragment" "$config" "$check" <<'PY'
+import difflib
+import os
+import pathlib
+import re
+import sys
+import tempfile
+import tomllib
+
+fragment_path = pathlib.Path(sys.argv[1]).expanduser()
+config_path = pathlib.Path(sys.argv[2]).expanduser()
+check = sys.argv[3] == "true"
+
+BEGIN = "# BEGIN dotfiles-managed Codex config"
+END = "# END dotfiles-managed Codex config"
+
+MANAGED_TOP_KEYS = {
+    "approvals_reviewer",
+    "model",
+    "model_reasoning_effort",
+    "service_tier",
+    "plan_mode_reasoning_effort",
+    "sandbox_mode",
+}
+MANAGED_EXACT_TABLES = {
+    "sandbox_workspace_write",
+    "tui",
+    "features",
+    "desktop",
+}
+MANAGED_SUBTREES = {
+    "plugins",
+}
+
+TABLE_RE = re.compile(r"^\s*\[{1,2}\s*([^\[\]]+?)\s*\]{1,2}\s*(?:#.*)?$")
+KEY_RE = re.compile(r"^\s*([A-Za-z0-9_-]+)\s*=")
+MARKED_BLOCK_RE = re.compile(
+    rf"(?ms)^{re.escape(BEGIN)}\n.*?^{re.escape(END)}\n*"
+)
+
+
+def read_text(path: pathlib.Path) -> str:
+    try:
+        return path.read_text()
+    except FileNotFoundError:
+        if path == config_path:
+            return ""
+        raise
+
+
+def validate_toml(name: str, text: str) -> None:
+    try:
+        tomllib.loads(text or "\n")
+    except tomllib.TOMLDecodeError as exc:
+        raise SystemExit(f"{name} is not valid TOML: {exc}") from exc
+
+
+def is_managed_table(path: str) -> bool:
+    if path in MANAGED_EXACT_TABLES:
+        return True
+    return any(path == root or path.startswith(f"{root}.") for root in MANAGED_SUBTREES)
+
+
+def strip_managed(text: str) -> str:
+    if BEGIN in text or END in text:
+        return MARKED_BLOCK_RE.sub("", text).lstrip("\n")
+
+    kept: list[str] = []
+    current_table: str | None = None
+    skip_table = False
+
+    for line in text.splitlines(keepends=True):
+        table_match = TABLE_RE.match(line)
+        if table_match:
+            current_table = table_match.group(1).strip()
+            skip_table = is_managed_table(current_table)
+            if skip_table:
+                continue
+
+        if skip_table:
+            continue
+
+        if current_table is None:
+            key_match = KEY_RE.match(line)
+            if key_match and key_match.group(1) in MANAGED_TOP_KEYS:
+                continue
+
+        kept.append(line)
+
+    return "".join(kept).lstrip("\n")
+
+
+fragment_text = read_text(fragment_path).strip() + "\n"
+live_text = read_text(config_path)
+
+validate_toml(str(fragment_path), fragment_text)
+if live_text.strip():
+    validate_toml(str(config_path), live_text)
+
+local_text = strip_managed(live_text).rstrip()
+merged = f"{BEGIN}\n{fragment_text}{END}\n"
+if local_text:
+    merged += f"\n{local_text}\n"
+
+validate_toml("merged Codex config", merged)
+
+if check:
+    if live_text != merged:
+        diff = difflib.unified_diff(
+            live_text.splitlines(),
+            merged.splitlines(),
+            fromfile=str(config_path),
+            tofile="merged",
+            lineterm="",
+        )
+        print("\n".join(diff), file=sys.stderr)
+        raise SystemExit(1)
+    print(f"{config_path} is in sync with {fragment_path}")
+    raise SystemExit(0)
+
+config_path.parent.mkdir(parents=True, exist_ok=True)
+with tempfile.NamedTemporaryFile(
+    "w",
+    dir=config_path.parent,
+    prefix=f".{config_path.name}.",
+    delete=False,
+) as tmp:
+    tmp.write(merged)
+    tmp_name = tmp.name
+
+os.replace(tmp_name, config_path)
+print(f"merged {fragment_path} into {config_path}")
+PY
