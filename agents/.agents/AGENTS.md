@@ -12,4 +12,6 @@ Generic, repo-agnostic skills live in the dotfiles repo (`agents/.agents/skills/
 
 ## Committing
 
+Use commits liberally and commit often. Commit each self-contained change separately: if one turn produces several independent changes, land them as several commits instead of batching them together. Each commit message should have a concise title and, when useful, one or two short paragraphs explaining why the change was needed and what it changes. Prefix the title with the affected system or module when that makes the scope clearer.
+
 When a worktree holds several independent findings, land them as separate commits via `/split_worktree_commits` rather than one batch commit.
