@@ -1,5 +1,13 @@
 # .zshenv This is ALWAYS loaded first, for your user account for all shells.
 
+# Suppress Ubuntu's /etc/zsh/zshrc compinit. On Ubuntu hosts the stock global
+# zshrc runs an unguarded `compinit` (full compaudit + compdump, no -C, no daily
+# cache) on every shell start (~580ms here), then ~/.zshrc runs its own managed
+# compinit a second time. This flag (read by /etc/zsh/zshrc before ~/.zshrc) skips
+# the global one, leaving only our cached compinit — ~1.1s off fleet shell startup.
+# Inert on macOS, whose /etc/zsh/zshrc has no such block.
+skip_global_compinit=1
+
 if [[ $(uname) == 'Darwin' ]]; then
 
   ################################################################
