@@ -198,3 +198,5 @@ unset _as _sh _dr
 # `cd`: every cd trains the db, `cd <partial>` frecency-jumps, `cdi` opens an fzf
 # picker.
 eval "$(zoxide init zsh --cmd cd)"
+# Alias for interactive selection using fzf
+alias zi='__zoxide_zi'
