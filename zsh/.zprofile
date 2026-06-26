@@ -14,3 +14,6 @@ fi
 
 # Start gpg-agent if not running (guarded: gpg may be absent on non-macOS hosts)
 command -v gpg-connect-agent >/dev/null && gpg-connect-agent /bye >/dev/null 2>&1
+
+# Added by Obsidian
+export PATH="$PATH:/Applications/Obsidian.app/Contents/MacOS"
