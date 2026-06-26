@@ -200,3 +200,8 @@ unset _as _sh _dr
 eval "$(zoxide init zsh --cmd cd)"
 # Alias for interactive selection using fzf
 alias zi='__zoxide_zi'
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/ak/.lmstudio/bin"
+# End of LM Studio CLI section
+
