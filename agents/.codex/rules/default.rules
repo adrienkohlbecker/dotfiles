@@ -1,0 +1,23 @@
+prefix_rule(
+    pattern=["mise", "run"],
+    decision="allow",
+    justification="Allow mise tasks outside the sandbox",
+)
+
+prefix_rule(
+    pattern=["obsidian"],
+    decision="allow",
+    justification="Allow Obsidian CLI commands outside the sandbox",
+)
+
+prefix_rule(
+    pattern=["claude"],
+    decision="allow",
+    justification="Allow Claude CLI commands outside the sandbox",
+)
+
+prefix_rule(pattern=["ssh", "lab"], decision="allow")
+prefix_rule(pattern=["gh", "api"], decision="allow")
+prefix_rule(pattern=["git", "add"], decision="allow")
+prefix_rule(pattern=["git", "commit"], decision="allow")
+prefix_rule(pattern=["gh", "run"], decision="allow")

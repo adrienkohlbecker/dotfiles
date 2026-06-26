@@ -20,6 +20,8 @@ writable_roots = [
     "~/Library/Caches",
     "~/.cache",
     "~/.ansible",
+    "~/.ssh",
+    ".git",
 ]
 
 [tui]
