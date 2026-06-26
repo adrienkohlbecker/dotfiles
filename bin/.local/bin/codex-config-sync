@@ -47,7 +47,14 @@ import pathlib
 import re
 import sys
 import tempfile
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # tomllib is stdlib only on 3.11+; jammy ships 3.10
+    try:
+        import tomli as tomllib
+    except ModuleNotFoundError:
+        tomllib = None
 
 fragment_path = pathlib.Path(sys.argv[1]).expanduser()
 config_path = pathlib.Path(sys.argv[2]).expanduser()
@@ -91,6 +98,8 @@ def read_text(path: pathlib.Path) -> str:
 
 
 def validate_toml(name: str, text: str) -> None:
+    if tomllib is None:
+        return  # no TOML parser available (3.10 fleet host); merge is marker/regex-based, skip the safety check
     try:
         tomllib.loads(text or "\n")
     except tomllib.TOMLDecodeError as exc:
