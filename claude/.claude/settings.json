@@ -1,4 +1,8 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "permissions": {
     "allow": [
       "Bash(shellcheck *)",
@@ -8,11 +12,6 @@
     ],
     "defaultMode": "auto"
   },
-  "outputStyle": "Proactive",
-  "worktree": {
-    "baseRef": "head"
-  },
-  "model": "sonnet",
   "hooks": {
     "PostToolUse": [
       {
@@ -76,6 +75,9 @@
       }
     ]
   },
+  "worktree": {
+    "baseRef": "head"
+  },
   "statusLine": {
     "type": "command",
     "command": "sh /Users/ak/.claude/statusline-command.sh"
@@ -86,6 +88,7 @@
     "commit-commands@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true
   },
+  "outputStyle": "Proactive",
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "tui": "fullscreen",
@@ -96,8 +99,5 @@
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  }
+  "cleanupPeriodDays": 365
 }
