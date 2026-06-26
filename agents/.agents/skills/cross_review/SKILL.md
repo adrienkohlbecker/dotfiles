@@ -2,7 +2,6 @@
 name: cross_review
 description: Ask the other coding agent (Claude ↔ Codex) to review the relevant changes
 argument-hint: "[pathspec|commit|range]"
-disable-model-invocation: true
 ---
 
 # Cross review
@@ -103,7 +102,7 @@ The review takes several minutes — use a generous timeout (10+ minutes) and le
   codex exec --sandbox read-only --cd "$repo" - < "$prompt_file"
   ```
 
-- **If you are Codex**, run Claude in print mode, read-only (`dontAsk` auto-allows read-only Bash like git log/blame/show and auto-denies mutations):
+- **If you are Codex**, run Claude outside the Codex sandbox, in print mode, with Claude itself kept read-only (`dontAsk` auto-allows read-only Bash like git log/blame/show and auto-denies mutations):
 
   ```sh
   claude -p --permission-mode dontAsk \
@@ -111,6 +110,8 @@ The review takes several minutes — use a generous timeout (10+ minutes) and le
     --disallowed-tools "Edit,Write,NotebookEdit" < "$prompt_file"
   ```
 
+  In Codex environments, request unsandboxed command execution for this `claude` invocation only when the approval policy allows repository diffs/prompts to be sent to the external Claude service. If that escalation is rejected by the policy layer, do **not** retry, do **not** delete the temp prompt/diff files yet, and do **not** report the review as complete. Instead, tell the user that local policy blocked the unsandboxed Claude call, give them the exact command above with the concrete `$prompt_file` path to run in their own terminal, and ask them to paste the output back for verbatim reporting.
+
 ## 4. Report
 
-Return the other agent's review **verbatim** — do not summarize, filter, or editorialize it. Clean up the temp files afterwards.
+Return the other agent's review **verbatim** — do not summarize, filter, or editorialize it. Clean up the temp files after a successful review. If execution was handed off to the user because policy blocked the unsandboxed Claude call, leave the temp files in place and report their paths.
