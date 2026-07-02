@@ -1,4 +1,5 @@
 {
+  "cleanupPeriodDays": 3650,
   "attribution": {
     "commit": "",
     "pr": "",
@@ -99,6 +100,5 @@
   "preferredNotifChannel": "auto",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true,
-  "cleanupPeriodDays": 365
+  "skipAutoPermissionPrompt": true
 }
