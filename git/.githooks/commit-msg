@@ -1,0 +1,45 @@
+#!/bin/bash
+set -euo pipefail
+
+# Global commit-msg hook (installed via core.hooksPath = ~/.githooks).
+# Rejects AI-attribution mentions (Claude/Anthropic trailers, session links,
+# "Generated with" lines) in commit messages. It deliberately does NOT match
+# the bare word "claude" — modules/packages legitimately carry that name
+# (e.g. the dotfiles `claude` stow package).
+
+msg_file=$1
+
+comment_char=$(git config --get core.commentchar || echo '#')
+# "auto" makes git pick a char per-message; it still defaults to '#' first
+[ "$comment_char" = auto ] && comment_char='#'
+
+# Keep only the real message: stop at the verbose-commit scissors line
+# (commit.verbose appends the full diff below it, which must not trigger the
+# check — e.g. when editing this very hook), then drop comment lines.
+msg=$(sed -n "/^${comment_char} -\{8,\} >8 -\{8,\}\$/q;p" "$msg_file" | grep -v "^${comment_char}" || true)
+
+patterns=(
+  'claude-session:'
+  'claude\.ai/code'
+  '(co-)?authored-by:.*claude'
+  'signed-off-by:.*claude'
+  'generated (with|by).*claude'
+  'noreply@anthropic'
+)
+
+for p in "${patterns[@]}"; do
+  if match=$(grep -i -E -m1 -- "$p" <<<"$msg"); then
+    echo "commit-msg: AI attribution is not allowed in commit messages" >&2
+    echo "  offending line: $match" >&2
+    exit 1
+  fi
+done
+
+# core.hooksPath masks per-repo hooks entirely, so chain to the repo's own
+# commit-msg hook if it has one (husky, pre-commit framework, etc.). Must use
+# --git-dir, not --git-path hooks/: the latter honors core.hooksPath and would
+# resolve back to this very script, exec'ing it in an infinite loop.
+repo_hook=$(git rev-parse --git-dir)/hooks/commit-msg
+if [ -x "$repo_hook" ]; then
+  exec "$repo_hook" "$@"
+fi

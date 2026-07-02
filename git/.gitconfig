@@ -31,6 +31,9 @@
 	# invokes the pager on an interactive TTY, where mise has put delta on PATH;
 	# scripts/cron (no TTY) skip the pager, so a delta-less context never breaks.
 	pager = delta
+	# Global hooks (blocks AI attribution in commit messages). This masks each
+	# repo's .git/hooks, so every hook here must chain to the repo-local one.
+	hooksPath = ~/.githooks
 [index]
 	# Skip the index trailing checksum — cheaper add/commit/status on the large
 	# $HOME-work-tree index. Honored on git >= 2.40; silently ignored on older.
