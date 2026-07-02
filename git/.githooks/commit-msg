@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Global commit-msg hook (installed via core.hooksPath = ~/.githooks).
-# Rejects AI-attribution mentions (Claude/Anthropic trailers, session links,
+# Rejects AI-attribution mentions (Claude/Codex trailers, session links,
 # "Generated with" lines) in commit messages. It deliberately does NOT match
-# the bare word "claude" — modules/packages legitimately carry that name
-# (e.g. the dotfiles `claude` stow package).
+# the bare words "claude"/"codex" — modules/packages legitimately carry those
+# names (e.g. the dotfiles `claude` and `codex` stow packages).
 
 msg_file=$1
 
@@ -18,13 +18,15 @@ comment_char=$(git config --get core.commentchar || echo '#')
 # check — e.g. when editing this very hook), then drop comment lines.
 msg=$(sed -n "/^${comment_char} -\{8,\} >8 -\{8,\}\$/q;p" "$msg_file" | grep -v "^${comment_char}" || true)
 
+agents='claude|codex|chatgpt|openai'
 patterns=(
-  'claude-session:'
+  '(claude|codex)-session:'
   'claude\.ai/code'
-  '(co-)?authored-by:.*claude'
-  'signed-off-by:.*claude'
-  'generated (with|by).*claude'
-  'noreply@anthropic'
+  'chatgpt\.com/codex'
+  "(co-)?authored-by:.*($agents)"
+  "signed-off-by:.*($agents)"
+  "generated (with|by).*($agents)"
+  'noreply@(anthropic|openai)'
 )
 
 for p in "${patterns[@]}"; do
