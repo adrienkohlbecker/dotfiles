@@ -41,9 +41,11 @@ done
 
 # core.hooksPath masks per-repo hooks entirely, so chain to the repo's own
 # commit-msg hook if it has one (husky, pre-commit framework, etc.). Must use
-# --git-dir, not --git-path hooks/: the latter honors core.hooksPath and would
-# resolve back to this very script, exec'ing it in an infinite loop.
-repo_hook=$(git rev-parse --git-dir)/hooks/commit-msg
+# --git-common-dir, not --git-path hooks/ (honors core.hooksPath and would
+# resolve back to this very script, exec'ing it in an infinite loop) and not
+# --git-dir (in a linked worktree that names the per-worktree gitdir, which
+# has no hooks/ -- repo hooks are shared via the common dir).
+repo_hook=$(git rev-parse --git-common-dir)/hooks/commit-msg
 if [ -x "$repo_hook" ]; then
   exec "$repo_hook" "$@"
 fi

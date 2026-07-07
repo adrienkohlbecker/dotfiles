@@ -1,0 +1,28 @@
+#!/bin/bash
+set -euo pipefail
+
+# Generic chain shim (installed via core.hooksPath = ~/.githooks), symlinked
+# as each client-side hook name in this directory. core.hooksPath masks
+# per-repo hooks entirely, so re-dispatch to the repo's own hook of the same
+# name when it has one (self-installed repo hooks, husky, pre-commit
+# framework, etc.). Only hooks whose presence is behavior-neutral (exit 0 is
+# identical to the hook being absent) get a symlink. Deliberately excluded:
+# - commit-msg: has its own global logic and chains on its own.
+# - push-to-checkout: mere presence replaces git's builtin worktree update,
+#   so an exit-0 shim would silently skip the checkout.
+# - fsmonitor-watchman: located via core.fsmonitor, not hooksPath (and see
+#   the fsmonitor hazard in agents/.agents/notes/dotfiles.md).
+# - reference-transaction, post-index-change: fire on nearly every git
+#   operation; a bash fork per ref/index write buys nothing here.
+# - server-side receive hooks, sendemail-validate, p4-*: unused.
+#
+# Must use --git-common-dir, not --git-path hooks/ (honors core.hooksPath and
+# would resolve back to this very script, exec'ing an infinite loop) and not
+# --git-dir (in a linked worktree that names the per-worktree gitdir, which
+# has no hooks/ -- repo hooks are shared via the common dir). exec passes
+# stdin through untouched (pre-push and post-rewrite read it).
+
+repo_hook=$(git rev-parse --git-common-dir)/hooks/$(basename "$0")
+if [ -x "$repo_hook" ]; then
+  exec "$repo_hook" "$@"
+fi
