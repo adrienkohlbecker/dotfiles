@@ -56,4 +56,6 @@ that an exported or configuration-driven contract is unused.
 Remove code only when this evidence proves it unused, and name the evidence.
 Otherwise preserve it and list it separately as a trim candidate.
 
-Commit each individual self-contained work item as you go. Once you have done a first pass, take another fresh look at the code and do a more ambitious pass.
+Commit each individual self-contained work item as you go. After the first pass,
+review the target afresh and continue only when another behavior-preserving or
+proven-unused simplification remains.
