@@ -48,6 +48,12 @@ contract rather than merely passing data through.
 Behavior-preserving structural simplification is in scope, even if it temporarily adds a small type/helper, provided it removes broader tuple/path/string plumbing.
 
 Implementation is approved; do not stop for a planning gate unless you find a real architecture/security fork.
-Actually remove code only when current usage proves it unused; otherwise list trim candidates separately.
+Before removing behavior, inspect applicable repository instructions, callers,
+tests, configuration and on-disk formats, hooks, history when useful, and
+external or operational entry points. Absence of local references is not proof
+that an exported or configuration-driven contract is unused.
+
+Remove code only when this evidence proves it unused, and name the evidence.
+Otherwise preserve it and list it separately as a trim candidate.
 
 Commit each individual self-contained work item as you go. Once you have done a first pass, take another fresh look at the code and do a more ambitious pass.
