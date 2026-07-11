@@ -24,7 +24,8 @@ Simplification rules:
 Before committing:
 - Review your own diff for newly introduced variables, parameters, wrappers, dispatcher modes, duplicated config, stale comments, and path/value plumbing.
 - Remove any new indirection that does not pay for itself.
-- Run the relevant focused validation.
+- Add or update the narrowest regression test when behavior changes.
+- Run the relevant focused validation for the current item.
 - Inspect the worktree and preserve unrelated changes.
 - Stage only the current self-contained item by explicit path or hunk.
 - Inspect the complete cached stat and per-file diff, unstage unrelated entries, and run `git commit --dry-run` before committing.
@@ -59,3 +60,8 @@ Otherwise preserve it and list it separately as a trim candidate.
 Commit each individual self-contained work item as you go. After the first pass,
 review the target afresh and continue only when another behavior-preserving or
 proven-unused simplification remains.
+
+Before pushing, run the repository's canonical full validation. Report each
+implemented item with its validation and commit SHA, then list deferred trim
+candidates with the missing evidence and any unresolved architecture or
+security forks.
