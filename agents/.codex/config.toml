@@ -1,16 +1,15 @@
-# Dotfiles-managed Codex preferences.
-#
-# Codex does not support TOML includes for the always-loaded user config, so this
-# file is merged into ~/.codex/config.toml by `codex-config-sync`. Keep generated
-# local state (project trust, hook hashes, marketplace paths, app MCP wiring) in
-# the live config only.
+# Portable Codex defaults. This file is stow-linked to ~/.codex/config.toml.
+# Codex may add machine-specific settings to the working tree; keep those
+# changes unstaged and use `git add -p -- agents/.codex/config.toml` to promote
+# only settings that should be shared across devices.
 
 approvals_reviewer = "auto_review"
 model = "gpt-5.5"
 model_reasoning_effort = "high"
 service_tier = "default"
 plan_mode_reasoning_effort = "xhigh"
-sandbox_mode = "workspace-write"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
 
 [sandbox_workspace_write]
 network_access = true
