@@ -17,7 +17,8 @@ prefix_rule(
 )
 
 prefix_rule(pattern=["ssh", "lab"], decision="allow")
-prefix_rule(pattern=["gh", "api"], decision="allow")
-prefix_rule(pattern=["git", "add"], decision="allow")
-prefix_rule(pattern=["git", "commit"], decision="allow")
-prefix_rule(pattern=["gh", "run"], decision="allow")
+prefix_rule(pattern=["ssh", "pug"], decision="allow")
+prefix_rule(pattern=["ssh", "fox"], decision="allow")
+prefix_rule(pattern=["gh"], decision="allow")
+prefix_rule(pattern=["glab"], decision="allow")
+prefix_rule(pattern=["git"], decision="allow")

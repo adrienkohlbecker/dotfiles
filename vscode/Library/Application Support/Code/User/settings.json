@@ -150,5 +150,6 @@
     "shellcheck.customArgs": [
         "-x"
     ],
-    "go.lintTool": "golangci-lint"
+    "go.lintTool": "golangci-lint",
+    "git.confirmSync": false
 }
