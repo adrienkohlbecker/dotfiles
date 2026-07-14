@@ -1,0 +1,4 @@
+interface:
+  display_name: "Merge Worktree"
+  short_description: "Update, verify, and merge a Git worktree"
+  default_prompt: "Use $merge-worktree to update this worktree, review pulled-in changes against its patch series, validate it, and merge it safely."
