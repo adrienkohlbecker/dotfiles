@@ -27,7 +27,7 @@ If the resulting diff is empty, stop and tell the user — do not send an empty 
 
 ## 2. Write the prompt file
 
-Write the diff and this prompt to a temp file (`mktemp`), substituting `<scope>` (a one-line description of what rule 1–5 selected), `<repo>`, and `<branch>`:
+Write this prompt to a temp file (`mktemp`), substituting `<scope>` (a one-line description of what rule 1–5 selected), `<repo>`, `<branch>`, and the absolute path to `<diff_file>`:
 
 ```text
 You are an expert code reviewer working INSIDE a live checkout of this
@@ -43,6 +43,12 @@ commit, push, or run state-mutating commands. Diagnostic reads are expected.
 Scope: <scope>
 Repository: <repo>
 Branch: <branch>
+Diff snapshot: <diff_file>
+
+Open the diff snapshot before investigating. Treat it as the authoritative
+record of the selected changes; do not regenerate the diff from the live
+worktree, which may have changed since the snapshot was created. Use the live
+checkout only to inspect surrounding code and verify the snapshot's claims.
 
 Investigate before you report. For every hunk:
 - Open the changed files and read the surrounding code the diff omits — the
@@ -87,10 +93,8 @@ Output format:
 - If you genuinely find nothing, say so plainly, then state what you verified
   and what residual risk or test gap remains. Do not pad.
 
-Be thorough, concrete, and detailed. The selected changes follow.
+Be thorough, concrete, and detailed.
 ```
-
-Then append the diff fenced as ` ```diff … ``` `.
 
 ## 3. Run the other agent
 
