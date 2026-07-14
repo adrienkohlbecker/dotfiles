@@ -1,5 +1,5 @@
 ---
-name: merge-worktree
+name: merge_worktree
 description: Update a Git worktree onto its local integration branch, review changes pulled in between the old and new merge bases against the worktree patch series, adapt and validate the result, and fast-forward merge only the reviewed tip. Use when the user asks to update, rebase, verify, integrate, or merge a detached or branched worktree while preserving linear history.
 ---
 
