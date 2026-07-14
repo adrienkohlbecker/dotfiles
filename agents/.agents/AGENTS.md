@@ -30,6 +30,8 @@ Generic, repo-agnostic skills live in the dotfiles repo (`agents/.agents/skills/
 
 ## Code
 
+When choosing names, prefer underscores (`_`) over hyphens (`-`) for identifiers, files, directories, skill names, and other names we control. Preserve hyphens where required by a language, tool, public interface, or upstream convention.
+
 Write simple, idiomatic code in the language at hand. Prefer built-in methods and standard-library APIs over hand-rolled equivalents, and structured parsers over shell snippets or ad hoc string manipulation. Keep functions small and single-purpose, use descriptive names, and don't extract a value used only once — or one that's self-explanatory — into a named constant.
 
 Let exceptions propagate naturally; add context only when it's meaningful. Raise with descriptive messages and use domain-specific error types rather than returning nil or sentinel values.
