@@ -6,7 +6,10 @@
 
 # The gnupg package deploys ~/.gnupg; stow creates that dir with the default
 # umask, but gpg refuses (and warns about) a homedir with group/other access, so
-# tighten it to 0700 after linking.
+# tighten it to 0700 after linking. The operator's public key
+# (gpg_public_key.asc, repo tooling like this file) is then imported so hosts
+# that only receive a forwarded gpg-agent can verify and encrypt; re-importing
+# an unchanged key is a no-op.
 #
 # Most packages use --no-folding so shared trees like ~/.config stay real
 # directories. The agents package allows folding so ~/.agents/skills/<skill> is
@@ -19,6 +22,7 @@ run = [
   "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --verbose \"$package\"; done",
   "stow --target=$HOME --verbose agents/",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
+  "if command -v gpg >/dev/null; then gpg --batch --quiet --import {{ config_root }}/gpg_public_key.asc; fi",
 ]
 
 [tasks.restow]
@@ -28,6 +32,7 @@ run = [
   "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --restow --verbose \"$package\"; done",
   "stow --target=$HOME --restow --verbose agents/",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
+  "if command -v gpg >/dev/null; then gpg --batch --quiet --import {{ config_root }}/gpg_public_key.asc; fi",
 ]
 
 [tasks.unstow]
