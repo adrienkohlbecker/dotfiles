@@ -5,7 +5,7 @@ description: Read, write, and commit a code repository's private notes in its `n
 
 # Project notes
 
-`notes/` in a code repository is a symlink to that project's private notes repository at `<vault>/Code/<name>` in the Obsidian vault (iCloud), with its git dir at `~/.local/share/project_notes/<name>.git`. Every worktree links to the same notes repository, so notes written from any worktree land on one history — no per-worktree branches or merges. The `project_notes` CLI (`init`, `migrate`, `link`, `doctor`) manages the plumbing; the global git hooks link new worktrees and stamp each notes commit with a `Code: <repo>@<sha>` trailer.
+`notes/` in a code repository is a symlink to that project's private notes repository at `<vault>/Code/<name>` in the Obsidian vault (iCloud), with its git dir at `~/.local/share/project_notes/<name>.git`. Every worktree links to the same notes repository, so notes written from any worktree land on one history — no per-worktree branches or merges. The `project_notes` CLI (`init`, `migrate`, `link`, `doctor`, `lint`) manages the plumbing; the global git hooks link new worktrees and stamp each notes commit with a `Code: <repo>@<sha>` trailer.
 
 ## Reading
 
@@ -40,7 +40,7 @@ Write a note for what outlives the session and isn't derivable from the code: de
 
 ## Setting up or checking
 
-- New project: `project_notes init` from a checkout (creates the vault folder, git dir, `origin` from `git config --global projectnotes.remotebase`, and links every worktree). Create the remote repository on the forge before the first push.
+- New project: `project_notes init` from a checkout (creates the vault folder, git dir, `origin` from `git config --global projectnotes.remotebase`, and links every worktree). Gitea's push-to-create makes the (private) remote repository on the first push.
 - Existing in-checkout clone (`notes/.git` is a directory): `project_notes migrate`.
 - A worktree without `notes/`: `project_notes link`. Codex app worktrees always start that way — Codex runs git with hooks disabled — unless the repository's Codex setup script (`.codex/environments/*.toml`) runs `project_notes link`; add that when setting up notes for a repository Codex works in.
-- `project_notes doctor` reports broken links, unpushed or uncommitted notes, iCloud conflict copies (`foo 2.md`) and evicted files, and frontmatter errors.
+- `project_notes doctor` reports broken links, unpushed or uncommitted notes, iCloud conflict copies (`foo 2.md`) and evicted files, and frontmatter errors; `project_notes lint` runs just the checks on the notes themselves.
