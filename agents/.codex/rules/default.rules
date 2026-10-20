@@ -21,7 +21,6 @@ prefix_rule(pattern=["ssh", "pug"], decision="allow")
 prefix_rule(pattern=["ssh", "fox"], decision="allow")
 prefix_rule(pattern=["gh"], decision="allow")
 prefix_rule(pattern=["glab"], decision="allow")
-prefix_rule(pattern=["git"], decision="allow")
 
 # Commands that print secret material into the session transcript.
 prefix_rule(
