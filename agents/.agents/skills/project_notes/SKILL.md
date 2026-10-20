@@ -35,7 +35,8 @@ Write a note for what outlives the session and isn't derivable from the code: de
 - A plan made in plan mode also goes to `notes/<topic>.md` (`status: planned`); the harness's own plan file is invisible to the operator.
 - Don't log review or simplification runs; their outcomes live in chat and commits, and prior-run logs anchor later reviews.
 - Scratch files go in the session's scratch space, never `notes/`.
-- Link with relative Markdown links (`[x](runbooks/y.md)`), not wikilinks, so links work on the git forge and in Obsidian alike.
+- Link other notes with relative Markdown links (`[x](runbooks/y.md)`), not wikilinks, so links work on the git forge and in Obsidian alike.
+- Link the code by its forge URL (`https://<forge>/<repo>/-/blob/master/<path>`), never `../<path>`: the notes really live in the vault, so `..` from them never reaches the code. Read such a link as `<path>` in the checkout.
 - Write in the repository's language and register; keep the same "current state, not history" rule as code comments, except in explicitly historical notes (investigations, rejected designs).
 
 ## Committing
