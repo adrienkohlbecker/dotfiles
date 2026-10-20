@@ -41,6 +41,8 @@ Preserve compatibility with existing on-disk formats and legacy config keys unle
 
 Comments describe current state, not history. Avoid `this used to...`, `was removed`, or `replaces the old...`; that context belongs in the commit message. Explaining why the current code deliberately avoids an obvious alternative is fine.
 
+Give each fact one canonical home and link to it instead of copying it; copies drift.
+
 Keep comments sparse and load-bearing: explain non-obvious paths — tricky concurrency, atomic writes, parsing, compatibility shims — and never narrate obvious assignments, with comment length proportional to the subtlety. Document public functions concisely: what it does, why its contract matters, and any non-obvious inputs, outputs, side effects, or failure modes — written for a competent reader new to the code, not an expert in it. Skip prose for trivial getters and setters. End every file with a trailing newline.
 
 One exception to "sparse": when you suppress an exception (`except X: pass`, `contextlib.suppress`), always add a one-line comment stating *why* it's safe — the specific condition that makes it expected and benign. When the *why* outgrows a comment (architecture decision, regression history), put it in a doc/notes file and leave a one-line pointer in the code.
