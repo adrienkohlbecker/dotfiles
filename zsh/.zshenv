@@ -58,11 +58,6 @@ if [[ $(uname) == 'Darwin' ]]; then
   # mise.toml (its python/uv venv and tasks) doesn't leak into them.
   export MISE_CEILING_PATHS="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home/Code"
 
-  # On macOS, /etc/zprofile reorders the path by executing path_helper. The following lines, coupled with code in ~/.zprofile,
-  # ensure that the PATH we set in this file take precedence
-  typeset -U path
-  path_prepend=($path)
-
 fi
 
 # editor
@@ -99,6 +94,14 @@ export TEALDEER_CONFIG_DIR="$HOME/.config/tealdeer"
 
 # local binaries
 export PATH="$HOME/.local/bin:$PATH"
+
+# On macOS, /etc/zprofile reorders the path by executing path_helper. Saving the
+# path here, after every entry above, lets ~/.zprofile restore it so the PATH
+# set in this file takes precedence.
+if [[ $(uname) == 'Darwin' ]]; then
+  typeset -U path
+  path_prepend=($path)
+fi
 
 # dotfiles repo helpers — functions (not .zshrc aliases) so they resolve in
 # non-interactive shells and scripts too. Since the stow migration the repo is a
