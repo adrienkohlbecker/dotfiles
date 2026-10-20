@@ -76,3 +76,4 @@ Cross-repo facts whose detail lives in a linked file under `~/Work/dotfiles/agen
 - git & forge tooling (SSH-signing traps, `gh` authorship/rate-limit gotchas, private-GitLab → local-git fallback) → `~/Work/dotfiles/agents/.agents/notes/git.md`
 - AWS auth (MFA-per-session TOTP collision under bursts) → `~/Work/dotfiles/agents/.agents/notes/aws.md`
 - mise tooling (eza macOS backend, CLI-vs-language-runtime config split) → `~/Work/dotfiles/agents/.agents/notes/mise.md`
+- Remote Control servers (concurrent sessions share one checkout, a server restart ends its sessions and `--resume` recovery, iCloud Full Disk Access) → `~/Work/dotfiles/agents/.agents/notes/remote_control.md`
