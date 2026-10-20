@@ -28,12 +28,12 @@ Read `references/target-and-agent-contract.md` before dispatching any component.
 4. Inspect the tokens after the target:
    - If every trailing token exactly matches one of `analysis`, `upstream`, `simplification`, `security`, or `prior-art` case-insensitively, dispatch only those components.
    - Otherwise, dispatch all five components and pass the whole trailing-token remainder as `<user_note>` emphasis.
-5. Dispatch the selected components in parallel as read-only subagents. Tell each subagent to follow the matching component skill:
-   - `analysis` -> `.agents/skills/improve-analysis/SKILL.md`
-   - `upstream` -> `.agents/skills/improve-upstream/SKILL.md`
-   - `simplification` -> `.agents/skills/improve-simplification/SKILL.md`
-   - `security` -> `.agents/skills/improve-security/SKILL.md`
-   - `prior-art` -> `.agents/skills/improve-prior-art/SKILL.md`
+5. Dispatch the selected components in parallel as read-only subagents. Tell each subagent to follow the matching component skill, passing its absolute path (the components are siblings of this skill's directory):
+   - `analysis` -> `../improve-analysis/SKILL.md`
+   - `upstream` -> `../improve-upstream/SKILL.md`
+   - `simplification` -> `../improve-simplification/SKILL.md`
+   - `security` -> `../improve-security/SKILL.md`
+   - `prior-art` -> `../improve-prior-art/SKILL.md`
 6. Consolidate reports with `references/consolidate-and-act.md`.
 7. Stop after presenting findings. Do not edit until the user chooses which numbered findings to apply.
 
