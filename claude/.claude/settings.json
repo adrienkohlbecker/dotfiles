@@ -5,6 +5,29 @@
     "pr": "",
     "sessionUrl": false
   },
+  "sandbox": {
+    "excludedCommands": [
+      "ssh *",
+      "scp *",
+      "rsync *",
+      "git push *",
+      "git fetch *",
+      "git pull *",
+      "glab *",
+      "mise *"
+    ],
+    "network": {
+      "allowedDomains": [
+        "pypi.org",
+        "files.pythonhosted.org",
+        "github.com",
+        "*.githubusercontent.com"
+      ]
+    },
+    "filesystem": {
+      "allowWrite": ["~/.cache/uv", "~/.local/share/uv"]
+    }
+  },
   "permissions": {
     "allow": [
       "Bash(shellcheck *)",
