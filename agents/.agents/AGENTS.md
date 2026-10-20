@@ -59,6 +59,8 @@ Tests exercise real behavior: assert what the consuming code or service observab
 
 Use commits liberally and commit often. Commit each self-contained change separately: if one turn produces several independent changes, land them as several commits instead of batching them together. Always inspect the **full** staged set (`git diff --cached --stat`, plus per-file `git diff`) before `git commit` — not just the file you added: `git commit` ships the entire index, and the operator may have staged or IDE-edited files between turns; unstage strays first. For `git commit --amend`, confirm with `git log -1` that HEAD is the commit you mean to rewrite. To split entangled changes into separate commits, stage hunks into the index (`git apply --cached`, or the `git add -p` recipe in `/split_worktree_commits`); never temp-revert the working tree. Never mention Claude, Codex, or AI assistance in commit messages.
 
+Some of the operator's repos are public (dotfiles and homelab among them; check a repo's visibility when unsure). Keep personal or household details, production command output, and content from private notes out of their diffs and commit messages.
+
 Write the title in the imperative mood, capitalized, no trailing punctuation, aiming for ~50 characters; prefix it with the affected system or module when that makes the scope clearer. A subject alone is acceptable only for simple mechanical changes or quick fixes. Otherwise, add a blank line followed by one or two short paragraphs (hard-wrapped to 72 columns) summarizing the change and explaining its motivation, preferring lists over prose for detailed changes.
 
 When a worktree holds several independent findings, land them as separate commits via `/split_worktree_commits` rather than one batch commit.
