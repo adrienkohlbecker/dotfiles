@@ -68,6 +68,7 @@
       "Ledger Read-Only Queries: in the compta repository, `mise prod <script>` with a script tracked in the repository and unchanged this session, `mise prod -- -e '...'`, and `sqlite3 -readonly` or `mode=ro` queries of the ledger are read-only inspection of the operator's own local data, not Production Reads, Production Deploy or PII Data Handling. Reading results into the transcript is fine; this does NOT cover code or input that sets `PRAGMA query_only`, writes files, makes network calls, or uses sqlite `.shell`, `.system`, `.output` or `.once`, nor copying results out of the repository or off the machine. Writes go through `mise prod:write` or `mise console`, which still need the operator's approval of that specific script."
     ]
   },
+  "model": "opus",
   "hooks": {
     "PostToolUse": [
       {
@@ -139,14 +140,30 @@
     "command": "sh /Users/ak/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "claude-code-setup@claude-plugins-official": false,
+    "claude-md-management@claude-plugins-official": false,
+    "commit-commands@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": false,
+    "plannotator@plannotator": true,
+    "cc-plugin-you-should-know@builtin": true
+  },
+  "extraKnownMarketplaces": {
+    "plannotator": {
+      "source": {
+        "source": "github",
+        "repo": "backnotprop/plannotator",
+        "ref": "v0.27.20"
+      }
+    }
   },
   "outputStyle": "Proactive",
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "editorMode": "normal",
