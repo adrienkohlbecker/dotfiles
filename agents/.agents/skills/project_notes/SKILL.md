@@ -42,5 +42,5 @@ Write a note for what outlives the session and isn't derivable from the code: de
 
 - New project: `project_notes init` from a checkout (creates the vault folder, git dir, `origin` from `git config --global projectnotes.remotebase`, and links every worktree). Create the remote repository on the forge before the first push.
 - Existing in-checkout clone (`notes/.git` is a directory): `project_notes migrate`.
-- A worktree without `notes/`: `project_notes link`.
+- A worktree without `notes/`: `project_notes link`. Codex app worktrees always start that way — Codex runs git with hooks disabled — unless the repository's Codex setup script (`.codex/environments/*.toml`) runs `project_notes link`; add that when setting up notes for a repository Codex works in.
 - `project_notes doctor` reports broken links, unpushed or uncommitted notes, iCloud conflict copies (`foo 2.md`) and evicted files, and frontmatter errors.

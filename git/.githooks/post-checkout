@@ -3,8 +3,10 @@ set -euo pipefail
 
 # Global post-checkout hook (installed via core.hooksPath = ~/.githooks).
 # A checkout from the null commit is a fresh clone or a new worktree (`git
-# worktree add`, including agent-created ones): link it to the project's
-# private notes. Best-effort -- a notes problem must never fail the checkout.
+# worktree add`, including Claude Code's): link it to the project's private
+# notes. The Codex app runs git with core.hooksPath=/dev/null, so its worktrees
+# need `project_notes link` in the repository's Codex setup script instead.
+# Best-effort -- a notes problem must never fail the checkout.
 # ~/.local/bin is spelled out because GUI-launched git may lack it on PATH.
 if [[ ${1:-} =~ ^0+$ ]]; then
   notes_cli=$(command -v project_notes || echo "$HOME/.local/bin/project_notes")
