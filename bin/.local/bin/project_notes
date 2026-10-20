@@ -148,10 +148,12 @@ def cmd_init(args: argparse.Namespace) -> None:
             raise NotesError(f"{gitdir} already exists without a matching {target}")
         GITDIR_ROOT.mkdir(parents=True, exist_ok=True)
         git("init", f"--separate-git-dir={gitdir}", str(target))
+    # Configure before the seed commit so the prepare-commit-msg hook stamps it.
+    configure_notes_repo(target, main, name)
+    if not git("rev-parse", "--verify", "--quiet", "HEAD", cwd=target, check=False):
         (target / "SOMEDAY.md").write_text(SOMEDAY_TEMPLATE.format(date=args.today))
         git("add", "SOMEDAY.md", cwd=target)
         git("commit", "-m", f"Start the {name} notes", cwd=target)
-    configure_notes_repo(target, main, name)
     link_all(main, target)
     if not git("remote", cwd=target):
         print(f"no remote: set `git config --global {REMOTE_BASE_KEY} <base-url>` or add origin by hand")
