@@ -24,3 +24,8 @@ MD025: false
 # Code block style consistency — false-positives on indented fenced blocks
 # inside list items (valid GFM).
 MD046: false
+# Separate callout blockquotes may sit one blank line apart.
+MD028: false
+# Sections may reuse a subheading (e.g. "Module layout additions" per design part).
+MD024:
+  siblings_only: true
