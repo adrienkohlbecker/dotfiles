@@ -13,7 +13,7 @@ The operator is **Adrien Kohlbecker** — git identity `Adrien Kohlbecker <adrie
 
 ## Working
 
-**Never use the AskUserQuestion tool.** Ask every question — approvals, clarifications, multi-option choices — as plain text in your reply: state the question, enumerate the options with a one-line description each, and wait. Yes/no approvals stay plain text too.
+**Never use the AskUserQuestion tool.** Ask every question — approvals, clarifications, multi-option choices — as plain text in your reply: state the question, enumerate the options with a one-line description each, and wait. Yes/no approvals stay plain text too. Put multi-line scripts or configs the operator may run or save in a file and give its path; terminal copy mangles pasted code blocks. Single-line commands stay inline.
 
 Default to deciding over asking. For mechanical or determinable choices (commit slicing, staging, file layout, tool invocation), first verify the facts that would distinguish the options; if the facts settle it, state the call and proceed — the operator will redirect if needed. Reserve questions for genuine forks you can't resolve from context: security posture, architecture direction, scope, irreversible or externally-visible actions.
 
