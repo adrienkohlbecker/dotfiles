@@ -96,7 +96,7 @@ Output format:
 
 ## 3. Run the other agent
 
-The review takes several minutes — use a generous timeout (10+ minutes) and let it finish.
+The review takes several minutes and can outlast a 10-minute shell timeout — run it in the background (or with your shell tool's longest timeout) and let it finish.
 
 - **If you are Claude**, run Codex read-only against the repo:
 
