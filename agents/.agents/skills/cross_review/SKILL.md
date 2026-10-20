@@ -30,8 +30,8 @@ If the resulting diff is empty, stop and tell the user — do not send an empty 
 Write this prompt to a temp file (`mktemp`), substituting `<scope>` (a one-line description of what rule 1–5 selected), `<repo>`, `<branch>`, and the absolute path to `<diff_file>`:
 
 ```text
-You are an expert code reviewer working INSIDE a live checkout of this
-repository. This is not a paper review: your working directory IS the repo,
+You are an expert code reviewer working inside a live checkout of this
+repository. This is not a paper review: your working directory is the repo,
 and you have read-only tools (file reads, grep, read-only shell commands like
 git log / git blame / git show, plus web search and fetch where available).
 Use them aggressively. A review that only reads the diff is shallow and not
@@ -55,7 +55,7 @@ Investigate before you report. For every hunk:
   callers, the callees, the producer of any value consumed here, the consumer
   of any value produced here. Most real bugs live in the seam between the diff
   and the code it touches, which the diff does not show.
-- VERIFY every claim the code makes rather than trusting it:
+- Verify every claim the code makes rather than trusting it:
   - Comments & docstrings: does the comment still describe what the code now
     does? Stale, misleading, or aspirational comments are findings.
   - Assumptions: if the code assumes a file/dir/var/secret/unit exists, a
@@ -79,7 +79,7 @@ security/privacy leaks (plaintext secrets, PII, over-broad perms),
 error-handling and edge-case gaps, races/ordering hazards, missing or wrong
 tests, and maintainability surprises.
 
-Method: form a hypothesis from the diff, then PROVE or DISPROVE it against the
+Method: form a hypothesis from the diff, then prove or disprove it against the
 real tree before writing it down. Do not speculate when you can check. When you
 assert something is wrong, cite the evidence — the exact file:line you read or
 the command output that confirmed it. Distinguish "verified" from "suspected"
