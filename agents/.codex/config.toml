@@ -1,11 +1,11 @@
-# BEGIN dotfiles-managed Codex config
-# Dotfiles-managed Codex preferences.
-#
-# Codex does not support TOML includes for the always-loaded user config, so this
-# file is merged into ~/.codex/config.toml by `codex-config-sync`. Keep generated
-# local state (project trust, hook hashes, marketplace paths, app MCP wiring) in
-# the live config only.
+# Dotfiles-managed Codex preferences. Stow does not link this file: the Codex
+# app replaces the symlink whenever it rewrites ~/.codex/config.toml, and it
+# keeps local state there too (project trust, hook hashes, marketplaces, app MCP
+# wiring). `codex_config_sync`, run by `mise run stow`, merges the marked block
+# below into the live config and leaves everything outside it alone; its
+# docstring covers how app edits inside the block are handled.
 
+# BEGIN dotfiles-managed Codex config
 approvals_reviewer = "user"
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
@@ -80,3 +80,4 @@ show-context-window-usage = true
 
 [notice]
 hide_full_access_warning = true
+# END dotfiles-managed Codex config

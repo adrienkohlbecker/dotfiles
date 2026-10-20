@@ -14,6 +14,9 @@
 # Most packages use --no-folding so shared trees like ~/.config stay real
 # directories. The agents package allows folding so ~/.agents/skills/<skill> is
 # a symlinked skill directory, which Codex discovers correctly.
+#
+# Stow skips ~/.codex/config.toml (the Codex app replaces that symlink when it
+# rewrites the file); codex_config_sync merges the managed block in instead.
 
 [tasks.stow]
 description = "Link all packages into $HOME (adds new files)"
@@ -21,6 +24,7 @@ dir = "{{ config_root }}"
 run = [
   "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --verbose \"$package\"; done",
   "stow --target=$HOME --verbose agents/",
+  "./bin/.local/bin/codex_config_sync",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
   "if command -v gpg >/dev/null; then gpg --batch --quiet --import {{ config_root }}/gpg_public_key.asc; fi",
 ]
@@ -31,6 +35,7 @@ dir = "{{ config_root }}"
 run = [
   "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --restow --verbose \"$package\"; done",
   "stow --target=$HOME --restow --verbose agents/",
+  "./bin/.local/bin/codex_config_sync",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
   "if command -v gpg >/dev/null; then gpg --batch --quiet --import {{ config_root }}/gpg_public_key.asc; fi",
 ]

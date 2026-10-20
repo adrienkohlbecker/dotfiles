@@ -1,0 +1,6 @@
+# Stow's built-in ignore list only applies to packages without this file; this
+# package has no files that list covers.
+#
+# The Codex app replaces a symlinked ~/.codex/config.toml when it rewrites it,
+# so codex_config_sync merges this file into the live config instead.
+^/\.codex/config\.toml$

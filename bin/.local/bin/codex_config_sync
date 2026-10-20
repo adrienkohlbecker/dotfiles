@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""Merge the dotfiles-managed block into the live ~/.codex/config.toml.
+
+The Codex app rewrites ~/.codex/config.toml atomically, which replaces a stow
+symlink, and keeps runtime state there (project trust, hook hashes,
+marketplaces, MCP wiring). So stow does not link the file. The dotfiles own only
+the block between the BEGIN/END marker lines; everything outside it is Codex's.
+
+The app also edits settings inside the block (model, plugins, desktop UI). To
+avoid silently reverting those, the block last applied is kept as a merge base
+in $XDG_STATE_HOME/codex_config_sync/managed_block.toml:
+
+- live block equals the dotfiles block: nothing to do;
+- live block unchanged since the last sync: write the dotfiles block;
+- otherwise (the app edited it, or there is no base yet): print the drift and
+  write nothing. Resolve it with --pull (copy the live block into the dotfiles
+  file, then review it with git diff) or --push (overwrite the live block).
+
+Every write is atomic and the merged config is parsed as TOML first. Without a
+TOML parser (Python < 3.11 and no tomli, e.g. jammy's 3.10) it does nothing.
+"""
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # stdlib only on 3.11+
+    try:
+        import tomli as tomllib
+    except ModuleNotFoundError:
+        tomllib = None
+
+BEGIN = "# BEGIN dotfiles-managed Codex config"
+END = "# END dotfiles-managed Codex config"
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+FRAGMENT = REPO_ROOT / "agents/.codex/config.toml"
+CONFIG = Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser() / "config.toml"
+BASE = Path(os.environ.get("XDG_STATE_HOME", "~/.local/state")).expanduser() / "codex_config_sync/managed_block.toml"
+
+
+class SyncError(Exception):
+    pass
+
+
+def split_marked(text: str, path: Path) -> tuple[str, str, str] | None:
+    """Split text into (before, block, after) around the marker lines.
+
+    Returns None when neither marker is present; raises SyncError when the
+    markers are not exactly one BEGIN line followed by one END line.
+    """
+    lines = text.splitlines(keepends=True)
+    begins = [i for i, line in enumerate(lines) if line.rstrip() == BEGIN]
+    ends = [i for i, line in enumerate(lines) if line.rstrip() == END]
+    if not begins and not ends:
+        return None
+    if len(begins) != 1 or len(ends) != 1 or begins[0] > ends[0]:
+        raise SyncError(f"{path}: expected one {BEGIN!r} line followed by one {END!r} line")
+    begin, end = begins[0], ends[0]
+    return "".join(lines[:begin]), "".join(lines[begin + 1 : end]), "".join(lines[end + 1 :])
+
+
+def join_marked(before: str, block: str, after: str) -> str:
+    return f"{before}{BEGIN}\n{block}{END}\n{after}"
+
+
+def read_optional(path: Path) -> str | None:
+    try:
+        return path.read_text()
+    except FileNotFoundError:
+        return None
+
+
+def write_atomic(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mode = path.stat().st_mode & 0o7777 if path.exists() else 0o600
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w") as handle:
+            handle.write(text)
+        os.chmod(tmp, mode)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
+
+
+def validate(text: str, label: str) -> None:
+    try:
+        tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise SyncError(f"{label} is not valid TOML: {exc}") from exc
+
+
+def push(before: str, block: str, after: str) -> None:
+    """Write block into the live config, keeping everything outside the markers."""
+    merged = join_marked(before, block, after)
+    validate(merged, f"{CONFIG} merged with {FRAGMENT}")
+    write_atomic(CONFIG, merged)
+    write_atomic(BASE, block)
+    print(f"codex_config_sync: wrote the managed block into {CONFIG}")
+
+
+def pull(fragment_header: str, live_block: str) -> None:
+    """Copy the live block into the dotfiles file, keeping its header above BEGIN."""
+    write_atomic(FRAGMENT, join_marked(fragment_header, live_block, ""))
+    write_atomic(BASE, live_block)
+    print(f"codex_config_sync: copied the live block into {FRAGMENT}; review it with git diff")
+
+
+def report_drift(live_block: str, block: str) -> None:
+    diff = difflib.unified_diff(
+        live_block.splitlines(keepends=True),
+        block.splitlines(keepends=True),
+        fromfile=f"{CONFIG} (live)",
+        tofile=f"{FRAGMENT} (dotfiles)",
+    )
+    sys.stdout.writelines(diff)
+    print(
+        f"codex_config_sync: the live block in {CONFIG} was edited since the last sync; left it alone.\n"
+        "  codex_config_sync --pull   adopt the live block into the dotfiles\n"
+        "  codex_config_sync --push   overwrite the live block with the dotfiles"
+    )
+
+
+def sync(mode: str | None) -> None:
+    fragment = split_marked(FRAGMENT.read_text(), FRAGMENT)
+    if fragment is None:
+        raise SyncError(f"{FRAGMENT}: missing the {BEGIN!r} and {END!r} lines")
+    fragment_header, block, _ = fragment
+    validate(block, f"{FRAGMENT} managed block")
+
+    live = read_optional(CONFIG) or ""
+    live_parts = split_marked(live, CONFIG) if live.strip() else ("", None, "")
+    if live_parts is None:
+        raise SyncError(f"{CONFIG} has no {BEGIN!r} block; add the marker lines by hand")
+    before, live_block, after = live_parts
+
+    if mode == "pull":
+        if live_block is None:
+            raise SyncError(f"{CONFIG} has no managed block to pull")
+        pull(fragment_header, live_block)
+    elif live_block == block:
+        if read_optional(BASE) != block:
+            write_atomic(BASE, block)
+        print(f"codex_config_sync: {CONFIG} is in sync")
+    elif mode == "push" or live_block in (None, read_optional(BASE)):
+        push(before, block, after)
+    else:
+        report_drift(live_block, block)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--pull", action="store_const", dest="mode", const="pull", help="copy the live block into the dotfiles")
+    group.add_argument("--push", action="store_const", dest="mode", const="push", help="overwrite the live block")
+    args = parser.parse_args()
+
+    if tomllib is None:
+        print("codex_config_sync: no TOML parser (needs Python 3.11+ or tomli); skipped", file=sys.stderr)
+        return 0
+    try:
+        sync(args.mode)
+    except SyncError as exc:
+        print(f"codex_config_sync: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
