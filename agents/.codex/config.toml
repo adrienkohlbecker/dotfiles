@@ -7,12 +7,14 @@
 
 # BEGIN dotfiles-managed Codex config
 approvals_reviewer = "user"
-model = "gpt-5.6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "high"
 service_tier = "default"
 plan_mode_reasoning_effort = "xhigh"
 sandbox_mode = "danger-full-access"
 personality = "pragmatic"
+
+notify = ["/Users/ak/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
 
 [sandbox_workspace_write]
 network_access = true
@@ -23,10 +25,11 @@ writable_roots = [
     "~/.cache",
     "~/.ansible",
     "~/.ssh",
-    ".git",
     "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home/Code",
     "~/.local/share/project_notes",
 ]
+exclude_tmpdir_env_var = false
+exclude_slash_tmp = false
 
 [tui]
 terminal_title = ["activity", "project-name", "run-state"]
@@ -46,19 +49,24 @@ status_line = [
 status_line_use_colors = true
 theme = "dracula"
 pet = "rocky"
+screen_reader_detection_done = true
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+"gpt-5.6-sol" = 4
+gpt-6-astra = 1
+"gpt-6.1-sol" = 1
 
 [features]
 terminal_resize_reflow = true
 memories = true
 js_repl = false
 codex_git_commit = true
+hooks = true
 
 [plugins]
 
 [plugins."github@openai-curated"]
-enabled = true
-
-[plugins."browser@openai-bundled"]
 enabled = true
 
 [plugins."documents@openai-primary-runtime"]
@@ -73,11 +81,56 @@ enabled = true
 [plugins."presentations@openai-primary-runtime"]
 enabled = true
 
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."code-review@openai-bundled"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
 [desktop]
-conversationDetailMode = "STEPS_COMMANDS"
+conversationDetailMode = "STEPS_PROSE"
 ambient-suggestions-enabled = true
 show-context-window-usage = true
+avatar-overlay-mascot-width-px = 92
+followUpQueueMode = "queue"
+dock-icon-preference = "app-default"
+mac-menu-bar-enabled = false
+defaultTerminalLocation = "bottom"
+appearanceDarkCodeThemeId = "dracula"
+usePointerCursors = false
+keepRemoteControlAwakeWhilePluggedIn = true
+git-worktree-root = ""
+sansFontSize = 13
+selected-avatar-id = "rocky"
+default-workspace-full-view = false
 
-[notice]
-hide_full_access_warning = true
+[desktop.appearanceDarkChromeTheme]
+accent = "#ff79c6"
+contrast = 60
+ink = "#f8f8f2"
+opaqueWindows = false
+surface = "#282a36"
+
+[desktop.appearanceDarkChromeTheme.fonts]
+code = "MesloLGM Nerd Font Mono"
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#50fa7b"
+diffRemoved = "#ff5555"
+skill = "#ff79c6"
 # END dotfiles-managed Codex config
