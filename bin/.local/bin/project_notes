@@ -1,0 +1,300 @@
+#!/usr/bin/env python3
+"""Manage a code repository's private notes, kept in the Obsidian vault.
+
+Each code repository's notes are their own git repository at
+<vault>/Code/<name>. Its git directory lives outside iCloud, at
+~/.local/share/project_notes/<name>.git, because iCloud sync mangles .git
+internals (conflict copies of the index, evicted objects). Every checkout and
+worktree of the code repository reaches the notes through a `notes` symlink
+that is ignored via .git/info/exclude, so public repositories never see it.
+
+The global post-checkout hook runs `project_notes link` for new clones and
+worktrees; the global prepare-commit-msg hook stamps notes commits with a
+`Code: <name>@<sha>` trailer. Conventions for the notes themselves live in the
+project_notes agent skill.
+
+Must stay compatible with macOS's /usr/bin/python3 (3.9): git hooks launched
+from GUI apps may not see the mise-managed interpreter.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+NOTES_ROOT = Path(
+    os.environ.get(
+        "PROJECT_NOTES_ROOT",
+        "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home/Code",
+    )
+).expanduser()
+GITDIR_ROOT = Path(os.environ.get("PROJECT_NOTES_GITDIRS", "~/.local/share/project_notes")).expanduser()
+LINK_NAME = "notes"
+CODE_REPO_KEY = "projectnotes.coderepo"
+REMOTE_BASE_KEY = "projectnotes.remotebase"
+
+# Meanings live in the project_notes skill; this is only the enforced set.
+STATUSES = {"runbook", "current", "planned", "deferred", "rejected", "completed", "reference"}
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+ICLOUD_CONFLICT_RE = re.compile(r" \d+$")  # "foo 2.md": iCloud's conflict copy of "foo.md"
+SF_DATALESS = 0x40000000  # macOS st_flags bit for an evicted iCloud placeholder
+
+SOMEDAY_TEMPLATE = """---
+status: reference # backlog; confirm with the operator before acting on any item
+created_at: {date}
+---
+
+# Someday
+
+Open follow-ups deferred from prior work. Not standing instructions.
+"""
+
+
+class NotesError(Exception):
+    pass
+
+
+def git(*args: str, cwd: Path | None = None, check: bool = True) -> str:
+    result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        raise NotesError(f"git {' '.join(args)} failed in {cwd or os.getcwd()}: {result.stderr.strip()}")
+    return result.stdout.strip()
+
+
+def toplevel(path: Path) -> Path:
+    return Path(git("rev-parse", "--show-toplevel", cwd=path))
+
+
+def worktrees(checkout: Path) -> list[Path]:
+    """Return every worktree of `checkout`'s repository, the main one first."""
+    out = git("worktree", "list", "--porcelain", cwd=checkout)
+    paths = [Path(line[len("worktree ") :]) for line in out.splitlines() if line.startswith("worktree ")]
+    return [p for p in paths if p.is_dir()]
+
+
+def notes_dir(name: str) -> Path:
+    return NOTES_ROOT / name
+
+
+def gitdir_for(name: str) -> Path:
+    return GITDIR_ROOT / f"{name}.git"
+
+
+def ensure_ignored(checkout: Path) -> None:
+    """Ignore the notes symlink through info/exclude, shared by every worktree."""
+    if subprocess.run(["git", "check-ignore", "-q", LINK_NAME], cwd=checkout).returncode == 0:
+        return
+    common = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=checkout))
+    exclude = common / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    with exclude.open("a") as f:
+        f.write(f"/{LINK_NAME}\n")
+
+
+def link_checkout(checkout: Path, target: Path) -> bool:
+    """Point `checkout`/notes at `target`. Returns True when a link was created."""
+    link = checkout / LINK_NAME
+    if link.is_symlink():
+        if link.resolve() != target.resolve():
+            print(f"project_notes: {link} points elsewhere ({os.readlink(link)}); left alone", file=sys.stderr)
+        return False
+    if link.exists():
+        raise NotesError(f"{link} exists and is not a symlink; run `project_notes migrate` first")
+    # Ignore before linking so a concurrent `git add -A` never stages the link.
+    ensure_ignored(checkout)
+    link.symlink_to(target)
+    return True
+
+
+def link_all(main: Path, target: Path) -> None:
+    for checkout in worktrees(main):
+        if link_checkout(checkout, target):
+            print(f"linked {checkout / LINK_NAME} -> {target}")
+
+
+def configure_notes_repo(target: Path, main: Path, name: str) -> None:
+    git("config", CODE_REPO_KEY, str(main), cwd=target)
+    remote_base = git("config", "--global", "--get", REMOTE_BASE_KEY, check=False)
+    has_origin = "origin" in git("remote", cwd=target).split()
+    if remote_base and not has_origin:
+        git("remote", "add", "origin", f"{remote_base.rstrip('/')}/{name}_notes.git", cwd=target)
+    if (target / "mise.toml").exists() and shutil.which("mise"):
+        subprocess.run(["mise", "trust", str(target / "mise.toml")], check=True)
+
+
+def resolve_main(args: argparse.Namespace) -> tuple[Path, str]:
+    main = worktrees(toplevel(Path(args.repo).resolve()))[0]
+    return main, args.name or main.name
+
+
+def cmd_init(args: argparse.Namespace) -> None:
+    """Create (or adopt) the vault notes repository and link every worktree."""
+    main, name = resolve_main(args)
+    target, gitdir = notes_dir(name), gitdir_for(name)
+    if (main / LINK_NAME).exists() and not (main / LINK_NAME).is_symlink():
+        raise NotesError(f"{main / LINK_NAME} already exists; use `project_notes migrate`")
+    if target.exists():
+        if not (target / ".git").exists():
+            raise NotesError(f"{target} exists but is not a git repository")
+        print(f"reusing existing notes repository {target}")
+    else:
+        if gitdir.exists():
+            raise NotesError(f"{gitdir} already exists without a matching {target}")
+        GITDIR_ROOT.mkdir(parents=True, exist_ok=True)
+        git("init", f"--separate-git-dir={gitdir}", str(target))
+        (target / "SOMEDAY.md").write_text(SOMEDAY_TEMPLATE.format(date=args.today))
+        git("add", "SOMEDAY.md", cwd=target)
+        git("commit", "-m", f"Start the {name} notes", cwd=target)
+    configure_notes_repo(target, main, name)
+    link_all(main, target)
+    if not git("remote", cwd=target):
+        print(f"no remote: set `git config --global {REMOTE_BASE_KEY} <base-url>` or add origin by hand")
+    else:
+        print(f"create {git('remote', 'get-url', 'origin', cwd=target)} if needed, then `git -C {target} push -u origin HEAD`")
+
+
+def cmd_migrate(args: argparse.Namespace) -> None:
+    """Move an in-checkout notes clone (<repo>/notes/.git) into the vault."""
+    main, name = resolve_main(args)
+    source, target, gitdir = main / LINK_NAME, notes_dir(name), gitdir_for(name)
+    if source.is_symlink() or not (source / ".git").is_dir():
+        raise NotesError(f"{source} is not a notes clone with its own .git directory")
+    for path in (target, gitdir):
+        if path.exists():
+            raise NotesError(f"{path} already exists")
+    GITDIR_ROOT.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(source / ".git"), str(gitdir))
+    (source / ".git").write_text(f"gitdir: {gitdir}\n")
+    shutil.move(str(source), str(target))
+    configure_notes_repo(target, main, name)
+    # Worktree links pointing at <main>/notes keep resolving once main is linked.
+    link_all(main, target)
+    print(f"moved {source} -> {target} (git dir {gitdir})")
+
+
+def cmd_link(args: argparse.Namespace) -> None:
+    """Link one checkout (default: the current one) to its project's notes.
+
+    Silent no-op outside a git repository or for projects without notes, so
+    the global post-checkout hook can call it unconditionally.
+    """
+    try:
+        checkout = toplevel(Path(args.repo).resolve())
+    except NotesError:
+        return
+    main = worktrees(checkout)[0]
+    main_link = main / LINK_NAME
+    if main_link.is_symlink():
+        target = main_link.resolve()
+    elif (notes_dir(main.name) / ".git").exists():
+        target = notes_dir(main.name)
+    else:
+        return
+    if link_checkout(checkout, target):
+        print(f"linked {checkout / LINK_NAME} -> {target}")
+
+
+def frontmatter_errors(path: Path) -> list[str]:
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    if not lines or lines[0].strip() != "---":
+        return ["missing YAML frontmatter"]
+    fields = {}
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        key, sep, rest = line.partition(":")
+        if sep:
+            fields[key.strip()] = rest.split("#")[0].strip()
+    errors = []
+    if fields.get("status") not in STATUSES:
+        errors.append(f"status must be one of {', '.join(sorted(STATUSES))}")
+    if not DATE_RE.match(fields.get("created_at", "")):
+        errors.append("created_at must be YYYY-MM-DD")
+    return errors
+
+
+def note_files(target: Path) -> list[Path]:
+    files = []
+    for dirpath, dirnames, filenames in os.walk(target):
+        dirnames[:] = [d for d in dirnames if not d.startswith(".")]
+        files.extend(Path(dirpath) / f for f in filenames if not f.startswith("."))
+    return sorted(files)
+
+
+def cmd_doctor(args: argparse.Namespace) -> None:
+    """Check links, git dir, remote sync, iCloud state, and note frontmatter."""
+    main, name = resolve_main(args)
+    target = notes_dir(name)
+    problems = []
+
+    if not (target / ".git").is_file():
+        raise NotesError(f"{target} is not a notes repository with an external git dir")
+    gitdir = Path((target / ".git").read_text().split(":", 1)[1].strip())
+    if not gitdir.is_dir():
+        problems.append(f"git dir {gitdir} is missing")
+    elif "Mobile Documents" in gitdir.parts:
+        problems.append(f"git dir {gitdir} is inside iCloud")
+
+    for checkout in worktrees(main):
+        link = checkout / LINK_NAME
+        if not link.is_symlink() or link.resolve() != target.resolve():
+            problems.append(f"{link} is not a symlink to {target}")
+        elif subprocess.run(["git", "check-ignore", "-q", LINK_NAME], cwd=checkout).returncode != 0:
+            problems.append(f"{link} is not ignored")
+
+    if git("config", "--get", CODE_REPO_KEY, cwd=target, check=False) != str(main):
+        problems.append(f"{CODE_REPO_KEY} is not {main}")
+    if not git("remote", cwd=target):
+        problems.append("no remote configured")
+    elif git("rev-parse", "--abbrev-ref", "@{u}", cwd=target, check=False):
+        ahead = git("rev-list", "--count", "@{u}..HEAD", cwd=target)
+        if ahead != "0":
+            problems.append(f"{ahead} unpushed commit(s)")
+    else:
+        problems.append("HEAD has no upstream")
+    dirty = git("status", "--porcelain", cwd=target)
+    if dirty:
+        problems.append(f"{len(dirty.splitlines())} uncommitted change(s)")
+
+    for path in note_files(target):
+        rel = path.relative_to(target)
+        if ICLOUD_CONFLICT_RE.search(path.stem):
+            problems.append(f"{rel}: looks like an iCloud conflict copy")
+        if os.lstat(path).st_flags & SF_DATALESS:
+            problems.append(f"{rel}: evicted by iCloud (mark the folder Keep Downloaded)")
+        elif path.suffix == ".md":
+            problems.extend(f"{rel}: {err}" for err in frontmatter_errors(path))
+
+    for problem in problems:
+        print(problem)
+    if problems:
+        sys.exit(1)
+    print(f"{name}: ok")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    for command, func in (("init", cmd_init), ("migrate", cmd_migrate), ("link", cmd_link), ("doctor", cmd_doctor)):
+        p = sub.add_parser(command, help=func.__doc__.split("\n")[0] if func.__doc__ else None)
+        p.add_argument("--repo", default=".", help="a checkout of the code repository (default: current directory)")
+        if command != "link":
+            p.add_argument("--name", help="notes folder name (default: the main checkout's directory name)")
+        p.set_defaults(func=func)
+    args = parser.parse_args()
+    if args.command == "init":
+        args.today = datetime.date.today().isoformat()
+    try:
+        args.func(args)
+    except NotesError as e:
+        sys.exit(f"project_notes: {e}")
+
+
+if __name__ == "__main__":
+    main()
