@@ -50,6 +50,8 @@ Every bash script starts with `set -euo pipefail`. Handle expected failures expl
 
 Do not push before full repository validation has passed. Prefer the canonical full check for that repository, such as `mise run lint`, `mise run test`, or the equivalent documented task. When you change behavior, add or update the regression test that covers it — exercise the narrowest relevant test in the inner loop, then run the full suite before pushing.
 
+Tests exercise real behavior: assert what the consuming code or service observably does, not that a step wrote the value it was told to write. A tautological check proves nothing beyond the step's own result, so omit it when no functional assertion is possible. Bound every wait in tests and harnesses so a hang surfaces as a quick failure, and fix a flake at its source instead of papering over it with auto-retry.
+
 ## Committing
 
 Use commits liberally and commit often. Commit each self-contained change separately: if one turn produces several independent changes, land them as several commits instead of batching them together. Always inspect the **full** staged set (`git diff --cached --stat`, plus per-file `git diff`) before `git commit` — not just the file you added: `git commit` ships the entire index, and the operator may have staged or IDE-edited files between turns; unstage strays first. For `git commit --amend`, confirm with `git log -1` that HEAD is the commit you mean to rewrite. To split entangled changes into separate commits, stage hunks into the index (`git apply --cached`, or the `git add -p` recipe in `/split_worktree_commits`); never temp-revert the working tree. Never mention Claude, Codex, or AI assistance in commit messages.
