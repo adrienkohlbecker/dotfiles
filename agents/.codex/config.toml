@@ -53,7 +53,10 @@ screen_reader_detection_done = true
 terminal_resize_reflow = true
 memories = true
 js_repl = false
-codex_git_commit = true
+# Removed from the CLI, but the app's Commit button still reads it: when the
+# ChatGPT account's attribution setting doesn't answer, true appends
+# `Co-authored-by: Codex <noreply@openai.com>`, which no commit-msg hook catches.
+codex_git_commit = false
 hooks = true
 
 [desktop]
