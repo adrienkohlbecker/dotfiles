@@ -10,6 +10,7 @@ set -euo pipefail
 # - commit-msg: has its own global logic (AI-attribution check, project notes
 #   Code: trailer) and chains on its own.
 # - post-checkout: its own script (links project notes), chains on its own.
+# - pre-commit: its own script (lints project notes), chains on its own.
 # - push-to-checkout: mere presence replaces git's builtin worktree update,
 #   so an exit-0 shim would silently skip the checkout.
 # - fsmonitor-watchman: located via core.fsmonitor, not hooksPath (and see

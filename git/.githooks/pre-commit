@@ -1,1 +1,20 @@
-chain-repo-hook
+#!/bin/bash
+set -euo pipefail
+
+# Global pre-commit hook (installed via core.hooksPath = ~/.githooks).
+# In a project notes repository (projectnotes.coderepo, set by project_notes),
+# lint the notes -- frontmatter, links, Markdown style, iCloud state -- so every
+# notes repository gets the same checks without tooling of its own.
+# ~/.local/bin is spelled out because GUI-launched git may lack it on PATH.
+if [ -n "$(git config --get projectnotes.coderepo || true)" ]; then
+  notes_cli=$(command -v project_notes || echo "$HOME/.local/bin/project_notes")
+  if [ -x "$notes_cli" ]; then
+    "$notes_cli" lint >&2
+  fi
+fi
+
+# Chain to the repo's own hook; see chain-repo-hook for why --git-common-dir.
+repo_hook=$(git rev-parse --git-common-dir)/hooks/pre-commit
+if [ -x "$repo_hook" ]; then
+  exec "$repo_hook" "$@"
+fi
