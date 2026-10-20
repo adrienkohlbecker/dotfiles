@@ -44,6 +44,8 @@ Keep comments sparse and load-bearing: explain non-obvious paths — tricky conc
 
 One exception to "sparse": when you suppress an exception (`except X: pass`, `contextlib.suppress`), always add a one-line comment stating *why* it's safe — the specific condition that makes it expected and benign. When the *why* outgrows a comment (architecture decision, regression history), put it in a doc/notes file and leave a one-line pointer in the code.
 
+Config defaults depend on provenance. Config derived from an upstream reference keeps its comments, examples, and explicit default-valued settings so it stays comparable with upstream — another exception to "sparse", since the upstream reference *is* current state. Locally authored config pins a value only when it's load-bearing: it documents a dependency, is a deliberate non-default, or is a tuning knob worth surfacing.
+
 Every bash script starts with `set -euo pipefail`. Handle expected failures explicitly, for example with `|| true`, so strict mode remains meaningful. Under `pipefail`, a reader that exits early (`… | head`) can kill the producer with SIGPIPE and fail the pipeline; filter with `awk` or `sed -n` instead.
 
 ## Validation
