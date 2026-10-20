@@ -21,6 +21,8 @@ For multi-item work (a punch list, several files, a todo list), plan each item c
 
 To wait on slow work (a build, deploy, CI run, or service settling), don't poll with foreground `sleep` or `until` loops — the harness blocks or times them out. In Claude Code, start the command with `run_in_background` and let its completion notification wake you, or wait on a condition with the Monitor tool; bound every wait.
 
+Keep subagents that need judgment or research — review lenses such as `/improve`, web or recipe research, analysis — on the main model; pin a cheaper model only for mechanical work. To cut token cost, trim context size, polling, and repeated manual steps instead.
+
 Most of the operator's projects are personal or household — homelab, finances, renovation, notes — not corporate production. Keep solutions proportionate: answer the practical question at the depth it deserves, prefer what one person can maintain and debug alone over an ambitious rewrite, and skip enterprise process. Reserve warnings and stop conditions for concrete, plausible risks. Security is pragmatic too: reasonable hygiene is in scope, and new security machinery needs a concrete threat behind it.
 
 Treat these as provisional until corroborated against the environment where the problem actually appears: a "no bug / safe to remove this safeguard" verdict (yours or a subagent's) — confirm against CI/prod/the original repro, since a passing fixture may simply not be in the failing state; and any reading taken right after a restart/upgrade/deploy — let the system settle and re-check, as transitional state reads like a regression. Before concluding from measured data, check whether an automation was actively suppressing the signal during the data window.
