@@ -10,8 +10,8 @@ that is ignored via .git/info/exclude, so public repositories never see it.
 
 The global post-checkout hook runs `project_notes link` for new clones and
 worktrees (not the Codex app's, which run git with hooks disabled); the global
-commit-msg hook stamps notes commits with a `Code: <name>@<sha>` trailer. Conventions for the notes themselves live in the
-project_notes agent skill.
+commit-msg hook stamps notes commits with a `Code: <name>@<sha>` trailer.
+Conventions for the notes themselves live in the project_notes agent skill.
 
 Must stay compatible with macOS's /usr/bin/python3 (3.9): git hooks launched
 from GUI apps may not see the mise-managed interpreter.
@@ -152,7 +152,8 @@ def cmd_init(args: argparse.Namespace) -> None:
     target, gitdir = notes_dir(name), gitdir_for(name)
     if (main / LINK_NAME).exists() and not (main / LINK_NAME).is_symlink():
         raise NotesError(f"{main / LINK_NAME} already exists; use `project_notes migrate`")
-    if target.exists():
+    created = not target.exists()
+    if not created:
         if not (target / ".git").exists():
             raise NotesError(f"{target} exists but is not a git repository")
         print(f"reusing existing notes repository {target}")
@@ -163,10 +164,12 @@ def cmd_init(args: argparse.Namespace) -> None:
         git("init", f"--separate-git-dir={gitdir}", str(target))
     # Configure before the seed commit so the commit-msg hook stamps it.
     configure_notes_repo(target, main, name)
-    if not git("rev-parse", "--verify", "--quiet", "HEAD", cwd=target, check=False):
+    # Seed only a repository created here: an adopted one, even without
+    # commits, may hold notes or staged work that a seed would overwrite.
+    if created:
         (target / "SOMEDAY.md").write_text(SOMEDAY_TEMPLATE.format(date=args.today))
         git("add", "SOMEDAY.md", cwd=target)
-        git("commit", "-m", f"Start the {name} notes", cwd=target)
+        git("commit", "-m", f"Start the {name} notes", "--", "SOMEDAY.md", cwd=target)
     link_all(main, target)
     if not git("remote", cwd=target):
         print(f"no remote: set `git config --global {REMOTE_BASE_KEY} <base-url>` or add origin by hand")
@@ -265,6 +268,22 @@ def lint_problems(target: Path) -> list[str]:
     return problems
 
 
+def notes_target(checkout: Path, name: str | None) -> Path:
+    """The notes repository a code checkout uses: its `notes` link, else the named folder.
+
+    Raises NotesError when that directory is missing, so a check never passes
+    vacuously on a project without notes.
+    """
+    link = checkout / LINK_NAME
+    if name is None and link.is_symlink():
+        target = link.resolve()
+    else:
+        target = notes_dir(name or worktrees(checkout)[0].name)
+    if not target.is_dir():
+        raise NotesError(f"no notes repository at {target}")
+    return target
+
+
 def report(problems: list[str], name: str) -> None:
     for problem in problems:
         print(problem)
@@ -276,14 +295,15 @@ def report(problems: list[str], name: str) -> None:
 def cmd_lint(args: argparse.Namespace) -> None:
     """Check the notes only (frontmatter, iCloud state); run from a notes or code checkout."""
     top = toplevel(Path(args.repo).resolve())
-    target = top if in_notes_root(top) else notes_dir(args.name or worktrees(top)[0].name)
+    target = top if in_notes_root(top) else notes_target(top, args.name)
     report(lint_problems(target), target.name)
 
 
 def cmd_doctor(args: argparse.Namespace) -> None:
     """Check links, git dir, remote sync, iCloud state, and note frontmatter."""
-    main, name = resolve_main(args)
-    target = notes_dir(name)
+    main, _ = resolve_main(args)
+    target = notes_target(main, args.name)
+    name = target.name
     problems = []
 
     if not (target / ".git").is_file():
