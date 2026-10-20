@@ -7,6 +7,7 @@ Personal conventions that apply across all repositories. Canonical file: `agents
 The operator is **Adrien Kohlbecker** — git identity `Adrien Kohlbecker <adrien.kohlbecker@gmail.com>`. When analysing git or MR history, only commits by that exact name/email are his; other "Adrien *" authors (e.g. Adrien Brault `adrien.brault@gmail.com`, Adrien Gooris `adrien.gooris@michelin.com`) are different people — don't attribute their work to him.
 
 - **1Password is a black box.** Never enumerate or read its contents (`op item list`, `op vault list`, `op item get`, `op item search`). The operator hands you `op://…` references directly; wire them through `op run --`. No discovery, no listing, no inspection — even to find an item id.
+- **Never print secret material.** The same applies to every secret store: don't run commands whose output is a secret (`op read`, `security find-generic-password`, `ansible-vault view|decrypt`, `podman secret inspect`, reading a secrets file). Pass references through to the consuming command instead.
 - **Don't edit `~/.codex/config.toml`** — it's the operator's live Codex config (hard scope denylist), not a session artifact.
 - Workstation, terminal, and cross-repo tooling specifics (macOS, git signing, AWS, mise) live under `## Reference`.
 
