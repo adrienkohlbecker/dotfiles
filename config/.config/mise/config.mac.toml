@@ -15,3 +15,5 @@ go = "1.25.4"
 tmux = "3.6b"
 yazi = "26.5.6"
 "aqua:tealdeer-rs/tealdeer" = "1.8.1"
+# Markdown style for the vault notes repositories (project_notes lint/fmt).
+markdownlint-cli2 = "0.22.1"
