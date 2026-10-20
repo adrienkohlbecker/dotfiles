@@ -57,7 +57,8 @@ Refuse to edit these paths even if a finding suggests it:
 - `/etc/**`
 - shell rc files such as `~/.bashrc`, `~/.zshrc`, `~/.profile`, and `~/.config/fish/**`
 - files matching `*credential*`, `*secret*`, `*.pem`, `*.key`, `id_rsa*`, or `.env*`
-- `~/.Codex/**`, unless the target itself is inside that tree
+- `~/.codex/config.toml` (the operator's live Codex config)
+- the rest of `~/.codex/**`, unless the target itself is inside that tree
 
 If a selected finding requires one of these edits, present it as a manual recommendation instead.
 
