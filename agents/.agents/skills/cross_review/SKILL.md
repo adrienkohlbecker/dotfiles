@@ -92,8 +92,6 @@ Output format:
 - A brief summary AFTER the findings.
 - If you genuinely find nothing, say so plainly, then state what you verified
   and what residual risk or test gap remains. Do not pad.
-
-Be thorough, concrete, and detailed.
 ```
 
 ## 3. Run the other agent
