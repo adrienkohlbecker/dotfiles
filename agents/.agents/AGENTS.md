@@ -72,7 +72,7 @@ When a worktree holds several independent findings, land them as separate commit
 Cross-repo facts whose detail lives in a linked file under `~/Work/dotfiles/agents/.agents/notes/`. The pointers below are always in context; read the file when a hook is relevant. Add a pointer here only for facts that apply across repos — repo-specific knowledge belongs in that repo's own memory/docs.
 
 - Dotfiles repo (stow layout, editing workflow, SSH signing, jammy compat, fsmonitor hazard) → `~/Work/dotfiles/agents/.agents/notes/dotfiles.md`
-- macOS workstation (Ghostty terminal + terminfo gap, `com.apple.provenance` xattr breaking container copies) → `~/Work/dotfiles/agents/.agents/notes/macos.md`
+- macOS workstation (Ghostty terminal + terminfo gap, `com.apple.provenance` xattr breaking container copies, NFD filenames and emoji matching) → `~/Work/dotfiles/agents/.agents/notes/macos.md`
 - git & forge tooling (SSH-signing traps, `gh` authorship/rate-limit gotchas, private-GitLab → local-git fallback) → `~/Work/dotfiles/agents/.agents/notes/git.md`
 - AWS auth (MFA-per-session TOTP collision under bursts) → `~/Work/dotfiles/agents/.agents/notes/aws.md`
 - mise tooling (eza macOS backend, CLI-vs-language-runtime config split) → `~/Work/dotfiles/agents/.agents/notes/mise.md`

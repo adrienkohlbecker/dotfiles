@@ -16,3 +16,9 @@ Ghostty's `shell-integration-features` includes `ssh-terminfo`, which wraps `ssh
 On macOS Sequoia the kernel stamps an **unremovable** `com.apple.provenance` xattr on essentially every file (`xattr -c` doesn't stick; even `cp -X` re-stamps). A podman-machine container build that bind-mounts host files via virtiofs sees this xattr, and any copy preserving xattrs (`cp --preserve=xattr`, `cp -a`) fails with `setting attributes … Operation not supported` — `com.apple.*` isn't a valid Linux xattr namespace. A second independent trigger: the podman-machine overlay mounts with a fixed SELinux `context=`, so the destination also rejects `setxattr(security.selinux)` (and `--security-opt label=disable` does *not* remove the `context=` mount).
 
 **General lesson:** on Mac + podman, prefer copy mechanisms that DON'T preserve xattrs (`cp` default, `rsync` without `-X`, `tar`) over `cp -a` / `--preserve=xattr`. Tools with their own xattr-preserving copy may expose an opt-out (e.g. dracut honours `DRACUT_NO_XATTR=1`). Linux/CI never hit either trigger.
+
+## Unicode: NFD filenames and emoji matching
+
+Accented filenames — common in the iCloud Obsidian vaults and French-named folders — can come back from `os.walk`, `find` or `ls` in **NFD** (`é` as `e` + combining accent), while the same path typed in a note, a config file or a CLI argument is NFC. Byte-wise comparison then silently never matches. `open()` accepts either form, so reads and writes work and only the comparison breaks.
+
+**Apply:** normalize both sides to NFC (`unicodedata.normalize("NFC", s)`) before comparing or indexing paths. Don't do emoji or signifier matching with `grep`/`jq` either — variation selectors and multi-codepoint sequences make it unreliable. Match bare text or ids in shell, and do Unicode-heavy matching in Python (the reason `ordo` is Python rather than bash + jq).
