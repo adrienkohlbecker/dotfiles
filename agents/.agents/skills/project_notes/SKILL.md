@@ -12,6 +12,8 @@ description: Read, write, and commit a code repository's private notes in its `n
 - Before non-trivial work, list `notes/` and read the notes whose names or `status` bear on the task. The repository's AGENTS.md links the load-bearing ones.
 - Trust by status: `runbook` and `current` describe how things are; `planned` and `deferred` are intentions; `rejected` records why not; `completed` points at code and git history as the source of truth.
 - `SOMEDAY.md` is a backlog, not standing instructions — never enact an item without the operator's confirmation.
+- `notes/` is a gitignored symlink, so a recursive search from the code root skips it: search inside `notes/` or name it explicitly.
+- Spawn worktree-isolated agents from the code checkout, not from inside `notes/`: the worktree is cut from the cwd's repository, so an agent started there lands in a notes worktree with no code.
 
 ## Writing
 
@@ -29,6 +31,10 @@ Write a note for what outlives the session and isn't derivable from the code: de
 
   Statuses: `runbook` (active procedure) · `current` (deployed state) · `planned` (near-term) · `deferred` (valid, not imminent) · `rejected` (kept for context) · `completed` (outcome in code/git) · `reference` (static lookup).
 - Update a note's `status` as its work lands; move notes that no longer inform anything to `archive/`.
+- When a discussion anchored in a note settles or reverses a decision, edit the note in the same turn, unasked — a stale note misleads later sessions.
+- A plan made in plan mode also goes to `notes/<topic>.md` (`status: planned`); the harness's own plan file is invisible to the operator.
+- Don't log review or simplification runs; their outcomes live in chat and commits, and prior-run logs anchor later reviews.
+- Scratch files go in the session's scratch space, never `notes/`.
 - Link with relative Markdown links (`[x](runbooks/y.md)`), not wikilinks, so links work on the git forge and in Obsidian alike.
 - Write in the repository's language and register; keep the same "current state, not history" rule as code comments, except in explicitly historical notes (investigations, rejected designs).
 
@@ -36,7 +42,7 @@ Write a note for what outlives the session and isn't derivable from the code: de
 
 - Commit inside the notes repository (`git -C notes …`), separately from code commits, with the same message conventions. Push when the work is done.
 - Never copy notes content, personal details, or production output into the code repository's commits or files — many code repositories are public.
-- The notes repository is shared by every worktree: commit only the notes you changed, and inspect `git -C notes status` first because other sessions may have edits in flight.
+- The notes repository is shared by every worktree: commit only the notes you changed, and inspect `git -C notes status` first because other sessions may have edits in flight. Run `git -C notes diff <file>` before a pathspec commit, since another session's hunks in the same file would ship with yours; stage only your hunks (`git apply --cached`). Never `git reset` there — report a bad commit instead.
 
 ## Setting up or checking
 
