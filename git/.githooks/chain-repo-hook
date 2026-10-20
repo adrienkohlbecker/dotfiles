@@ -11,7 +11,7 @@ set -euo pipefail
 # - push-to-checkout: mere presence replaces git's builtin worktree update,
 #   so an exit-0 shim would silently skip the checkout.
 # - fsmonitor-watchman: located via core.fsmonitor, not hooksPath (and see
-#   the fsmonitor hazard in agents/.agents/notes/dotfiles.md).
+#   the fsmonitor hazard in ~/.agents/notes/dotfiles.md).
 # - reference-transaction, post-index-change: fire on nearly every git
 #   operation; a bash fork per ref/index write buys nothing here.
 # - server-side receive hooks, sendemail-validate, p4-*: unused.

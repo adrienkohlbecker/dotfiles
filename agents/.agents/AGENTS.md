@@ -81,11 +81,11 @@ When a worktree holds several independent findings, land them as separate commit
 
 ## Reference
 
-Cross-repo facts whose detail lives in a linked file under `~/Work/dotfiles/agents/.agents/notes/`. The pointers below are always in context; read the file when a hook is relevant. Add a pointer here only for facts that apply across repos — repo-specific knowledge belongs in that repo's own memory/docs.
+Cross-repo facts whose detail lives in a linked file under `~/.agents/notes/` — the dotfiles project's private notes (`project_notes` skill), not the public repo. The pointers below are always in context; read the file when a hook is relevant. Add a pointer here only for facts that apply across repos — repo-specific knowledge belongs in that repo's own memory/docs.
 
-- Dotfiles repo (stow layout, editing workflow, SSH signing, jammy compat, fsmonitor hazard) → `~/Work/dotfiles/agents/.agents/notes/dotfiles.md`
-- macOS workstation (Ghostty terminal + terminfo gap, `com.apple.provenance` xattr breaking container copies, NFD filenames and emoji matching) → `~/Work/dotfiles/agents/.agents/notes/macos.md`
-- git & forge tooling (SSH-signing traps, `gh` authorship/rate-limit gotchas, private-GitLab → local-git fallback) → `~/Work/dotfiles/agents/.agents/notes/git.md`
-- AWS auth (MFA-per-session TOTP collision under bursts) → `~/Work/dotfiles/agents/.agents/notes/aws.md`
-- mise tooling (eza macOS backend, CLI-vs-language-runtime config split) → `~/Work/dotfiles/agents/.agents/notes/mise.md`
-- Remote Control servers (concurrent sessions share one checkout, a server restart ends its sessions and `--resume` recovery, iCloud Full Disk Access) → `~/Work/dotfiles/agents/.agents/notes/remote_control.md`
+- Dotfiles repo (stow layout, editing workflow, SSH signing, jammy compat, fsmonitor hazard) → `~/.agents/notes/dotfiles.md`
+- macOS workstation (Ghostty terminal + terminfo gap, `com.apple.provenance` xattr breaking container copies, NFD filenames and emoji matching) → `~/.agents/notes/macos.md`
+- git & forge tooling (SSH-signing traps, `gh` authorship/rate-limit gotchas, private-GitLab → local-git fallback) → `~/.agents/notes/git.md`
+- AWS auth (MFA-per-session TOTP collision under bursts) → `~/.agents/notes/aws.md`
+- mise tooling (eza macOS backend, CLI-vs-language-runtime config split) → `~/.agents/notes/mise.md`
+- Remote Control servers (concurrent sessions share one checkout, a server restart ends its sessions and `--resume` recovery, iCloud Full Disk Access) → `~/.agents/notes/remote_control.md`

@@ -17,12 +17,16 @@
 #
 # Stow skips ~/.codex/config.toml (the Codex app replaces that symlink when it
 # rewrites the file); codex_config_sync merges the managed block in instead.
+#
+# `notes/` is not a package: it's the gitignored link to this repo's private
+# notes (project_notes), which agents/.agents/notes points at so they deploy as
+# ~/.agents/notes. Every loop skips it, or stow would scatter them into $HOME.
 
 [tasks.stow]
 description = "Link all packages into $HOME (adds new files)"
 dir = "{{ config_root }}"
 run = [
-  "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --verbose \"$package\"; done",
+  "for package in */; do case $package in agents/ | notes/) ;; *) stow --target=$HOME --no-folding --verbose \"$package\" ;; esac; done",
   "stow --target=$HOME --verbose agents/",
   "./bin/.local/bin/codex_config_sync",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
@@ -33,7 +37,7 @@ run = [
 description = "Re-link all packages — cleans stale links after deletes/renames"
 dir = "{{ config_root }}"
 run = [
-  "for package in */; do [ \"$package\" = agents/ ] || stow --target=$HOME --no-folding --restow --verbose \"$package\"; done",
+  "for package in */; do case $package in agents/ | notes/) ;; *) stow --target=$HOME --no-folding --restow --verbose \"$package\" ;; esac; done",
   "stow --target=$HOME --restow --verbose agents/",
   "./bin/.local/bin/codex_config_sync",
   "mkdir -p $HOME/.gnupg && chmod 700 $HOME/.gnupg",
@@ -43,4 +47,4 @@ run = [
 [tasks.unstow]
 description = "Remove all of this repo's symlinks from $HOME"
 dir = "{{ config_root }}"
-run = "stow --target=$HOME --delete --verbose */"
+run = "for package in */; do [ \"$package\" = notes/ ] || stow --target=$HOME --delete --verbose \"$package\"; done"
