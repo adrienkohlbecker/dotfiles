@@ -16,6 +16,10 @@ in $XDG_STATE_HOME/codex_config_sync/managed_block.toml:
   write nothing. Resolve it with --pull (copy the live block into the dotfiles
   file, then review it with git diff) or --push (overwrite the live block).
 
+Dropping a setting from the dotfiles block deletes it from the live config on
+the next push. To hand it over to Codex instead, first move it outside the
+markers in the live config: root keys above BEGIN, tables below END.
+
 Every write is atomic and the merged config is parsed as TOML first. Without a
 TOML parser (Python < 3.11 and no tomli, e.g. jammy's 3.10) it does nothing.
 """
