@@ -34,7 +34,7 @@ Write simple, idiomatic code in the language at hand. Prefer built-in methods an
 
 Let exceptions propagate naturally; add context only when it's meaningful. Raise with descriptive messages and use domain-specific error types rather than returning nil or sentinel values.
 
-Preserve compatibility with existing on-disk formats and legacy config keys unless a breaking migration is explicitly requested. When writing config or other shared user state, validate the write, avoid clobbering unrelated entries, and fail closed on malformed input.
+Preserve compatibility with existing on-disk formats and legacy config keys unless a breaking migration is explicitly requested. When writing config or other shared user state, write atomically (temp file in the same directory, then rename), validate the write, avoid clobbering unrelated entries, and fail closed on malformed input.
 
 ## Authoring
 
