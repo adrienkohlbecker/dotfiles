@@ -22,3 +22,35 @@ prefix_rule(pattern=["ssh", "fox"], decision="allow")
 prefix_rule(pattern=["gh"], decision="allow")
 prefix_rule(pattern=["glab"], decision="allow")
 prefix_rule(pattern=["git"], decision="allow")
+
+# Commands that print secret material into the session transcript.
+prefix_rule(
+    pattern=["op", "read"],
+    decision="forbidden",
+    justification="Prints a 1Password secret; wire op:// references through op run instead",
+    match=["op read op://Private/x/password"],
+    not_match=["op run -- env"],
+)
+
+prefix_rule(
+    pattern=["op", "item", "get"],
+    decision="forbidden",
+    justification="Prints a 1Password item",
+    match=["op item get abc123 --fields password"],
+)
+
+prefix_rule(
+    pattern=["security", "find-generic-password"],
+    decision="forbidden",
+    justification="Prints keychain passwords",
+    match=["security find-generic-password -s example -w"],
+    not_match=["security find-certificate -a"],
+)
+
+prefix_rule(
+    pattern=["ansible-vault", ["view", "decrypt"]],
+    decision="forbidden",
+    justification="Prints decrypted vault content",
+    match=["ansible-vault view group_vars/prod.yml", "ansible-vault decrypt secrets.yml"],
+    not_match=["ansible-vault encrypt_string --encrypt-vault-id test"],
+)
