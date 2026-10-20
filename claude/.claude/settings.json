@@ -29,6 +29,9 @@
     }
   },
   "permissions": {
+    "additionalDirectories": [
+      "/Users/ak/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home/Code"
+    ],
     "allow": [
       "Bash(shellcheck *)",
       "Bash(git add *)",

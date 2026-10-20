@@ -25,6 +25,10 @@ Most of the operator's projects are personal or household — homelab, finances,
 
 Treat these as provisional until corroborated against the environment where the problem actually appears: a "no bug / safe to remove this safeguard" verdict (yours or a subagent's) — confirm against CI/prod/the original repro, since a passing fixture may simply not be in the failing state; and any reading taken right after a restart/upgrade/deploy — let the system settle and re-check, as transitional state reads like a regression. Before concluding from measured data, check whether an automation was actively suppressing the signal during the data window.
 
+## Project notes
+
+A `notes/` symlink in a repository points to that project's private notes repository in the Obsidian vault (`Code/<name>`). Consult it before non-trivial work and record durable decisions there, following the `project_notes` skill; never copy its content into the code repository.
+
 ## User-level skills
 
 Generic, repo-agnostic skills live in the dotfiles repo (`agents/.agents/skills/`), symlinked into `~/.claude/skills` and `~/.agents/skills` so both Claude Code and Codex discover them in any repo. Repo-specific skills stay in each repo's `.agents/skills/`. New skills follow the same split: generic → dotfiles, repo-bound → the repo.
