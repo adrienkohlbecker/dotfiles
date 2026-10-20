@@ -11,9 +11,11 @@ that is ignored via .git/info/exclude, so public repositories never see it.
 The global post-checkout hook runs `project_notes link` for new clones and
 worktrees. The Codex app runs git with hooks disabled, so `init` and `migrate`
 also give the repository a Codex environment whose setup script links them.
-The global commit-msg hook stamps notes commits with a `Code: <name>@<sha>`
-trailer.
-Conventions for the notes themselves live in the project_notes agent skill.
+The global pre-commit hook runs `project_notes lint` in notes repositories,
+and the global commit-msg hook stamps notes commits with a `Code: <name>@<sha>`
+trailer. Conventions for the notes themselves live in the project_notes agent
+skill; `lint` and `fmt` hold the checks shared by every notes repository, with
+one Markdown style (~/.config/project_notes/notes.markdownlint.yaml).
 
 Must stay compatible with macOS's /usr/bin/python3 (3.9): git hooks launched
 from GUI apps may not see the mise-managed interpreter.
@@ -47,6 +49,22 @@ STATUSES = {"runbook", "current", "planned", "deferred", "rejected", "completed"
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ICLOUD_CONFLICT_RE = re.compile(r" \d+$")  # "foo 2.md": iCloud's conflict copy of "foo.md"
 SF_DATALESS = 0x40000000  # macOS st_flags bit for an evicted iCloud placeholder
+MARKDOWNLINT_CONFIG = Path("~/.config/project_notes/notes.markdownlint.yaml").expanduser()
+# The mise shim runs without mise on PATH, e.g. in hooks launched by GUI apps;
+# it needs MISE_ENV=mac to see the mac-only tool (and node, which runs it).
+MARKDOWNLINT_SHIM = Path("~/.local/share/mise/shims/markdownlint-cli2").expanduser()
+
+# Code fences and spans match first, so links inside them are never checked.
+LINK_TOKEN_RE = re.compile(
+    r"^(`{3,}|~{3,})[^\n]*\n.*?\n\1"
+    r"|`+.+?`+"
+    r"|!?\[[^\]]*\]\((?P<inline>[^)]+)\)"
+    r"|^\[[^\]]+\]:[ \t]+(?P<ref>\S+)",
+    re.MULTILINE | re.DOTALL,
+)
+URL_SCHEME_RE = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
+# git@host:owner/repo.git, ssh://git@host[:port]/owner/repo.git, https://host/owner/repo
+REMOTE_RE = re.compile(r"^(?:[a-z+]+://)?(?:[^@/]+@)?(?P<host>[^:/]+)(?::\d+)?[:/](?P<path>.+?)(?:\.git)?/?$")
 
 SOMEDAY_TEMPLATE = """---
 status: reference # backlog; confirm with the operator before acting on any item
@@ -293,8 +311,78 @@ def note_files(target: Path) -> list[Path]:
     return sorted(files)
 
 
+def markdown_files(target: Path) -> list[Path]:
+    """The notes' Markdown files that are on disk (iCloud may have evicted some)."""
+    return [p for p in note_files(target) if p.suffix == ".md" and not os.lstat(p).st_flags & SF_DATALESS]
+
+
+def code_link_re(code_repo: Path) -> re.Pattern | None:
+    """Match links into the code repository's forge web UI, capturing the file path.
+
+    Built from its origin remote as https://<host>/<owner>/<repo>, followed by
+    GitHub's /blob|tree/<ref>/, GitLab's /-/blob|tree/<ref>/ or Gitea's
+    /src/branch/<ref>/.
+    """
+    m = REMOTE_RE.match(git("remote", "get-url", "origin", cwd=code_repo, check=False))
+    if not m:
+        return None
+    base = re.escape(f"https://{m.group('host')}/{m.group('path')}")
+    return re.compile(base + r"(?:/-)?/(?:blob|tree|src/branch)/[^/]+/([^?#]*)")
+
+
+def link_problems(target: Path, files: list[Path]) -> list[str]:
+    """Broken local links: relative ones from the note's real place, forge links in the code checkout.
+
+    Relative links resolve inside the vault, as Obsidian, the forge and a shell
+    following the notes/ symlink all see them, so `../` never reaches the code.
+    """
+    code_repo = Path(git("config", "--get", CODE_REPO_KEY, cwd=target, check=False) or "/nonexistent")
+    code_re = code_link_re(code_repo) if code_repo.is_dir() else None
+    problems = []
+    for path in files:
+        for m in LINK_TOKEN_RE.finditer(path.read_text(encoding="utf-8", errors="replace")):
+            raw = m.group("inline") or m.group("ref")
+            url = raw.strip().strip("<>").split("#")[0].strip() if raw else ""
+            code_link = code_re.match(url) if code_re else None
+            if code_link:
+                resolved = code_repo / code_link.group(1)
+            elif not url or URL_SCHEME_RE.match(url):
+                continue
+            else:
+                resolved = path.parent / url
+            if not resolved.exists():
+                problems.append(f"{path.relative_to(target)}: broken link: {url}")
+    return problems
+
+
+def markdownlint(target: Path, files: list[Path], fix: bool = False) -> bool:
+    """Run markdownlint-cli2 with the shared notes style; it prints its own findings.
+
+    Returns False when it reports problems. A missing linter only warns, so the
+    pre-commit hook never blocks a commit on tooling alone.
+    """
+    exe, env = shutil.which("markdownlint-cli2"), None
+    if not exe and MARKDOWNLINT_SHIM.exists():
+        exe, env = str(MARKDOWNLINT_SHIM), {**os.environ, "MISE_ENV": os.environ.get("MISE_ENV", "mac")}
+    if not exe:
+        print("project_notes: markdownlint-cli2 not found; Markdown style not checked", file=sys.stderr)
+        return True
+    if not files:
+        return True
+    cmd = [exe, "--config", str(MARKDOWNLINT_CONFIG), *(["--fix"] if fix else []), "--"]
+    result = subprocess.run(
+        cmd + [str(f.relative_to(target)) for f in files], cwd=target, env=env, capture_output=True, text=True
+    )
+    # Keep the findings, drop the banner and per-run progress lines.
+    noise = ("markdownlint-cli2 v", "Finding: ", "Linting: ", "Summary: ")
+    findings = [line for line in (result.stdout + result.stderr).splitlines() if not line.startswith(noise)]
+    if findings:
+        print("\n".join(findings), file=sys.stderr)
+    return result.returncode == 0
+
+
 def lint_problems(target: Path) -> list[str]:
-    """Problems in the notes themselves: frontmatter, iCloud conflict copies, evicted files."""
+    """Problems in the notes: frontmatter, links, Markdown style, iCloud conflict copies, evicted files."""
     problems = []
     for path in note_files(target):
         rel = path.relative_to(target)
@@ -304,6 +392,10 @@ def lint_problems(target: Path) -> list[str]:
             problems.append(f"{rel}: evicted by iCloud (mark the folder Keep Downloaded)")
         elif path.suffix == ".md":
             problems.extend(f"{rel}: {err}" for err in frontmatter_errors(path))
+    files = markdown_files(target)
+    problems.extend(link_problems(target, files))
+    if not markdownlint(target, files):
+        problems.append("markdownlint reported problems (`project_notes fmt` fixes most)")
     return problems
 
 
@@ -331,15 +423,27 @@ def report(problems: list[str], name: str) -> None:
     print(f"{name}: ok")
 
 
-def cmd_lint(args: argparse.Namespace) -> None:
-    """Check the notes only (frontmatter, iCloud state); run from a notes or code checkout."""
+def lint_target(args: argparse.Namespace) -> Path:
     top = toplevel(Path(args.repo).resolve())
-    target = top if in_notes_root(top) else notes_target(top, args.name)
+    return top if in_notes_root(top) else notes_target(top, args.name)
+
+
+def cmd_lint(args: argparse.Namespace) -> None:
+    """Check the notes only (frontmatter, links, Markdown style, iCloud state); run from a notes or code checkout."""
+    target = lint_target(args)
     report(lint_problems(target), target.name)
 
 
+def cmd_fmt(args: argparse.Namespace) -> None:
+    """Fix the notes' Markdown style (markdownlint-cli2 --fix); run from a notes or code checkout."""
+    target = lint_target(args)
+    if not markdownlint(target, markdown_files(target), fix=True):
+        sys.exit(1)
+    print(f"{target.name}: formatted")
+
+
 def cmd_doctor(args: argparse.Namespace) -> None:
-    """Check links, git dir, remote sync, iCloud state, and note frontmatter."""
+    """Check links, git dir, remote sync, and everything `lint` checks."""
     main, _ = resolve_main(args)
     target = notes_target(main, args.name)
     name = target.name
@@ -381,7 +485,7 @@ def cmd_doctor(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
-    commands = (("init", cmd_init), ("migrate", cmd_migrate), ("link", cmd_link), ("doctor", cmd_doctor), ("lint", cmd_lint))
+    commands = (("init", cmd_init), ("migrate", cmd_migrate), ("link", cmd_link), ("doctor", cmd_doctor), ("lint", cmd_lint), ("fmt", cmd_fmt))
     for command, func in commands:
         p = sub.add_parser(command, help=func.__doc__.split("\n")[0] if func.__doc__ else None)
         p.add_argument("--repo", default=".", help="a checkout of the code repository (default: current directory)")
