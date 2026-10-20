@@ -5,7 +5,7 @@ description: Read, write, and commit a code repository's private notes in its `n
 
 # Project notes
 
-`notes/` in a code repository is a symlink to that project's private notes repository at `<vault>/Code/<name>` in the Obsidian vault (iCloud), with its git dir at `~/.local/share/project_notes/<name>.git`. Every worktree links to the same notes repository, so notes written from any worktree land on one history — no per-worktree branches or merges. The `project_notes` CLI (`init`, `migrate`, `link`, `doctor`, `lint`) manages the plumbing; the global git hooks link new worktrees and stamp each notes commit with a `Code: <repo>@<sha>` trailer.
+`notes/` in a code repository is a symlink to that project's private notes repository at `<vault>/Code/<name>` in the Obsidian vault (iCloud), with its git dir at `~/.local/share/project_notes/<name>.git`. Every worktree links to the same notes repository, so notes written from any worktree land on one history — no per-worktree branches or merges. The `project_notes` CLI (`init`, `migrate`, `link`, `doctor`, `lint`, `fmt`) manages the plumbing and the checks every notes repository shares; the global git hooks link new worktrees, lint notes before each commit, and stamp each notes commit with a `Code: <repo>@<sha>` trailer.
 
 ## Reading
 
@@ -51,4 +51,5 @@ Write a note for what outlives the session and isn't derivable from the code: de
 - Existing in-checkout clone (`notes/.git` is a directory): `project_notes migrate`.
 - Both also write `.codex/environments/environment.toml`, whose setup script runs `project_notes link` — Codex app worktrees need it because Codex runs git with hooks disabled. Commit that file in the code repository. A repository that already has a Codex environment is left alone and flagged if its file doesn't mention `project_notes`; add the link to its setup script by hand.
 - A worktree without `notes/`: `project_notes link`.
-- `project_notes doctor` reports broken links, unpushed or uncommitted notes, iCloud conflict copies (`foo 2.md`) and evicted files, and frontmatter errors; `project_notes lint` runs just the checks on the notes themselves.
+- `project_notes lint` checks the notes themselves: frontmatter, broken links (relative ones within the notes, forge links against the code checkout), Markdown style (markdownlint, one shared config in `~/.config/project_notes/`), iCloud conflict copies (`foo 2.md`) and evicted files. The global pre-commit hook runs it, so a notes repository needs no lint tooling of its own. `project_notes fmt` fixes most style findings.
+- `project_notes doctor` adds the plumbing: worktree links, the external git dir, the recorded code repository, and unpushed or uncommitted notes.
