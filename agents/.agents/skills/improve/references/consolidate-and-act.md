@@ -33,7 +33,7 @@ For each selected item:
 
 1. State the intended change and wait for approval. For small changes, prefer showing the exact diff before editing. For larger changes, prose is acceptable, but the commit diff needs a separate approval.
 2. Apply the edit.
-3. Track progress with the available task tracking tool, such as `update_plan` or `TodoWrite`.
+3. Track progress with the session's task-tracking tool.
 
 ## Commit Protocol
 
