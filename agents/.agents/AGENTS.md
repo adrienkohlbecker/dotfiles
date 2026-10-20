@@ -1,6 +1,6 @@
 # User Guidelines
 
-Personal conventions that apply across all repositories. Canonical file: `agents/.agents/AGENTS.md` in the dotfiles repo — agent-neutral, like the skills and hooks. `~/.claude/CLAUDE.md` (Claude Code) and `~/.codex/AGENTS.md` (Codex) are stow-installed symlinks that resolve to it via package-relative links (`claude/.claude/CLAUDE.md`, `agents/.codex/AGENTS.md`).
+Personal conventions that apply across all repositories. Canonical file: `agents/.agents/AGENTS.md` in the dotfiles repo; how it and the skills are installed is in `~/.agents/notes/dotfiles.md`.
 
 ## Operator
 
@@ -33,7 +33,7 @@ A `notes/` symlink in a repository points to that project's private notes reposi
 
 ## User-level skills
 
-Generic, repo-agnostic skills live in the dotfiles repo (`agents/.agents/skills/`), symlinked into `~/.claude/skills` and `~/.agents/skills` so both Claude Code and Codex discover them in any repo. Repo-specific skills stay in each repo's `.agents/skills/`. New skills follow the same split: generic → dotfiles, repo-bound → the repo.
+Generic, repo-agnostic skills live in the dotfiles repo (`agents/.agents/skills/`); repo-specific skills stay in each repo's `.agents/skills/`.
 
 ## Code
 
@@ -76,8 +76,6 @@ Use commits liberally and commit often. Commit each self-contained change separa
 Some of the operator's repos are public (dotfiles and homelab among them; check a repo's visibility when unsure). Keep personal or household details, production command output, and content from private notes out of their diffs and commit messages.
 
 Write the title in the imperative mood, capitalized, no trailing punctuation, aiming for ~50 characters; prefix it with the affected system or module when that makes the scope clearer. A subject alone is acceptable only for simple mechanical changes or quick fixes. Otherwise, add a blank line followed by one or two short paragraphs (hard-wrapped to 72 columns) summarizing the change and explaining its motivation, preferring lists over prose for detailed changes.
-
-When a worktree holds several independent findings, land them as separate commits via `/split_worktree_commits` rather than one batch commit.
 
 ## Reference
 
