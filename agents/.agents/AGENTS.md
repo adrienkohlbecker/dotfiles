@@ -51,6 +51,8 @@ Every bash script starts with `set -euo pipefail`. Handle expected failures expl
 
 ## Validation
 
+The operator's repos use [mise](https://mise.jdx.dev) as their task runner: start with `mise tasks ls`, run the repo's tasks rather than raw tool invocations, and apply mechanical lint fixes with its fixer task (`mise run fix`, `mise run fmt`) rather than by hand.
+
 Do not push before full repository validation has passed. Prefer the canonical full check for that repository, such as `mise run lint`, `mise run test`, or the equivalent documented task. When you change behavior, add or update the regression test that covers it — exercise the narrowest relevant test in the inner loop, then run the full suite before pushing.
 
 Tests exercise real behavior: assert what the consuming code or service observably does, not that a step wrote the value it was told to write. A tautological check proves nothing beyond the step's own result, so omit it when no functional assertion is possible. Bound every wait in tests and harnesses so a hang surfaces as a quick failure, and fix a flake at its source instead of papering over it with auto-retry.
