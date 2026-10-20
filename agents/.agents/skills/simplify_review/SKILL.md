@@ -1,5 +1,5 @@
 ---
-name: simplify
+name: simplify_review
 description: Review-first aggressive code simplification for a target file, directory, or glob, producing numbered findings and applying only user-selected changes.
 ---
 
