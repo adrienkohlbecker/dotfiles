@@ -1,1 +1,20 @@
-chain-repo-hook
+#!/bin/bash
+set -euo pipefail
+
+# Global post-checkout hook (installed via core.hooksPath = ~/.githooks).
+# A checkout from the null commit is a fresh clone or a new worktree (`git
+# worktree add`, including agent-created ones): link it to the project's
+# private notes. Best-effort -- a notes problem must never fail the checkout.
+# ~/.local/bin is spelled out because GUI-launched git may lack it on PATH.
+if [[ ${1:-} =~ ^0+$ ]]; then
+  notes_cli=$(command -v project_notes || echo "$HOME/.local/bin/project_notes")
+  if [ -x "$notes_cli" ]; then
+    "$notes_cli" link >&2 || true
+  fi
+fi
+
+# Chain to the repo's own hook; see chain-repo-hook for why --git-common-dir.
+repo_hook=$(git rev-parse --git-common-dir)/hooks/post-checkout
+if [ -x "$repo_hook" ]; then
+  exec "$repo_hook" "$@"
+fi
