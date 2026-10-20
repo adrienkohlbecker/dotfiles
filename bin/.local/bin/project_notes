@@ -9,8 +9,8 @@ worktree of the code repository reaches the notes through a `notes` symlink
 that is ignored via .git/info/exclude, so public repositories never see it.
 
 The global post-checkout hook runs `project_notes link` for new clones and
-worktrees; the global prepare-commit-msg hook stamps notes commits with a
-`Code: <name>@<sha>` trailer. Conventions for the notes themselves live in the
+worktrees (not the Codex app's, which run git with hooks disabled); the global
+commit-msg hook stamps notes commits with a `Code: <name>@<sha>` trailer. Conventions for the notes themselves live in the
 project_notes agent skill.
 
 Must stay compatible with macOS's /usr/bin/python3 (3.9): git hooks launched
@@ -23,6 +23,7 @@ import argparse
 import datetime
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -87,20 +88,32 @@ def gitdir_for(name: str) -> Path:
 
 
 def ensure_ignored(checkout: Path) -> None:
-    """Ignore the notes symlink through info/exclude, shared by every worktree."""
-    if subprocess.run(["git", "check-ignore", "-q", LINK_NAME], cwd=checkout).returncode == 0:
-        return
+    """Ignore the notes symlink through info/exclude, shared by every worktree.
+
+    Written even when a .gitignore rule already covers the link, so it stays
+    ignored if that rule is ever dropped from a (possibly public) repository.
+    """
     common = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=checkout))
     exclude = common / "info" / "exclude"
+    entry = f"/{LINK_NAME}"
+    text = exclude.read_text() if exclude.exists() else ""
+    if entry in text.splitlines():
+        return
     exclude.parent.mkdir(exist_ok=True)
     with exclude.open("a") as f:
-        f.write(f"/{LINK_NAME}\n")
+        f.write(("\n" if text and not text.endswith("\n") else "") + entry + "\n")
+
+
+def in_notes_root(path: Path) -> bool:
+    root = NOTES_ROOT.resolve()
+    return root == path.resolve() or root in path.resolve().parents
 
 
 def link_checkout(checkout: Path, target: Path) -> bool:
     """Point `checkout`/notes at `target`. Returns True when a link was created."""
     link = checkout / LINK_NAME
     if link.is_symlink():
+        ensure_ignored(checkout)
         if link.resolve() != target.resolve():
             print(f"project_notes: {link} points elsewhere ({os.readlink(link)}); left alone", file=sys.stderr)
         return False
@@ -148,7 +161,7 @@ def cmd_init(args: argparse.Namespace) -> None:
             raise NotesError(f"{gitdir} already exists without a matching {target}")
         GITDIR_ROOT.mkdir(parents=True, exist_ok=True)
         git("init", f"--separate-git-dir={gitdir}", str(target))
-    # Configure before the seed commit so the prepare-commit-msg hook stamps it.
+    # Configure before the seed commit so the commit-msg hook stamps it.
     configure_notes_repo(target, main, name)
     if not git("rev-parse", "--verify", "--quiet", "HEAD", cwd=target, check=False):
         (target / "SOMEDAY.md").write_text(SOMEDAY_TEMPLATE.format(date=args.today))
@@ -158,7 +171,10 @@ def cmd_init(args: argparse.Namespace) -> None:
     if not git("remote", cwd=target):
         print(f"no remote: set `git config --global {REMOTE_BASE_KEY} <base-url>` or add origin by hand")
     else:
-        print(f"create {git('remote', 'get-url', 'origin', cwd=target)} if needed, then `git -C {target} push -u origin HEAD`")
+        print(
+            f"origin is {git('remote', 'get-url', 'origin', cwd=target)}; first push "
+            f"(push-to-create makes the repository): git -C {shlex.quote(str(target))} push -u origin HEAD"
+        )
 
 
 def cmd_migrate(args: argparse.Namespace) -> None:
@@ -183,19 +199,25 @@ def cmd_migrate(args: argparse.Namespace) -> None:
 def cmd_link(args: argparse.Namespace) -> None:
     """Link one checkout (default: the current one) to its project's notes.
 
-    Silent no-op outside a git repository or for projects without notes, so
-    the global post-checkout hook can call it unconditionally.
+    Silent no-op outside a git repository, inside the notes root itself, or
+    for projects without notes, so the global post-checkout hook can call it
+    unconditionally. Without a link in the main checkout to follow, a notes
+    repository is used only if its recorded code repository is this one, so
+    an unrelated clone that merely shares the folder name is never linked.
     """
     try:
         checkout = toplevel(Path(args.repo).resolve())
     except NotesError:
         return
+    if in_notes_root(checkout):
+        return
     main = worktrees(checkout)[0]
     main_link = main / LINK_NAME
+    candidate = notes_dir(main.name)
     if main_link.is_symlink():
         target = main_link.resolve()
-    elif (notes_dir(main.name) / ".git").exists():
-        target = notes_dir(main.name)
+    elif (candidate / ".git").exists() and git("config", "--get", CODE_REPO_KEY, cwd=candidate, check=False) == str(main):
+        target = candidate
     else:
         return
     if link_checkout(checkout, target):
@@ -212,7 +234,7 @@ def frontmatter_errors(path: Path) -> list[str]:
             break
         key, sep, rest = line.partition(":")
         if sep:
-            fields[key.strip()] = rest.split("#")[0].strip()
+            fields[key.strip()] = rest.split("#")[0].strip().strip("\"'")
     errors = []
     if fields.get("status") not in STATUSES:
         errors.append(f"status must be one of {', '.join(sorted(STATUSES))}")
@@ -227,6 +249,35 @@ def note_files(target: Path) -> list[Path]:
         dirnames[:] = [d for d in dirnames if not d.startswith(".")]
         files.extend(Path(dirpath) / f for f in filenames if not f.startswith("."))
     return sorted(files)
+
+
+def lint_problems(target: Path) -> list[str]:
+    """Problems in the notes themselves: frontmatter, iCloud conflict copies, evicted files."""
+    problems = []
+    for path in note_files(target):
+        rel = path.relative_to(target)
+        if ICLOUD_CONFLICT_RE.search(path.stem):
+            problems.append(f"{rel}: looks like an iCloud conflict copy")
+        if os.lstat(path).st_flags & SF_DATALESS:
+            problems.append(f"{rel}: evicted by iCloud (mark the folder Keep Downloaded)")
+        elif path.suffix == ".md":
+            problems.extend(f"{rel}: {err}" for err in frontmatter_errors(path))
+    return problems
+
+
+def report(problems: list[str], name: str) -> None:
+    for problem in problems:
+        print(problem)
+    if problems:
+        sys.exit(1)
+    print(f"{name}: ok")
+
+
+def cmd_lint(args: argparse.Namespace) -> None:
+    """Check the notes only (frontmatter, iCloud state); run from a notes or code checkout."""
+    top = toplevel(Path(args.repo).resolve())
+    target = top if in_notes_root(top) else notes_dir(args.name or worktrees(top)[0].name)
+    report(lint_problems(target), target.name)
 
 
 def cmd_doctor(args: argparse.Namespace) -> None:
@@ -264,26 +315,15 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     if dirty:
         problems.append(f"{len(dirty.splitlines())} uncommitted change(s)")
 
-    for path in note_files(target):
-        rel = path.relative_to(target)
-        if ICLOUD_CONFLICT_RE.search(path.stem):
-            problems.append(f"{rel}: looks like an iCloud conflict copy")
-        if os.lstat(path).st_flags & SF_DATALESS:
-            problems.append(f"{rel}: evicted by iCloud (mark the folder Keep Downloaded)")
-        elif path.suffix == ".md":
-            problems.extend(f"{rel}: {err}" for err in frontmatter_errors(path))
-
-    for problem in problems:
-        print(problem)
-    if problems:
-        sys.exit(1)
-    print(f"{name}: ok")
+    problems.extend(lint_problems(target))
+    report(problems, name)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
-    for command, func in (("init", cmd_init), ("migrate", cmd_migrate), ("link", cmd_link), ("doctor", cmd_doctor)):
+    commands = (("init", cmd_init), ("migrate", cmd_migrate), ("link", cmd_link), ("doctor", cmd_doctor), ("lint", cmd_lint))
+    for command, func in commands:
         p = sub.add_parser(command, help=func.__doc__.split("\n")[0] if func.__doc__ else None)
         p.add_argument("--repo", default=".", help="a checkout of the code repository (default: current directory)")
         if command != "link":
