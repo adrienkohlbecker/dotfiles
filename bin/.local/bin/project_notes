@@ -11,8 +11,8 @@ that is ignored via .git/info/exclude, so public repositories never see it.
 The global post-checkout hook runs `project_notes link` for new clones and
 worktrees. The Codex app runs git with hooks disabled, so `init` and `migrate`
 also give the repository a Codex environment whose setup script links them.
-The global prepare-commit-msg hook stamps notes commits with a
-`Code: <name>@<sha>` trailer.
+The global commit-msg hook stamps notes commits with a `Code: <name>@<sha>`
+trailer.
 Conventions for the notes themselves live in the project_notes agent skill.
 
 Must stay compatible with macOS's /usr/bin/python3 (3.9): git hooks launched
