@@ -100,6 +100,10 @@
   autoupdate = true
 [gpg "ssh"]
 	allowedSignersFile = ~/.ssh/allowed_signers
+# project_notes init gives new notes repositories origin <remotebase>/<name>_notes.git;
+# Gitea's push-to-create makes the repository (private) on the first push.
+[projectnotes]
+  remotebase = ssh://git@gitea.lab.fahm.fr/adrienkohlbecker
 [include]
   path = ~/.gitconfig.local
 # macOS-only overrides. Repos live under /Users/ on macOS (Linux uses /home/),
