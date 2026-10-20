@@ -168,6 +168,11 @@ def main() -> int:
     group.add_argument("--push", action="store_const", dest="mode", const="push", help="overwrite the live block")
     args = parser.parse_args()
 
+    # The managed block is macOS-only (app paths, Mac sandbox roots), and stow
+    # also runs on the Linux fleet: never create or touch a config there.
+    if sys.platform != "darwin" or not CONFIG.parent.is_dir():
+        print("codex_config_sync: not macOS or no ~/.codex; skipped", file=sys.stderr)
+        return 0
     if tomllib is None:
         print("codex_config_sync: no TOML parser (needs Python 3.11+ or tomli); skipped", file=sys.stderr)
         return 0
