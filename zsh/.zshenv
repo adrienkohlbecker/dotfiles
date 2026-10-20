@@ -53,6 +53,11 @@ if [[ $(uname) == 'Darwin' ]]; then
   # cross-platform CLI tools in config.toml — never the source-compiled ruby.
   export MISE_ENV=mac
 
+  # Project notes live in the Obsidian vault under Code/<repo> (see
+  # project_notes); stop mise's config walk there so the vault's own root
+  # mise.toml (its python/uv venv and tasks) doesn't leak into them.
+  export MISE_CEILING_PATHS="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home/Code"
+
   # On macOS, /etc/zprofile reorders the path by executing path_helper. The following lines, coupled with code in ~/.zprofile,
   # ensure that the PATH we set in this file take precedence
   typeset -U path
