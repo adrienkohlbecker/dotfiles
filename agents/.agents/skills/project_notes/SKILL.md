@@ -49,5 +49,6 @@ Write a note for what outlives the session and isn't derivable from the code: de
 
 - New project: `project_notes init` from a checkout (creates the vault folder, git dir, `origin` from `git config --global projectnotes.remotebase`, and links every worktree). Gitea's push-to-create makes the (private) remote repository on the first push.
 - Existing in-checkout clone (`notes/.git` is a directory): `project_notes migrate`.
-- A worktree without `notes/`: `project_notes link`. Codex app worktrees always start that way — Codex runs git with hooks disabled — unless the repository's Codex setup script (`.codex/environments/*.toml`) runs `project_notes link`; add that when setting up notes for a repository Codex works in.
+- Both also write `.codex/environments/environment.toml`, whose setup script runs `project_notes link` — Codex app worktrees need it because Codex runs git with hooks disabled. Commit that file in the code repository. A repository that already has a Codex environment is left alone and flagged if its file doesn't mention `project_notes`; add the link to its setup script by hand.
+- A worktree without `notes/`: `project_notes link`.
 - `project_notes doctor` reports broken links, unpushed or uncommitted notes, iCloud conflict copies (`foo 2.md`) and evicted files, and frontmatter errors; `project_notes lint` runs just the checks on the notes themselves.
