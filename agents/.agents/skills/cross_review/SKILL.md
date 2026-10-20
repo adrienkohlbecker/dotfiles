@@ -117,3 +117,5 @@ The review takes several minutes and can outlast a 10-minute shell timeout — r
 ## 4. Report
 
 Return the other agent's review **verbatim** — do not summarize, filter, or editorialize it. Clean up the temp files after a successful review. If execution was handed off to the user because policy blocked the unsandboxed Claude call, leave the temp files in place and report their paths.
+
+After the review, ask which findings to fix and stop until the user answers. Where the host offers reply buttons for the end of a turn (Claude desktop's next-step box), offer "Fix all findings" and "Pick items"; elsewhere ask in plain text.
