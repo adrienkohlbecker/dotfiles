@@ -12,6 +12,13 @@
       "Bash(grep *)",
       "WebSearch"
     ],
+    "deny": [
+      "Bash(op read *)",
+      "Bash(op item get *)",
+      "Bash(security find-generic-password *)",
+      "Bash(ansible-vault view *)",
+      "Bash(ansible-vault decrypt *)"
+    ],
     "defaultMode": "auto"
   },
   "hooks": {
