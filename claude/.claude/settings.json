@@ -47,6 +47,24 @@
     ],
     "defaultMode": "auto"
   },
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "**Organization**: none. A single operator's personal and household projects (homelab, Home Assistant, a personal finance ledger, renovation and notes vaults, dotfiles) on their own Mac. There is no employer, team or other tenant; \"shared\" infrastructure means the operator's own household services.",
+      "**Source control**: the operator's own repositories at github.com/adrienkohlbecker/* and gitlab.com/akohlbecker/*, including the registry.gitlab.com/akohlbecker/* container registry. The dotfiles and homelab repositories are public, so personal and household details stay out of them.",
+      "**Homelab production hosts**: `lab`, `pug`, `fox`, `bunk` and `udm` (the `[prod]` group of the homelab `hosts.ini`) are production even though their names lack `prod`; `lab` runs household-critical DNS and Home Assistant. The homelab test harness's qemu fixtures reuse these host names but are disposable VMs it creates and destroys.",
+      "**Cloud provider(s)**: an AWS account used only for the homelab's CI test cells, and Hetzner servers managed by the homelab Terraform.",
+      "**Secrets management**: 1Password (`op://` references the operator supplies, consumed through `op run`), ansible-vault values and files, and the macOS keychain. Never read, print or enumerate them.",
+      "**Personal-finance data**: in the compta repository, \"production\" is the operator's own GnuCash ledger file on this Mac, not a hosted service. `mise prod` opens it read-only (query_only); `mise prod:write` and `mise console` can write to it.",
+      "**Approval style**: the operator approves with terse replies such as \"yes\", \"go ahead\", \"do it\", \"approved\" or item numbers (\"2\", \"do 1 to 4\"). Such a reply authorizes exactly the changes the agent's immediately preceding message proposed by name (target and action), and nothing the agent adds afterwards."
+    ],
+    "allow": [
+      "$defaults",
+      "Homelab Diagnostics: read-only diagnostic SSH to the homelab production hosts (e.g. `ssh lab '...'`), including `sudo -n` reads: listing files and directories, hashing or `stat`-ing files, `hostid`, systemctl status/show/cat/is-active, journalctl, podman ps/images/inspect (excluding `podman secret inspect`), zfs/zpool list/get/status, findmnt, ip/nft/iptables list, dpkg/apt-cache queries, grep/cat/jq of non-secret config, and unpacking an initramfs into a temp directory the same command creates and removes. This does NOT cover anything that changes state (restart, stop, kill, rm outside that temp directory, apt install/remove, config writes, chown/chgrp, efibootmgr) or reads secret material (vault files, /mnt/services/*/secrets, credential or token files, `podman secret inspect`); those still need the operator's explicit ack.",
+      "Home Assistant Config Checkout: editing and committing files in the homelab repository's local Home Assistant config clone (`roles/homeassistant/files/ha_gui_config`, its own git repository) is a Local Operation, not Modify Shared Resources or Production Deploy. Nothing reaches the live Home Assistant until `mise run ha:sync push|sync`, which still needs explicit ack; discarding uncommitted work there is still Irreversible Local Destruction.",
+      "Ledger Read-Only Queries: in the compta repository, `mise prod <script>` and `mise prod -- -e '...'` (read-only by construction) and `sqlite3 -readonly` or `mode=ro` queries of the ledger are read-only inspection of the operator's own local data, not Production Reads or Production Deploy. Writes go through `mise prod:write` or `mise console`, which still need the operator's approval of that specific script."
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
