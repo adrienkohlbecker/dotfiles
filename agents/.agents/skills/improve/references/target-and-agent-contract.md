@@ -62,4 +62,4 @@ After the list, append one line:
 
 > **Biggest single win:** *[the one change you would push hardest for if you could only pick one]*
 
-Aim for 5-10 findings. Quality beats volume; return fewer when fewer are real.
+Return only the findings that are real; quality beats volume, and an empty list is a valid result.
