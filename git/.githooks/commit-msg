@@ -39,6 +39,23 @@ for p in "${patterns[@]}"; do
   fi
 done
 
+# In a project notes repository (projectnotes.coderepo, set by project_notes),
+# append a `Code: <repo>@<sha>` trailer naming the code state the notes were
+# written against: the main checkout's HEAD, since the shared notes clone can't
+# tell which worktree a commit came from. Done here, after the editor, so an
+# empty message still aborts and the trailer never joins the subject line.
+# Best-effort: a failed lookup skips the trailer, never the commit.
+code_repo=$(git config --get projectnotes.coderepo || true)
+if [ -n "$code_repo" ] && [ -n "${msg//[[:space:]]/}" ] && ! grep -q '^Code: ' "$msg_file"; then
+  # The hook inherits this repo's GIT_DIR/GIT_INDEX_FILE; drop them for the lookup.
+  sha=$(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$code_repo" rev-parse --short HEAD 2>/dev/null || true)
+  if [ -n "$sha" ]; then
+    # interpret-trailers places the trailer above comments and the
+    # commit.verbose scissors line; a plain append would land below them.
+    git interpret-trailers --in-place --trailer "Code: $(basename "$code_repo")@$sha" "$msg_file"
+  fi
+fi
+
 # core.hooksPath masks per-repo hooks entirely, so chain to the repo's own
 # commit-msg hook if it has one (husky, pre-commit framework, etc.). Must use
 # --git-common-dir, not --git-path hooks/ (honors core.hooksPath and would

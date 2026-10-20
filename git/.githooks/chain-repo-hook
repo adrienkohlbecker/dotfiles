@@ -7,7 +7,9 @@ set -euo pipefail
 # name when it has one (self-installed repo hooks, husky, pre-commit
 # framework, etc.). Only hooks whose presence is behavior-neutral (exit 0 is
 # identical to the hook being absent) get a symlink. Deliberately excluded:
-# - commit-msg: has its own global logic and chains on its own.
+# - commit-msg: has its own global logic (AI-attribution check, project notes
+#   Code: trailer) and chains on its own.
+# - post-checkout: its own script (links project notes), chains on its own.
 # - push-to-checkout: mere presence replaces git's builtin worktree update,
 #   so an exit-0 shim would silently skip the checkout.
 # - fsmonitor-watchman: located via core.fsmonitor, not hooksPath (and see
