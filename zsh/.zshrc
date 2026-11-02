@@ -162,7 +162,7 @@ eval "$(atuin init zsh  --disable-up-arrow --disable-ctrl-r)"
 # so __fzfcmd is defined; the widget reuses it.
 source "$HOME/.zsh/fzf-atuin-widget.zsh"
 
-# csearch <keyword> — fzf picker over Claude Code session transcripts.
+# csearch [terms] — fzf picker over Claude Code and Codex session transcripts.
 source "$HOME/.zsh/claude-search.zsh"
 
 # Scaleway CLI autocomplete initialization.

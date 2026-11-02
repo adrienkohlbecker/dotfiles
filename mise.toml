@@ -22,6 +22,11 @@
 # notes (project_notes), which agents/.agents/notes points at so they deploy as
 # ~/.agents/notes. Every loop skips it, or stow would scatter them into $HOME.
 
+[tasks.test]
+description = "Run the csearch helper's regression tests"
+dir = "{{ config_root }}"
+run = "python3 -B -m unittest test_claude_search"
+
 [tasks.stow]
 description = "Link all packages into $HOME (adds new files)"
 dir = "{{ config_root }}"
