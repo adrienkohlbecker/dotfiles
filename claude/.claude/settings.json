@@ -122,7 +122,7 @@
     "claude-md-management@claude-plugins-official": false,
     "commit-commands@claude-plugins-official": false,
     "skill-creator@claude-plugins-official": false,
-    "plannotator@plannotator": true,
+    "plannotator@plannotator": false,
     "cc-plugin-you-should-know@builtin": true
   },
   "extraKnownMarketplaces": {
@@ -196,5 +196,12 @@
     "claude-opus-5-5": {
       "effortLevel": "high"
     }
+  },
+  "skillOverrides": {
+    "plannotator-annotate": "off",
+    "plannotator-compound": "off",
+    "plannotator-last": "off",
+    "plannotator-setup-goal": "off",
+    "plannotator-visual-explainer": "off"
   }
 }
