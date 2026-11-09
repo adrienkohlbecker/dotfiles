@@ -42,6 +42,7 @@ Write a note for what outlives the session and isn't derivable from the code: de
 ## Committing
 
 - Commit inside the notes repository (`git -C notes …`), separately from code commits, with the same message conventions. Push when the work is done.
+- Write that path literally as `notes`, from the root of the checkout or worktree you are in (`cd` there in its own call first if needed), never as an absolute path: every worktree's `notes/` is the same repository, and only the relative `git -C notes add` and `git -C notes commit` are pre-approved.
 - Never copy notes content, personal details, or production output into the code repository's commits or files — many code repositories are public.
 - The notes repository is shared by every worktree: commit only the notes you changed, and inspect `git -C notes status` first because other sessions may have edits in flight. Run `git -C notes diff <file>` before a pathspec commit, since another session's hunks in the same file would ship with yours; stage only your hunks (`git apply --cached`). Never `git reset` there — report a bad commit instead.
 
