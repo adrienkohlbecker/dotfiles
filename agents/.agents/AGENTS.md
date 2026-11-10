@@ -86,4 +86,4 @@ Cross-repo facts whose detail lives in a linked file under `~/.agents/notes/` �
 - git & forge tooling (SSH-signing traps, `gh` authorship/rate-limit gotchas, private-GitLab → local-git fallback) → `~/.agents/notes/git.md`
 - AWS auth (MFA-per-session TOTP collision under bursts) → `~/.agents/notes/aws.md`
 - mise tooling (eza macOS backend, CLI-vs-language-runtime config split) → `~/.agents/notes/mise.md`
-- Remote Control servers (concurrent sessions share one checkout, a server restart ends its sessions and `--resume` recovery, iCloud Full Disk Access) → `~/.agents/notes/remote_control.md`
+- Remote Control (the desktop app serves folders to the phone, why not standalone servers, recovering sdk-cli sessions by id, shared checkout) → `~/.agents/notes/remote_control.md`
