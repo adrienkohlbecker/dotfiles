@@ -363,6 +363,17 @@ class LocalClone:
         return None
 
 
+def clone_candidates(target: Path) -> list[Path]:
+    """The repositories forge links may point into: every notes repository under the notes root and
+    its recorded code repository, `target`'s own first so they win a remote that two clones share."""
+    others = sorted(p for p in NOTES_ROOT.glob("*/") if (p / ".git").exists() and p.resolve() != target.resolve())
+    repos = []
+    for notes in [target, *others]:
+        code_repo = git("config", "--get", CODE_REPO_KEY, cwd=notes, check=False)
+        repos.extend([notes, Path(code_repo)] if code_repo else [notes])
+    return repos
+
+
 def local_clones(repos: list[Path]) -> dict[str, LocalClone]:
     """Map `<host>/<owner>/<repo>` (lowercase, as forge URLs name it) to the local clone with that remote."""
     clones = {}
@@ -396,13 +407,12 @@ def link_problems(target: Path, files: list[Path]) -> list[str]:
 
     Relative links resolve inside the vault, as Obsidian, the forge and a shell
     following the notes/ symlink all see them, so `../` never reaches the code.
-    Forge links into the notes repository or the recorded code repository are
-    checked with git at the linked ref, so they verify offline (the forge may
-    hide everything behind a login) and before a push. Links into any other
+    Forge links into any project's notes or code repository are checked with
+    git at the linked ref, so they verify offline (the forge may hide
+    everything behind a login) and before a push. Links into any other
     repository, or at a ref that isn't local, are only noted on stderr.
     """
-    code_repo = Path(git("config", "--get", CODE_REPO_KEY, cwd=target, check=False) or "/nonexistent")
-    clones = local_clones([target, code_repo])
+    clones = local_clones(clone_candidates(target))
     problems, no_clone = [], collections.Counter()
     pending = collections.defaultdict(list)  # repo -> [(problem, revs, path)]
     for path in files:

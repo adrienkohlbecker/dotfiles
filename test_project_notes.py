@@ -38,11 +38,15 @@ class ForgeLinkTest(unittest.TestCase):
             "GIT_COMMITTER_NAME": "Test",
             "GIT_COMMITTER_EMAIL": "test@example.com",
         }
-        self.code = root / "code" / "proj"
-        self.notes = root / "vault" / "proj"
-        self.init_repo(self.code, f"{FORGE}/proj.git")
-        self.init_repo(self.notes, "ssh://git@forge.example:2222/owner/proj_notes.git")
-        self.git(self.notes, "config", "projectnotes.coderepo", str(self.code))
+        self.root = root
+        self.code, self.notes = self.init_project("proj")
+
+    def init_project(self, name):
+        code, notes = self.root / "code" / name, self.root / "vault" / name
+        self.init_repo(code, f"{FORGE}/{name}.git")
+        self.init_repo(notes, f"ssh://git@forge.example:2222/owner/{name}_notes.git")
+        self.git(notes, "config", "projectnotes.coderepo", str(code))
+        return code, notes
 
     def git(self, repo, *args):
         result = subprocess.run(["git", *args], cwd=repo, env=self.env, capture_output=True, text=True, check=True)
@@ -144,6 +148,13 @@ class ForgeLinkTest(unittest.TestCase):
         self.assert_ok(self.lint(*ok))
         missing = f"{FORGE}/proj/-/blob/main/lib/gone.py"
         self.assert_broken(self.lint(*ok, missing), missing)
+
+    def test_link_into_another_projects_code(self):
+        other_code, _ = self.init_project("other")
+        self.commit(other_code, {"shared.py": ""})
+        self.assert_ok(self.lint(f"{FORGE}/other/src/branch/main/shared.py"))
+        missing = f"{FORGE}/other/src/branch/main/gone.py"
+        self.assert_broken(self.lint(missing), missing)
 
     def test_unknown_repository_or_ref_is_only_noted(self):
         self.commit(self.code, {"README.md": ""})
