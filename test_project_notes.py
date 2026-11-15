@@ -156,15 +156,18 @@ class ForgeLinkTest(unittest.TestCase):
         missing = f"{FORGE}/other/src/branch/main/gone.py"
         self.assert_broken(self.lint(missing), missing)
 
-    def test_unknown_repository_or_ref_is_only_noted(self):
+    def test_third_party_repository_is_skipped_silently(self):
+        result = self.lint("https://forge.example/someone/else/src/branch/main/x.py")
+        self.assert_ok(result)
+        self.assertEqual(result.stderr, "")
+
+    def test_unknown_ref_is_only_noted(self):
         self.commit(self.code, {"README.md": ""})
         result = self.lint(
-            "https://forge.example/someone/else/src/branch/main/x.py",
             f"{FORGE}/proj/src/branch/unfetched/x.py",
             f"{FORGE}/proj/src/commit/{'0' * 40}/x.py",
         )
         self.assert_ok(result)
-        self.assertIn("no local clone: forge.example/someone/else (1)", result.stderr)
         self.assertIn("ref not in", result.stderr)
         self.assertIn("src/branch/unfetched/x.py", result.stderr)
         self.assertIn(f"src/commit/{'0' * 40}/x.py", result.stderr)

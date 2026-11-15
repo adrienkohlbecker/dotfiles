@@ -410,10 +410,11 @@ def link_problems(target: Path, files: list[Path]) -> list[str]:
     Forge links into any project's notes or code repository are checked with
     git at the linked ref, so they verify offline (the forge may hide
     everything behind a login) and before a push. Links into any other
-    repository, or at a ref that isn't local, are only noted on stderr.
+    repository (third-party code) are skipped; one at a ref that isn't local
+    is only noted on stderr.
     """
     clones = local_clones(clone_candidates(target))
-    problems, no_clone = [], collections.Counter()
+    problems = []
     pending = collections.defaultdict(list)  # repo -> [(problem, revs, path)]
     for path in files:
         rel = path.relative_to(target)
@@ -426,10 +427,8 @@ def link_problems(target: Path, files: list[Path]) -> list[str]:
                 if url and not URL_SCHEME_RE.match(url) and not (path.parent / url).exists():
                     problems.append(f"{rel}: broken link: {url}")
                 continue
-            repo = f"{forge.group('host')}/{forge.group('repo')}"
-            clone = clones.get(repo.lower())
+            clone = clones.get(f"{forge.group('host')}/{forge.group('repo')}".lower())
             if not clone:
-                no_clone[repo] += 1
                 continue
             resolved = clone.resolve(forge.group("kind"), urllib.parse.unquote(forge.group("rest")))
             if not resolved:
@@ -440,9 +439,6 @@ def link_problems(target: Path, files: list[Path]) -> list[str]:
     for repo, links in pending.items():
         missing = missing_objects(repo, sorted({f"{rev}:{file}" for _, revs, file in links for rev in revs}))
         problems.extend(problem for problem, revs, file in links if all(f"{rev}:{file}" in missing for rev in revs))
-    if no_clone:
-        counts = ", ".join(f"{repo} ({n})" for repo, n in sorted(no_clone.items()))
-        print(f"project_notes: forge links not verified, no local clone: {counts}", file=sys.stderr)
     return sorted(problems)
 
 
