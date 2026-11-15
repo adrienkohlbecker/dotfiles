@@ -24,13 +24,16 @@ from GUI apps may not see the mise-managed interpreter.
 from __future__ import annotations
 
 import argparse
+import collections
 import datetime
+import functools
 import os
 import re
 import shlex
 import shutil
 import subprocess
 import sys
+import urllib.parse
 from pathlib import Path
 
 NOTES_ROOT = Path(
@@ -63,6 +66,14 @@ LINK_TOKEN_RE = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 URL_SCHEME_RE = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
+# A file or directory in a forge's web UI, the path after the ref: Gitea's
+# /src|raw/branch|commit|tag/<ref>/, GitHub's /blob|tree|raw/<ref>/ and
+# GitLab's /-/blob|tree|raw/<ref>/ (whose groups may nest).
+FORGE_LINK_RE = re.compile(
+    r"^https?://(?P<host>[^/]+)/(?P<repo>[^/?#]+/[^?#]+?)(?:/-)?"
+    r"/(?:(?:src|raw)/(?P<kind>branch|commit|tag)|blob|tree|raw)/(?P<rest>[^?#]*)"
+)
+SHA_RE = re.compile(r"^[0-9a-f]{7,64}$")
 # git@host:owner/repo.git, ssh://git@host[:port]/owner/repo.git, https://host/owner/repo
 REMOTE_RE = re.compile(r"^(?:[a-z+]+://)?(?:[^@/]+@)?(?P<host>[^:/]+)(?::\d+)?[:/](?P<path>.+?)(?:\.git)?/?$")
 
@@ -316,43 +327,113 @@ def markdown_files(target: Path) -> list[Path]:
     return [p for p in note_files(target) if p.suffix == ".md" and not os.lstat(p).st_flags & SF_DATALESS]
 
 
-def code_link_re(code_repo: Path) -> re.Pattern | None:
-    """Match links into the code repository's forge web UI, capturing the file path.
+class LocalClone:
+    """A local clone of a forge repository, found through one of its remotes."""
 
-    Built from its origin remote as https://<host>/<owner>/<repo>, followed by
-    GitHub's /blob|tree/<ref>/, GitLab's /-/blob|tree/<ref>/ or Gitea's
-    /src/branch/<ref>/.
-    """
-    m = REMOTE_RE.match(git("remote", "get-url", "origin", cwd=code_repo, check=False))
-    if not m:
+    def __init__(self, path: Path, remote: str):
+        self.path, self.remote = path, remote
+
+    @functools.cached_property
+    def refs(self) -> set[str]:
+        return set(git("for-each-ref", "--format=%(refname)", cwd=self.path).splitlines())
+
+    def has_commit(self, sha: str) -> bool:
+        return subprocess.run(["git", "cat-file", "-e", f"{sha}^{{commit}}"], cwd=self.path, capture_output=True).returncode == 0
+
+    def resolve(self, kind: str | None, rest: str) -> tuple[list[str], str] | None:
+        """Split a link's `<ref>/<path>` into the local revisions to look in and the path.
+
+        Ref names may contain slashes, so each split point is tried in turn
+        against the refs that exist here. A branch counts on its local ref and
+        on its remote-tracking one; `kind` None (GitHub and GitLab links) also
+        accepts a tag or a commit sha. Returns None when no ref is local.
+        """
+        segments = rest.strip("/").split("/")
+        for i in range(1, len(segments) + 1):
+            name, path = "/".join(segments[:i]), "/".join(segments[i:])
+            revs = []
+            if kind in ("branch", None):
+                revs = [r for r in (f"refs/heads/{name}", f"refs/remotes/{self.remote}/{name}") if r in self.refs]
+            if not revs and kind in ("tag", None) and f"refs/tags/{name}" in self.refs:
+                revs = [f"refs/tags/{name}"]
+            if not revs and kind in ("commit", None) and i == 1 and SHA_RE.match(name) and self.has_commit(name):
+                revs = [name]
+            if revs:
+                return revs, path
         return None
-    base = re.escape(f"https://{m.group('host')}/{m.group('path')}")
-    return re.compile(base + r"(?:/-)?/(?:blob|tree|src/branch)/[^/]+/([^?#]*)")
+
+
+def local_clones(repos: list[Path]) -> dict[str, LocalClone]:
+    """Map `<host>/<owner>/<repo>` (lowercase, as forge URLs name it) to the local clone with that remote."""
+    clones = {}
+    for repo in repos:
+        if not repo.is_dir():
+            continue
+        for remote in git("remote", cwd=repo, check=False).splitlines():
+            m = REMOTE_RE.match(git("remote", "get-url", remote, cwd=repo, check=False))
+            if m:
+                clones.setdefault(f"{m.group('host')}/{m.group('path')}".lower(), LocalClone(repo, remote))
+    return clones
+
+
+def missing_objects(repo: Path, names: list[str]) -> set[str]:
+    """The `<rev>:<path>` names that `repo` has no object for, in one git call."""
+    if not names:
+        return set()
+    result = subprocess.run(
+        ["git", "cat-file", "--batch-check"],
+        cwd=repo,
+        input="".join(f"{name}\n" for name in names),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return {name for name, line in zip(names, result.stdout.splitlines()) if line.endswith((" missing", " ambiguous"))}
 
 
 def link_problems(target: Path, files: list[Path]) -> list[str]:
-    """Broken local links: relative ones from the note's real place, forge links in the code checkout.
+    """Broken links: relative ones from the note's real place, forge links in the local clones.
 
     Relative links resolve inside the vault, as Obsidian, the forge and a shell
     following the notes/ symlink all see them, so `../` never reaches the code.
+    Forge links into the notes repository or the recorded code repository are
+    checked with git at the linked ref, so they verify offline (the forge may
+    hide everything behind a login) and before a push. Links into any other
+    repository, or at a ref that isn't local, are only noted on stderr.
     """
     code_repo = Path(git("config", "--get", CODE_REPO_KEY, cwd=target, check=False) or "/nonexistent")
-    code_re = code_link_re(code_repo) if code_repo.is_dir() else None
-    problems = []
+    clones = local_clones([target, code_repo])
+    problems, no_clone = [], collections.Counter()
+    pending = collections.defaultdict(list)  # repo -> [(problem, revs, path)]
     for path in files:
+        rel = path.relative_to(target)
         for m in LINK_TOKEN_RE.finditer(path.read_text(encoding="utf-8", errors="replace")):
             raw = m.group("inline") or m.group("ref")
-            url = raw.strip().strip("<>").split("#")[0].strip() if raw else ""
-            code_link = code_re.match(url) if code_re else None
-            if code_link:
-                resolved = code_repo / code_link.group(1)
-            elif not url or URL_SCHEME_RE.match(url):
+            url = raw.strip().strip("<>").strip() if raw else ""
+            forge = FORGE_LINK_RE.match(url)
+            if not forge:
+                url = url.split("#")[0].strip()
+                if url and not URL_SCHEME_RE.match(url) and not (path.parent / url).exists():
+                    problems.append(f"{rel}: broken link: {url}")
                 continue
-            else:
-                resolved = path.parent / url
-            if not resolved.exists():
-                problems.append(f"{path.relative_to(target)}: broken link: {url}")
-    return problems
+            repo = f"{forge.group('host')}/{forge.group('repo')}"
+            clone = clones.get(repo.lower())
+            if not clone:
+                no_clone[repo] += 1
+                continue
+            resolved = clone.resolve(forge.group("kind"), urllib.parse.unquote(forge.group("rest")))
+            if not resolved:
+                print(f"project_notes: {rel}: not verified, ref not in {clone.path}: {url}", file=sys.stderr)
+                continue
+            revs, file = resolved
+            pending[clone.path].append((f"{rel}: broken link: {url}", revs, file))
+    for repo, links in pending.items():
+        missing = missing_objects(repo, sorted({f"{rev}:{file}" for _, revs, file in links for rev in revs}))
+        problems.extend(problem for problem, revs, file in links if all(f"{rev}:{file}" in missing for rev in revs))
+    if no_clone:
+        counts = ", ".join(f"{repo} ({n})" for repo, n in sorted(no_clone.items()))
+        print(f"project_notes: forge links not verified, no local clone: {counts}", file=sys.stderr)
+    return sorted(problems)
 
 
 def markdownlint(target: Path, files: list[Path], fix: bool = False) -> bool:

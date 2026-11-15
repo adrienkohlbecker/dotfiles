@@ -23,9 +23,9 @@
 # ~/.agents/notes. Every loop skips it, or stow would scatter them into $HOME.
 
 [tasks.test]
-description = "Run the csearch helper's regression tests"
+description = "Run the csearch and project_notes regression tests"
 dir = "{{ config_root }}"
-run = "python3 -B -m unittest test_claude_search"
+run = "python3 -B -m unittest test_claude_search test_project_notes"
 
 [tasks.stow]
 description = "Link all packages into $HOME (adds new files)"
