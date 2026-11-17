@@ -1,7 +1,8 @@
 {
   "cleanupPeriodDays": 3650,
   "env": {
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400k"
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400k",
+    "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "100000"
   },
   "attribution": {
     "commit": "",
