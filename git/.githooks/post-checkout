@@ -13,6 +13,14 @@ if [[ ${1:-} =~ ^0+$ ]]; then
   if [ -x "$notes_cli" ]; then
     "$notes_cli" link >&2 || true
   fi
+  # A new linked worktree (its .git is a file) of a repository already worked
+  # in: trust its mise config, as the main checkout's is, and install, whose
+  # postinstall hooks bootstrap it (uv sync into its own .venv). Fresh clones
+  # are left alone, so an unknown repository's config is never trusted.
+  # Best-effort, like the notes link.
+  if [ -f .git ] && [ -f mise.toml ] && command -v mise >/dev/null; then
+    { mise trust --quiet && mise install --quiet; } >&2 || true
+  fi
 fi
 
 # Chain to the repo's own hook; see chain-repo-hook for why --git-common-dir.
