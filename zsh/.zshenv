@@ -58,6 +58,10 @@ if [[ $(uname) == 'Darwin' ]]; then
   # mise.toml (its python/uv venv and tasks) doesn't leak into them.
   export MISE_CEILING_PATHS="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home/Code"
 
+  # The vault the ordo task CLIs (tq, te, tm) read, so they work from any
+  # repository (see the project_todos skill), not only from inside the vault.
+  export ORDO_VAULT="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Home"
+
 fi
 
 # editor
