@@ -74,6 +74,6 @@ te set --id k3m9p2 --priority high --due 2026-12-01 --add-tag '#blocked'
 - When a task turns out to be several, close none of them silently: reword the open line to the first concrete step and add the others as their own lines.
 - Report what you added, completed, or cancelled, with ids, so the operator can find them in their views.
 
-## Committing
+## Not versioned
 
-TODO.md is a project note: every edit, including one made by `te`, is committed in the notes repository as the `project_notes` skill describes (`git -C notes diff TODO.md`, then `git -C notes add TODO.md` and `git -C notes commit`). The operator's own planning edits may be in flight in the same file, so check the diff and stage only your hunks.
+TODO.md is gitignored in the notes repository (`project_notes init` seeds the rule): it is live task state that the operator and `te` edit from the vault all day, so tracking it would keep the notes repository dirty. Never commit it or `git add -f` it, and expect `git -C notes status` to stay silent about it. Its history is the tasks themselves: closed tasks stay in the file with their done or cancelled date. If `git -C notes status` does list TODO.md, the notes repository predates the rule: add a `TODO.md` line to its `.gitignore` and commit that.
