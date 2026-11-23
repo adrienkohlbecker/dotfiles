@@ -29,7 +29,7 @@ Treat these as provisional until corroborated against the environment where the 
 
 ## Project notes
 
-A `notes/` symlink in a repository points to that project's private notes repository in the Obsidian vault (`Code/<name>`). Consult it before non-trivial work and record durable decisions there, following the `project_notes` skill; never copy its content into the code repository. `git worktree add` links the new worktree's `notes/` through the global post-checkout hook: never `ln -s` it yourself, since on an existing link `ln` drops a stray link inside the notes repository instead.
+A `notes/` symlink in a repository points to that project's private notes repository in the Obsidian vault (`Code/<name>`). Consult it before non-trivial work and record durable decisions there, following the `project_notes` skill; never copy its content into the code repository. A repository's tracked tasks live in `notes/TODO.md`, which the operator's Obsidian task views read; manage them with the `project_todos` skill. `git worktree add` links the new worktree's `notes/` through the global post-checkout hook: never `ln -s` it yourself, since on an existing link `ln` drops a stray link inside the notes repository instead.
 
 ## User-level skills
 

@@ -12,6 +12,7 @@ description: Read, write, and commit a code repository's private notes in its `n
 - Before non-trivial work, list `notes/` and read the notes whose names or `status` bear on the task. The repository's AGENTS.md links the load-bearing ones.
 - Trust by status: `runbook` and `current` describe how things are; `planned` and `deferred` are intentions; `rejected` records why not; `completed` points at code and git history as the source of truth.
 - `SOMEDAY.md` is a backlog, not standing instructions — never enact an item without the operator's confirmation.
+- `TODO.md` is the repository's task list, the one note the vault's task views read; the `project_todos` skill covers its format and tools.
 - `notes/` is a gitignored symlink, so a recursive search from the code root skips it: search inside `notes/` or name it explicitly.
 - Spawn worktree-isolated agents from the code checkout, not from inside `notes/`: the worktree is cut from the cwd's repository, so an agent started there lands in a notes worktree with no code.
 
