@@ -87,6 +87,10 @@ created_at: {date}
 Open follow-ups deferred from prior work. Not standing instructions.
 """
 
+# TODO.md is the project's task list (project_todos skill): task state edited
+# from the vault and by `te`, which would keep the notes repository dirty.
+GITIGNORE_TEMPLATE = "TODO.md\n"
+
 # The Codex app writes these files itself (hence the banner) and runs the setup
 # script in each worktree it creates; see setup_codex_environment.
 CODEX_ENV_DIR = Path(".codex/environments")
@@ -234,8 +238,9 @@ def cmd_init(args: argparse.Namespace) -> None:
     # commits, may hold notes or staged work that a seed would overwrite.
     if created:
         (target / "SOMEDAY.md").write_text(SOMEDAY_TEMPLATE.format(date=args.today))
-        git("add", "SOMEDAY.md", cwd=target)
-        git("commit", "-m", f"Start the {name} notes", "--", "SOMEDAY.md", cwd=target)
+        (target / ".gitignore").write_text(GITIGNORE_TEMPLATE)
+        git("add", "SOMEDAY.md", ".gitignore", cwd=target)
+        git("commit", "-m", f"Start the {name} notes", "--", "SOMEDAY.md", ".gitignore", cwd=target)
     link_all(main, target)
     setup_codex_environment(main)
     if not git("remote", cwd=target):

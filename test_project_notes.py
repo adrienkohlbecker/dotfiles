@@ -179,5 +179,37 @@ class ForgeLinkTest(unittest.TestCase):
         self.assert_broken(self.lint("missing.md"), "missing.md")
 
 
+class InitTest(unittest.TestCase):
+    def test_new_notes_repository_ignores_the_task_list(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name).resolve()
+        git_dir = os.path.dirname(shutil.which("git"))
+        env = {
+            "HOME": str(root),
+            "PATH": f"{git_dir}:/usr/bin:/bin",
+            "PROJECT_NOTES_ROOT": str(root / "vault"),
+            "PROJECT_NOTES_GITDIRS": str(root / "gitdirs"),
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "Test",
+            "GIT_COMMITTER_EMAIL": "test@example.com",
+        }
+        code = root / "code" / "proj"
+        code.mkdir(parents=True)
+
+        def run(*args, cwd):
+            return subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True, check=True).stdout
+
+        run("git", "init", "-q", "-b", "main", cwd=code)
+        run("git", "commit", "-q", "--allow-empty", "-m", "Start", cwd=code)
+        run(sys.executable, str(CLI), "init", "--repo", str(code), cwd=code)
+        notes = root / "vault" / "proj"
+        (notes / "TODO.md").write_text("- [ ] proj: A task\n")
+        (notes / "design.md").write_text("A note\n")
+        self.assertEqual(run("git", "status", "--porcelain", cwd=notes).split(), ["??", "design.md"])
+
+
 if __name__ == "__main__":
     unittest.main()
